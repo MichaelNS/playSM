@@ -1,0 +1,47 @@
+@(fileCardSeq: List[(Option[Option[String]], Int)])()
+@_template {
+    <div class="row column">
+        <h2>smr category</h2>
+    </div>
+
+    <li><a href="@routes.SmCategory.listDirWithoutCatByLastDate">listDirWithoutCatByLastDate</a></li>
+    <li><a href="@routes.SmCategory.listFcWithoutCatByLastDate">listFcWithoutCatByLastDate</a></li>
+
+    <div class="input-group-button2">
+        <form method="post" action="@routes.SmMove.moveAllDevices()">
+            <button type="submit" class="button success">Start job 'move FC in all devices'</button>
+        </form>
+    </div>
+
+    <div class="input-group-rules">
+        <form method="post" action="@routes.SmCategory.applyRulesSetCategory()">
+            <button type="submit" class="button success">Apply rules - set category</button>
+        </form>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>categoryType</th>
+                    <th>COUNT(*)</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(fileCard <- fileCardSeq) {
+                <tr>
+                    @if(fileCard._1.flatten.isEmpty) {
+                        <td>Empty</td>
+                        @*<td><a href="@routes.SmCategory.listDescriptionAndCnt("?")" >!Emtpy!</a></td>*@
+                    } else {
+                        <td><a href="@routes.SmCategory.listDescriptionAndCnt(fileCard._1.flatten.get)" >@fileCard._1</a></td>
+                    }
+                    <td>@fileCard._2</td>
+                </tr>
+            }
+
+            </tbody>
+        </table>
+    </div>
+}
+

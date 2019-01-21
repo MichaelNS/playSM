@@ -1,0 +1,52 @@
+@(categoryType: String, description: String, lst_path: Seq[(String, String, Int, String)], moveForm: Form[FormCrMove])()
+@_template {
+    <div class="row column">
+        <h2>Path by description - @description</h2>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th>Device</th>
+                    <th>File cnt</th>
+                    <th>Convert path</th>
+                    <th>Add</th>
+                    <th>Add path</th>
+                    <th>Del path</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(path <- lst_path) {
+                <tr>
+                    <td><a href="@routes.SmCategory.listDirWithoutCatByParent(path._1, isBegins = false)" >@path._1</a></td>
+                    <td>@path._2</td>
+                    <td><a href="@routes.SmMove.listAllPathsByLstCrc(path._1)" >@path._3</a></td>
+                    <td>@path._4</td>
+                    <form method="post" action="@routes.SmMove.createJobToMove(categoryType, description, path._2, path._1)">
+                        <td>
+                            <div class="input-group-button">
+                                <button type="submit" class="button small expanded success">Add</button>
+                            </div>
+                        </td>
+                        <td>
+                            <input class="input-group-field" type="text" name="newPath" value="@moveForm("newPath").value" placeholder="Some message..." required/>
+                            @moveForm.error("newPath").map { formError =>
+                                <span class="form-error is-visible">@formError.message</span>
+                            }
+                        </td>
+                    </form>
+                    <td>
+                        <form method="post" action="@routes.SmMove.delJobToMove(categoryType, description, path._2, path._1)">
+                            <div class="input-group-button">
+                                <button type="submit" class="button small expanded alert">Delete</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

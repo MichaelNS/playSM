@@ -1,0 +1,14 @@
+#fname {
+    width: 100%;
+}
+
+.ui-widget {
+    margin-top: 2em;
+    font-family: Arial;
+}
+
+#log {
+    height: 200px;
+    width: 100%;
+    overflow: auto;
+}

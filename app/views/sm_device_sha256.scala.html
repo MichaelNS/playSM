@@ -1,0 +1,31 @@
+@(device: String,
+        rowFcSeq: Seq[(String, String, String, java.time.LocalDateTime, Option[Option[String]], Option[Option[String]])]
+)()
+@_template {
+    <div class="row column">
+        <h2>FC device - @device</h2>
+        <h2>file - @rowFcSeq.head._2</h2>
+    </div>
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th width="40">LastModifiedDate</th>
+                    <th>categoryType</th>
+                    <th>description</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(fileCard <- rowFcSeq) {
+                <tr>
+                    <td>@fileCard._3</td>
+                    <td>@fileCard._4.format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH.mm"))</td>
+                    <td>@fileCard._5</td>
+                    <td>@fileCard._6</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

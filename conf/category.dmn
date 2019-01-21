@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" id="Definitions_0lkw8wb" name="DRD" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="decision" name="Cathegory">
+    <decisionTable id="decisionTable_1">
+      <input id="input_1" label="Path">
+        <inputExpression id="inputExpression_1" typeRef="string">
+          <text>path</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_1iuzaa8" label="isBegins" name="isBegins" typeRef="boolean" />
+      <output id="output_1" label="Category" name="category" typeRef="string" />
+      <output id="OutputClause_1fk3qpf" label="Description" name="description" typeRef="string" />
+      <rule id="DecisionRule_13u7oxh">
+        <inputEntry id="UnaryTests_16vovh6">
+          <text>"home/user"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0xpld9a">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1rqi7ke">
+          <text>"Category"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1kvw6st">
+          <text>"Description"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

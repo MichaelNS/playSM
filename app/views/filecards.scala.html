@@ -1,0 +1,31 @@
+@(fileCardSeq: Seq[EntitySmFc[SmFileCard]])()
+@_template {
+    <div class="row column">
+        <h2>NS SmFileCard</h2>
+    </div>
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    @*<th>Device</th>*@
+                    <th>Path</th>
+                    <th >Name</th>
+                    <th width="40">LastModifiedDate</th>
+                    @*<th >CreationDate</th>*@
+                </tr>
+            </thead>
+            <tbody>
+            @for(fileCard <- fileCardSeq) {
+                <tr>
+                    @*<td>@fileCard.data.storeName</td>*@
+                <td>@fileCard.data.fParent</td>
+                <td>@fileCard.data.fName</td>
+                <td>@fileCard.data.fLastModifiedDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH.mm"))</td>
+                    @*<td>@fileCard.data.fCreationDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH.mm.ss"))</td>*@
+                </tr>
+            }
+
+            </tbody>
+        </table>
+    </div>
+}

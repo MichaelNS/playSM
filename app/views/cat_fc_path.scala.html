@@ -1,0 +1,94 @@
+@(mode: String,
+        fParent: String,
+        rowSeq: Seq[(
+                String,
+                        String,
+                        String,
+                        java.time.LocalDateTime,
+                        Option[String],
+                        Option[Option[String]],
+                        Option[Option[String]]
+                )],
+        catForm: Form[FormCategoryUpdate],
+        isBegins: Boolean
+)()
+@_template {
+    <div class="row column">
+        <h2>Fill category & description by path</h2>
+    </div>
+
+    @if(mode == "path" && rowSeq.nonEmpty) {
+        <div class="input-group-button">
+            <form method="get" action="@routes.SmCategory.listDirWithoutCatByParent(fParent, if(isBegins) false else true)">
+                <button type="submit" class="button success">listDirWithoutCatBeginsParent</button>
+            </form>
+        </div>
+
+
+        <form method="post" action="@routes.SmCategory.assignCategoryAndDescription(fParent, isBegins)">
+            <div class="row column">
+                <label>Category
+                    <input type="text" name="category" value="" placeholder="category" required>
+                    @catForm.error("category").map { formError =>
+                        <span class="form-error is-visible">@formError.message</span>
+                    }
+                </label>
+            </div>
+            <div class="row column">
+                <label>Description
+                    <input type="text" name="description" value="" placeholder="description" required>
+                    @catForm.error("description").map { formError =>
+                        <span class="form-error is-visible">@formError.message</span>
+                    }
+                </label>
+            </div>
+            <div class="row">
+                <div class="large-6 medium-10 small-12 large-centered medium-centered columns">
+                    <div class="row">
+                        <div class="small-6 columns">
+                            <button type="submit" class="button expanded success">set category & description</button>
+                        </div>
+                        @*
+                        <div class="small-6 columns">
+                        <a href="@routes.RestrictedApplication.messages()" class="button expanded secondary">
+                        Cancel</a>
+                        </div>
+                        *@
+                    </div>
+                </div>
+            </div>
+        </form>
+
+    }
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th>Name</th>
+                    <th width="40">LastModifiedDate</th>
+                    <th>CategoryType</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(cRow <- rowSeq) {
+                <tr>
+                    @if(mode == "FC") {
+                        <td><a href="@routes.SmCategory.listDirWithoutCatByParent(cRow._2, isBegins = false)" >@cRow._2</a></td>
+                    } else {
+                        <td>@{
+                            cRow._1 + ru.ns.model.OsConf.fsSeparator + cRow._2
+                        }</td>
+                    }
+                <td>@cRow._3</td>
+                <td>@cRow._4.format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH.mm"))</td>
+                <td>@cRow._6</td>
+                <td>@cRow._7</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

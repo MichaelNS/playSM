@@ -1,0 +1,40 @@
+@(devices: Seq[(String, String, String, String, String)],
+        device_Unreliable: String,
+        device_NotView: String,
+        cntFiles: Int,
+        rows: Int,
+        maxRows: Int
+)()
+@_template {
+    <div class="row column">
+        <h2>Check all files backup</h2>
+    </div>
+
+    <div class="device_Unreliable">device unreliable - @device_Unreliable</div>
+    <div class="device_NotView">device not view - @device_NotView</div>
+    <div class="cntFiles">cnt files backup - @cntFiles</div>
+    <div class="rows">rows - @rows</div>
+    <div class="maxRows">maxRows - @maxRows</div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th width="70%">FileName</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Device</th>
+            </thead>
+            <tbody>
+            @for(device <- devices) {
+                <tr>
+                    <td><a href="@routes.SmView.viewFile(Some(device._1))">@device._2</a></td>
+                    <td>@device._3</td>
+                    <td>@device._4</td>
+                    <td>@device._5</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

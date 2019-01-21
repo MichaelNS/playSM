@@ -1,0 +1,34 @@
+@(rowSeq: Seq[(Option[String],
+        String,
+        String,
+        java.time.LocalDateTime
+        )]
+)()
+@_template {
+    <div class="row column">
+        <h2>list FC without category, order by lastDate </h2>
+        <h3><a href="@routes.SmCategory.listDirWithoutCatByLastDate">
+            list dirs without category</a>  </h3>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th>Name</th>
+                    <th width="40">LastModifiedDate</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(cRow <- rowSeq) {
+                <tr>
+                    <td><a href="@routes.SmCategory.listDirWithoutCatByParent(cRow._2, isBegins = false)" >@cRow._2</a></td>
+                    <td><a href="@routes.SmView.viewFile(cRow._1)" >@cRow._3</a></td>
+                    <td>@cRow._4.format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH.mm"))</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,0 +1,48 @@
+@(device: String, maxFilesInDir: Int)()
+
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
+    <div class="row column">
+        <ul>
+            <li><a href="@routes.SmApplication.getByDevice(device)">get By Device</a></li>
+
+            <li><a href="@routes.SmApplication.getByDeviceByLastModifDate(device)">get Device By LastModifDate</a></li>
+
+            <li><a href="@routes.SmReport.lstDirByDevice(device, maxFilesInDir)">lstDirByDevice</a></li>
+
+            <li><a href="@routes.SmReport.cntFilesWithoutSha256ByDevice(device)">cnt Files Without Sha256 By Device</a></li>
+            <li><a href="@routes.SmReport.listFilesWithoutSha256ByDevice(device)">list Files Without Sha256 By Device</a></li>
+
+            <li><a href="@routes.SmReport.checkBackUp(device)">check BackUp</a></li>
+
+            <li><a href="@routes.SmReport.checkDuplicates(device)">check Duplicates</a></li>
+
+            <li><a href="@routes.SmView.viewStorage(device)">viewStorage</a></li>
+        </ul>
+
+        <div class="input-group-button">
+            <form action="@routes.SmSync.syncDevice(device)" method="post">
+                <button class="button success">sync Device</button>
+            </form>
+        </div>
+
+        <div class="input-group-button">
+            <form action="@routes.SmSyncStream.syncDevice(device)" method="post">
+                <button class="button success">sync Device Stream</button>
+            </form>
+        </div>
+
+        <div class="input-group-button">
+            <form action="@routes.SmSync.calcCRC(device)" method="post">
+                <button class="button success">calcCRC</button>
+            </form>
+        </div>
+
+        <div class="input-group-button">
+            <form action="@routes.SmMigrateDb.convertDeviceIdBatch(device)" method="post">
+                <button class="button success">convert device ID batch</button>
+            </form>
+        </div>
+    </div>
+
+</html>

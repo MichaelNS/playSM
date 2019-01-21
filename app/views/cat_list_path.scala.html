@@ -1,0 +1,28 @@
+@(rowSeq: Vector[DirWithoutCat]
+)()
+@_template {
+    <div class="row column">
+        <h2>list dirs without category, order by lastDate </h2>
+        <h3><a href="@routes.SmCategory.listFcWithoutCatByLastDate">
+            list FC without category</a>  </h3>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th width="40">LastModifiedDate</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(cRow <- rowSeq) {
+                <tr>
+                    <td><a href="@routes.SmCategory.listDirWithoutCatByParent(cRow.path, isBegins = false)" >@cRow.path</a></td>
+                    <td>@cRow.date</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

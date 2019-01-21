@@ -1,0 +1,39 @@
+@(catForm: Form[FormCategoryUpdate],
+        fParent: String,
+        isBegins: Boolean
+)()
+@_template {
+    <form method="post" action="@routes.SmCategory.assignCategoryAndDescription(fParent, isBegins)">
+        <div class="row column">
+            <label>Category
+                <input type="text" name="category" value="" placeholder="category" required>
+                @catForm.error("category").map { formError =>
+                    <span class="form-error is-visible">@formError.message</span>
+                }
+            </label>
+        </div>
+        <div class="row column">
+            <label>Description
+                <input type="text" name="description" value="" placeholder="description" required>
+                @catForm.error("description").map { formError =>
+                    <span class="form-error is-visible">@formError.message</span>
+                }
+            </label>
+        </div>
+        <div class="row">
+            <div class="large-6 medium-10 small-12 large-centered medium-centered columns">
+                <div class="row">
+                    <div class="small-6 columns">
+                        <button type="submit" class="button expanded success">set category & description</button>
+                    </div>
+                    @*
+                    <div class="small-6 columns">
+                    <a href="@routes.RestrictedApplication.messages()" class="button expanded secondary">
+                    Cancel</a>
+                    </div>
+                    *@
+                </div>
+            </div>
+        </div>
+    </form>
+}

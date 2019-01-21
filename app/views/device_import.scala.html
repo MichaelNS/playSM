@@ -1,0 +1,72 @@
+@(devices: scala.collection.mutable.Seq[DeviceView])()
+@_template {
+    <div class="row column">
+        <h2>Device import</h2>
+    </div>
+
+    <div class="input-group-button">
+        <form action="@routes.SmSync.refreshDevice" method="post">
+            <button class="button success">refresh devices</button>
+        </form>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Label</th>
+                    <th>Uid</th>
+                    <th>Descr</th>
+                    <th>last sync</th>
+                    <th>visible</th>
+                    <th>syncDevice</th>
+                    <th>calcCRC</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(device <- devices) {
+                <tr>
+                    <td>@device.name</td>
+                    <td>@device.label</td>
+                    <td><a href="@routes.SmApplication.deviceIndex(device.uid)" >@device.uid</a></td>
+
+                    <td>@device.describe</td>
+
+                    @* new device has value LocalDateTime.MIN*@
+                    @if(device.syncDate.getYear > -1) {
+                        <td>
+                            @device.syncDate.toLocalDateTime.toString("dd.MM.yyyy HH:mm")
+
+                            (@{org.joda.time.Days.daysBetween(device.syncDate.toLocalDate, new org.joda.time.LocalDate()).getDays
+                        } days ago)
+                        </td>
+                    } else {
+                        <td>None</td>
+                    }
+
+                    <td>@device.visible</td>
+
+
+
+                    <td>
+                        <div class="input-group-button">
+                            <form action="@routes.SmSyncStream.syncDevice(device.uid)" method="post">
+                                <button class="button success">sync Device</button>
+                            </form>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="input-group-button">
+                            <form action="@routes.SmSync.calcCRC(device.uid)" method="post">
+                                <button class="button primary">calcCRC</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

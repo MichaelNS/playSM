@@ -1,0 +1,27 @@
+@(catForm: Form[FormCrMove],
+        description: String,
+        categoryType: String,
+        device: String,
+        oldPath: String
+)()
+@_template {
+    <form method="post" action="@routes.SmMove.createJobToMove(categoryType, description, device, oldPath)">
+        <div class="row column">
+            <label>newPath
+                <input type="text" name="newPath" value="" placeholder="newPath" required>
+                @catForm.error("newPath").map { formError =>
+                    <span class="form-error is-visible">@formError.message</span>
+                }
+            </label>
+        </div>
+        <div class="row">
+            <div class="large-6 medium-10 small-12 large-centered medium-centered columns">
+                <div class="row">
+                    <div class="small-6 columns">
+                        <button type="submit" class="button expanded success">set newPath</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+}

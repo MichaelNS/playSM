@@ -1,0 +1,27 @@
+@(lst_path: Seq[(String, String, Int)])()
+@_template {
+    <div class="row column">
+        <h2>view by</h2>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Device</th>
+                    <th>Path</th>
+                    <th>File cnt</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(path <- lst_path) {
+                <tr>
+                    <td>@path._1</td>
+                    <td>@path._2</td>
+                    <td>@path._3</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

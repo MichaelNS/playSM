@@ -1,0 +1,29 @@
+@(device: String, lstPath: Vector[(String, Int, Int, String)], depth: Int)()
+@_template {
+    <div class="row column">
+        <h2>Explorer</h2>
+    </div>
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th>Count ALL</th>
+                    <th>Count <br>
+                        Category is null</th>
+                    <th>Category</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(path <- lstPath) {
+                <tr>
+                    <td><a href="@routes.SmReport.explorerDevice(device, path._1, depth + 1)" >@path._1</a></td>
+                    <td>@path._2</td>
+                    <td>@path._3</td>
+                    <td>@path._4</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

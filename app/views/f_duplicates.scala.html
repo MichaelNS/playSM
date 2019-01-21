@@ -1,0 +1,32 @@
+@(device: String, maxFileSize: Long, rowSeq: Seq[(Option[String], String, Option[Long], Int)])()
+@_template {
+    <div class="row column">
+        <h2>checkDuplicates - @device, maxFileSize - @{
+            (maxFileSize / 1024).formatted("%,d")
+        } KB</h2>
+    </div>
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>SHA256</th>
+                    <th>fName</th>
+                    <th>fSize KB</th>
+                    <th>CNT</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(cRow <- rowSeq) {
+                <tr>
+                    <td><a href="@routes.SmReport.getFcByDeviceSha256(device, cRow._1.get)" >@cRow._1</a></td>
+                    <td>@cRow._2</td>
+                    <td>@{
+                        (cRow._3.get / 1024).formatted("%,d")
+                    }</td>
+                    <td>@cRow._4</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
