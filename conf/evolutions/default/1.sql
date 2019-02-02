@@ -1,6 +1,6 @@
 # --- !Ups
 
-CREATE TABLE SM_DEVICE
+CREATE TABLE IF NOT EXISTS SM_DEVICE
 (
   "ID"        serial PRIMARY KEY,
   "NAME"      VARCHAR              NOT NULL,
@@ -8,10 +8,11 @@ CREATE TABLE SM_DEVICE
   "UID"       VARCHAR              NOT NULL,
   "SYNC_DATE" TIMESTAMP            NOT NULL,
   "DESCRIBE"  VARCHAR              NULL,
-  "VISIBLE"   BOOLEAN DEFAULT TRUE NOT NULL
+  "VISIBLE"   BOOLEAN DEFAULT TRUE NOT NULL,
+  "RELIABLE"  BOOLEAN DEFAULT TRUE NOT NULL
 );
 
-CREATE TABLE SM_FILE_CARD
+CREATE TABLE IF NOT EXISTS SM_FILE_CARD
 (
   "ID"                   VARCHAR PRIMARY KEY NOT NULL,
   "STORE_NAME"           VARCHAR             NOT NULL,
@@ -26,25 +27,22 @@ CREATE TABLE SM_FILE_CARD
   "F_NAME_LC"            VARCHAR             NOT NULL
 );
 
+-- CREATE INDEX sha256_idx ON sm_file_card ("SHA256" ASC NULLS LAST);
+
 CREATE INDEX sha256_idx
-  ON public.sm_file_card USING btree
-    ("SHA256" COLLATE pg_catalog."default" varchar_pattern_ops ASC NULLS LAST)
-  WITH (FILLFACTOR =100)
-  TABLESPACE pg_default;
+  ON sm_file_card
+    ("SHA256" ASC NULLS LAST);
 
 CREATE INDEX f_parent_idx
-  ON public.sm_file_card USING btree
-    ("F_PARENT" COLLATE pg_catalog."default" varchar_pattern_ops ASC NULLS LAST)
-  WITH (FILLFACTOR =100)
-  TABLESPACE pg_default;
+  ON sm_file_card
+    ("F_PARENT" ASC NULLS LAST);
 
 CREATE INDEX last_modified_idx
-  ON public.sm_file_card USING btree
-    ("F_LAST_MODIFIED_DATE" DESC NULLS LAST)
-  WITH (FILLFACTOR =100)
-  TABLESPACE pg_default;
+  ON sm_file_card
+    ("F_LAST_MODIFIED_DATE" DESC NULLS LAST);
 
-CREATE TABLE SM_PATH_MOVE
+
+CREATE TABLE IF NOT EXISTS SM_PATH_MOVE
 (
   "ID"         serial PRIMARY KEY,
   "STORE_NAME" VARCHAR NOT NULL,
@@ -52,12 +50,13 @@ CREATE TABLE SM_PATH_MOVE
   "PATH_TO"    VARCHAR NOT NULL
 );
 
-CREATE TABLE SM_CATEGORY_FC
+CREATE TABLE IF NOT EXISTS SM_CATEGORY_FC
 (
-  "ID"            VARCHAR,
-  "F_NAME"        VARCHAR,
-  "CATEGORY_TYPE" VARCHAR,
-  "DESCRIPTION"   VARCHAR,
+  "ID"                VARCHAR,
+  "F_NAME"            VARCHAR,
+  "CATEGORY_TYPE"     VARCHAR,
+  "SUB_CATEGORY_TYPE" VARCHAR,
+  "DESCRIPTION"       VARCHAR,
   PRIMARY KEY ("ID", "F_NAME")
 );
 

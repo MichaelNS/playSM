@@ -7,7 +7,7 @@ import java.{lang, util}
 
 import com.typesafe.scalalogging._
 import org.slf4j.LoggerFactory
-import ru.ns.model.{Device, FileCardSt, OsConf}
+import ru.ns.model.{Device, FileCardSt, OsConf, SmPath}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -79,7 +79,7 @@ object FileUtils {
 
     debug(fileStores)
 
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     val lstAll = fileStores.asScala.map(x => x.name()).toSeq.filter(_ != "")
     val lstDist = lstAll.distinct
@@ -101,29 +101,63 @@ object FileUtils {
     devices
   }
 
-  def readDirRecursive(impPath: String,
-                       deviceUid: String,
-                       mountPoint: String,
-                       sExclusionDir: util.List[String],
-                       sExclusionFile: util.List[String]): ArrayBuffer[FileCardSt] = {
-    debug(impPath)
+  /**
+    * return list child path of path2scan
+    *
+    * used [[SmSyncDeviceStream.foreachPath]]
+    *
+    * @param path2scan     paths to scan - (home/user/Documents)
+    * @param mountPoint    mountPoint
+    * @param sExclusionDir list of dir which need exclusion
+    * @return ArrayBuffer[SmPath]
+    */
 
-    val visitor = new SmMatchingVisitor("", deviceUid, mountPoint, sExclusionDir, sExclusionFile)
+  def getPathesRecursive(path2scan: String,
+                         mountPoint: String,
+                         sExclusionDir: util.List[String]
+                        ): ArrayBuffer[SmPath] = {
+    debug(path2scan)
 
-    val startingDir = Paths.get(mountPoint + OsConf.fsSeparator + impPath)
+    val visitor = new SmPathVisitor("", mountPoint, sExclusionDir)
+    val startingDir = Paths.get(mountPoint + OsConf.fsSeparator + path2scan)
 
     if (startingDir.toFile.exists) {
-      logger.debug(s"readDirRecursive -> Current path [$impPath]   startingDir [$startingDir]")
+      //      logger.debug(s"readDirRecursive2 -> Current path [$impPath]   startingDir [$startingDir]")
 
       try {
         Files.walkFileTree(startingDir, visitor)
       } catch {
         case ex: IOException =>
-          logger.error(s"readDirRecursive error: ${ex.toString}\nStackTrace:\n${ex.getStackTrace.mkString("\n")}")
+          logger.error(s"readDirRecursive2 error: ${ex.toString}\nStackTrace:\n${ex.getStackTrace.mkString("\n")}")
           throw ex
       }
     } else {
-      logger.warn(s"readDirRecursive -> Current path IS NOT EXISTS [$impPath]   startingDir [$startingDir]")
+      logger.warn(s"readDirRecursive -> Current path IS NOT EXISTS [$path2scan]   startingDir [$startingDir]")
+    }
+
+    visitor.done()
+  }
+
+  def getFilesFromStore(impPath: String,
+                        deviceUid: String,
+                        mountPoint: String,
+                        sExclusionFile: util.List[String]): ArrayBuffer[FileCardSt] = {
+
+    val visitor = new SmFileVisitor("", deviceUid, mountPoint, sExclusionFile)
+
+    val startingDir = Paths.get(mountPoint + OsConf.fsSeparator + impPath)
+
+    if (startingDir.toFile.exists) {
+      //      logger.debug(s"getFilesFromStore -> Current path [$impPath]   startingDir [$startingDir]")
+      try
+        Files.walkFileTree(startingDir, util.EnumSet.noneOf(classOf[FileVisitOption]), 1, visitor)
+      catch {
+        case ex: IOException =>
+          logger.error(s"getFilesFromStore error: ${ex.toString}\nStackTrace:\n${ex.getStackTrace.mkString("\n")}")
+          throw ex
+      }
+    } else {
+      logger.warn(s"getFilesFromStore -> Current path IS NOT EXISTS [$impPath]   startingDir [$startingDir]")
     }
 
     visitor.done()

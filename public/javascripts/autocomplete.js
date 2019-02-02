@@ -4,7 +4,26 @@ $(function () {
         $("#log").scrollTop(0);
     }
 
-    $("#fname").autocomplete({
+    var table = $('#fc-table-filter').DataTable({
+        "columns": [
+            // {"data": "id"},
+            {
+                "data": "name",
+                "render": function (data, type, row, meta) {
+                    if (type === 'display') {
+                        if (row.sha256)
+                            data = '<a href="view-file?sha256=' + row.sha256 + '">' + data + '</a>';
+                        else data
+                    }
+                    return data;
+                }
+            },
+            {"data": "path"},
+            {"data": "sha256"}
+        ]
+    });
+
+    $("#f-name").autocomplete({
         source: function (request, response) {
             $.ajax({
                 url: "/search-by-file-name",
@@ -17,7 +36,7 @@ $(function () {
             });
         },
         // open: function() {
-        //     $('#fname').autocomplete("widget").width(900)
+        //     $('#f-name').autocomplete("widget").width(900)
         // },
         minLength: 2,
         select: function (event, ui) {
@@ -26,14 +45,8 @@ $(function () {
                 data: {name: ui.item.value},
                 dataType: "json",
                 success: function (result) {
-                    // console.log(result);
-                    // $("#log").html(result);
-
-                    $.each(result, function (index, value) {
-                        console.log(value);
-                        log(value.name + " | " + value.path);
-                    });
-
+                    table.clear();
+                    table.rows.add(result).draw();
                 },
                 error: function (request, status, error) {
                     alert(request.responseText);

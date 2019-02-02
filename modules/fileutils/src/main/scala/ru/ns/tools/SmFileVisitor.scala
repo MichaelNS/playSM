@@ -1,17 +1,27 @@
 package ru.ns.tools
 
+import java.nio.charset.StandardCharsets
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
 import java.time.ZoneId
 import java.util
 
+import com.google.common.hash.Hashing
 import ru.ns.model.{FileCardSt, OsConf}
 
 import scala.collection.mutable.ArrayBuffer
 
-
-class SmMatchingVisitor(glob: String, deviceUid: String, mountPoint: String, sExclusionDir: util.List[String], sExclusionFile: util.List[String])
+/**
+  *
+  * @param glob           glob
+  * @param deviceUid      device Uid
+  * @param mountPoint     mount point
+  * @param sExclusionFile list of ExclusionFile
+  */
+class SmFileVisitor(glob: String, deviceUid: String, mountPoint: String, sExclusionFile: util.List[String])
   extends SimpleFileVisitor[Path] {
+
+  //  private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))
 
   val fileCardSt_lst: ArrayBuffer[FileCardSt] = ArrayBuffer[FileCardSt]()
   val pathMatcher: PathMatcher = FileSystems.getDefault.getPathMatcher("glob:" + glob)
@@ -20,7 +30,7 @@ class SmMatchingVisitor(glob: String, deviceUid: String, mountPoint: String, sEx
   var hDevise: Map[String, String] = Map[String, String]()
 
   override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
-    if (sExclusionFile.contains(file.getFileName.toString)) {
+    if (sExclusionFile.contains(file.getFileName.toString) || file.toFile.isDirectory) {
       return FileVisitResult.CONTINUE
     }
     else {
@@ -33,7 +43,6 @@ class SmMatchingVisitor(glob: String, deviceUid: String, mountPoint: String, sEx
       }
     }
 
-    import com.roundeights.hasher.Implicits._
     val fileName = file.getFileName.toString
     val extPos: Int = fileName.lastIndexOf('.')
 
@@ -50,7 +59,7 @@ class SmMatchingVisitor(glob: String, deviceUid: String, mountPoint: String, sEx
       }
 
     val fileCardSt: FileCardSt = FileCardSt(
-      id = (deviceUid + fParent + fileName).sha256.toUpperCase,
+      id = Hashing.sha256().hashString(deviceUid + fParent + fileName, StandardCharsets.UTF_8).toString.toUpperCase,
       storeName = deviceUid,
       fParent = fParent,
       fName = fileName,
@@ -64,19 +73,6 @@ class SmMatchingVisitor(glob: String, deviceUid: String, mountPoint: String, sEx
 
     fileCardSt_lst += fileCardSt
     FileVisitResult.CONTINUE
-  }
-
-  override def preVisitDirectory(path: Path, attrs: BasicFileAttributes): FileVisitResult = {
-    if (path.getFileName.toString.contains("_files")) {
-      FileVisitResult.SKIP_SUBTREE
-    }
-    else if (sExclusionDir.contains(path.getFileName.toString)) {
-      lstExclusionDir.add(path.getFileName.toString)
-      lstExclusionFullPath.add(path.getParent.toString + OsConf.fsSeparator + path.getFileName)
-      FileVisitResult.SKIP_SUBTREE
-    } else {
-      FileVisitResult.CONTINUE
-    }
   }
 
   def done(): ArrayBuffer[FileCardSt] = {

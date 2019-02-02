@@ -8,6 +8,7 @@ case class DeviceView(name: String,
                       describe: String,
                       syncDate: DateTime,
                       visible: Boolean,
+                      reliable: Boolean,
                       withOutCrc: Int
                      ) {
 

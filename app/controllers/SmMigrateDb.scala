@@ -1,10 +1,12 @@
 package controllers
 
+import java.nio.charset.StandardCharsets
+
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
-import com.roundeights.hasher.Implicits._
+import com.google.common.hash.Hashing
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
 import play.api.mvc.{Action, AnyContent, InjectedController}
@@ -53,7 +55,7 @@ class SmMigrateDb @Inject()(val database: DBService)
     val lstToIns = ArrayBuffer[Tables.SmFileCard#TableElementType]()
     val lstToDel = ArrayBuffer[String]()
     msg.foreach { p =>
-      val newId = (p.storeName + p.fParent + p.fName).sha256.toUpperCase
+      val newId = Hashing.sha256().hashString(p.storeName + p.fParent + p.fName, StandardCharsets.UTF_8).toString.toUpperCase
 
       if (p.id != newId) {
         lstToIns += Tables.SmFileCardRow(newId, p.storeName, p.fParent, p.fName, p.fExtension,

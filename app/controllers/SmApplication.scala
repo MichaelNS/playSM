@@ -2,10 +2,9 @@ package controllers
 
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
-import models.{DeviceView, SmFileCard}
 import models.db.Tables
+import models.{DeviceView, SmFileCard}
 import org.joda.time.DateTime
-import play.api.Logger
 import play.api.mvc._
 import ru.ns.model.OsConf
 import services.db.DBService
@@ -22,6 +21,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmApplication @Inject()(val database: DBService)
   extends InjectedController {
 
+  val logger = play.api.Logger(getClass)
+
   def smIndex: Action[AnyContent] = Action.async {
     implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
 
@@ -32,17 +33,18 @@ class SmApplication @Inject()(val database: DBService)
         x2."UID",
         x2."DESCRIBE",
         x2."SYNC_DATE",
+        x2."RELIABLE",
       (SELECT count(1) FROM "sm_file_card" x3 WHERE x3."STORE_NAME" = x2."UID" AND (x3."SHA256" IS NULL)  AND (x3."F_SIZE" > 0))
       FROM "sm_device" x2
       where x2."VISIBLE" is true
       ORDER BY x2."LABEL"
       """
-      .as[(String, String, String, String, DateTime, Int)]
+      .as[(String, String, String, String, DateTime, Boolean, Int)]
     database.runAsync(qry).map { rowSeq =>
-      //      Logger.debug(pprint.apply(rowSeq).toString())
+      //      logger.debug(pprint.apply(rowSeq).toString())
 
       val devices = ArrayBuffer[DeviceView]()
-      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = true, withOutCrc = p._6) }
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
 
       Ok(views.html.smr_index(devices))
     }
@@ -55,7 +57,7 @@ class SmApplication @Inject()(val database: DBService)
   def getByDevice(device: String): Action[AnyContent] = Action.async {
     val maxRes = 200
 
-    Logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
+    logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
 
     database.runAsync(Tables.SmFileCard.filter(_.storeName === device).take(maxRes).to[List].result).map { rowSeq =>
       val fcSeq = rowSeq.map(SmFileCard(_))
@@ -66,7 +68,7 @@ class SmApplication @Inject()(val database: DBService)
   def getByDeviceByLastModifDate(device: String): Action[AnyContent] = Action.async {
     val maxRes = 200
 
-    Logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
+    logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
 
     database.runAsync(
       Tables.SmFileCard
@@ -111,7 +113,7 @@ class SmApplication @Inject()(val database: DBService)
     database.runAsync(
       qry.result
     ).map { rowSeq =>
-      Logger.warn(rowSeq.head.toString())
+      logger.warn(rowSeq.head.toString())
     }
 
 

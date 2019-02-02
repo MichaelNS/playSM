@@ -14,6 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsFinder)
   extends InjectedController {
 
+  val logger = play.api.Logger(getClass)
   val gLimit: Int = 100
 
   def queryForm: Action[AnyContent] = Action {
@@ -22,7 +23,9 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
 
   def byFileName(fileName: String, limit: Int): Action[AnyContent] = Action.async {
     val maxLimit: Int = Math.min(limit, gLimit)
-    val fileNameFnd = fileName.replace(" ", "%")
+    val fileNameFnd = fileName.replace(" ", "%").toLowerCase()
+
+    logger.debug(s"fileName - $fileName")
 
     val qry = sql"""
        SELECT DISTINCT fc."F_NAME"
@@ -34,11 +37,14 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
       .as[String]
 
     database.runAsync(qry).map { rowSeq =>
+      logger.debug(rowSeq.size.toString)
+
       Ok(Json.toJson(rowSeq))
     }
   }
 
-  case class FilePath(name: String,
+  case class FilePath(/*id: String,*/
+                      name: String,
                       path: String,
                       sha256: String
                      ) {
@@ -46,12 +52,13 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
   }
 
   implicit val locationFilePath: Writes[FilePath] = (
+    //    (JsPath \ "id").write[String] and
     (JsPath \ "name").write[String] and
       (JsPath \ "path").write[String] and
       (JsPath \ "sha256").write[String]
     ) (unlift(FilePath.unapply))
 
-  def getFilesbyName(fileName: String, limit: Int): Action[AnyContent] = Action.async { implicit request =>
+  def getFilesbyName(fileName: String, limit: Int): Action[AnyContent] = Action.async {
     val maxLimit: Int = Math.min(limit, gLimit)
 
     val qry = sql"""
@@ -65,7 +72,11 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
 
     database.runAsync(qry).map { rowSeq =>
       val filePath = ArrayBuffer[FilePath]()
-      rowSeq.foreach { p => filePath += FilePath(name = p._1, path = p._2, sha256 = p._3) }
+      var cnt = 1
+      rowSeq.foreach { p =>
+        filePath += FilePath(/*cnt.toString,*/ name = p._1, path = p._2, sha256 = p._3)
+        cnt += 1
+      }
 
       Ok(Json.toJson(filePath))
     }

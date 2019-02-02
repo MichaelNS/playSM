@@ -3,10 +3,11 @@ name := "playSM"
 //common settings for the project and subprojects
 lazy val commonSettings = Seq(
   organization := "ru.ns",
-  version := "0.1.2",
-  scalaVersion := "2.12.8",
+  version := "0.1.3",
+  scalaVersion := "2.13.0",
 
   //  https://tpolecat.github.io/2017/04/25/scalac-flags.html
+  // https://nathankleyn.com/2019/05/13/recommended-scalac-flags-for-2-13/
 
   // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/StandardScalaSettings.scala
   // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/ScalaSettings.scala
@@ -25,9 +26,7 @@ lazy val commonSettings = Seq(
     "-unchecked", // Enable additional warnings where generated code depends on assumptions.
     "-Xcheckinit", // Wrap field accessors to throw an exception on uninitialized access.
     //    "-Xfatal-warnings", // Fail the compilation if there are any warnings.
-    "-Xfuture", // Turn on future language features.
     "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
-    "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
     "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
     "-Xlint:doc-detached", // A Scaladoc comment appears to be detached from its element.
@@ -42,15 +41,8 @@ lazy val commonSettings = Seq(
     "-Xlint:private-shadow", // A private field (or class parameter) shadows a superclass field.
     "-Xlint:stars-align", // Pattern sequence wildcard must align with sequence component.
     "-Xlint:type-parameter-shadow", // A local type parameter shadows a type already in scope.
-    "-Xlint:unsound-match", // Pattern match may not be typesafe.
-    "-Yno-adapted-args", // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-    "-Ypartial-unification", // Enable partial unification in type constructor inference
     "-Ywarn-dead-code", // Warn when dead code is identified.
     "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.
-    "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
-    "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
-    "-Ywarn-nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
-    "-Ywarn-nullary-unit", // Warn when nullary methods return Unit.
     "-Ywarn-numeric-widen", // Warn when numerics are widened.
     "-Ywarn-unused:implicits", // Warn if an implicit parameter is unused.
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
@@ -58,7 +50,10 @@ lazy val commonSettings = Seq(
     "-Ywarn-unused:params", // Warn if a value parameter is unused.
     "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
     "-Ywarn-unused:privates", // Warn if a private member is unused.
-    "-Ywarn-value-discard" // Warn when non-Unit expression results are unused.
+    "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
+    "-Ybackend-parallelism", "8", // Enable paralellisation — change to desired number!
+    "-Ycache-plugin-class-loader:last-modified", // Enables caching of classloaders for compiler plugins
+    "-Ycache-macro-class-loader:last-modified", // and macro definitions. This can lead to performance improvements.
   )
 )
 
@@ -71,33 +66,31 @@ lazy val root = (project in file("."))
   .settings(
     libraryDependencies += ehcache,
 
-    libraryDependencies += "com.typesafe.slick" %% "slick" % "3.2.3",
-    libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.2.3",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.17.0",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.17.0",
-    libraryDependencies += "com.typesafe.play" %% "play-slick" % "3.0.3",
-    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "3.0.3",
+    libraryDependencies += "com.typesafe.slick" %% "slick" % "3.3.2",
+    libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.18.0",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.18.0",
+    libraryDependencies += "com.typesafe.play" %% "play-slick" % "4.0.2",
+    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "4.0.2",
 
-    libraryDependencies += "com.github.t3hnar" %% "scala-bcrypt" % "3.1",
-
-    libraryDependencies += "org.webjars" %% "webjars-play" % "2.6.3",
+    libraryDependencies += "org.webjars" %% "webjars-play" % "2.7.3",
     libraryDependencies += "org.webjars" % "foundation" % "6.4.3",
 
     libraryDependencies += guice,
 
-    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
+    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % Test,
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.5",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.3",
+    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.7",
+    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.5",
 
-    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.7.0",
+    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0",
 
     //    scala-fixture:
-    libraryDependencies += "com.github.tototoshi" %% "scala-fixture" % "0.3.0",
-    libraryDependencies += "com.h2database" % "h2" % "1.4.192" % Test,
-    libraryDependencies += "org.flywaydb" % "flyway-core" % "5.1.4" % "test",
+    libraryDependencies += "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
+    libraryDependencies += "com.h2database" % "h2" % "1.4.197" % Test,
+    libraryDependencies += "org.flywaydb" % "flyway-core" % "5.2.4" % "test",
 
-    libraryDependencies += "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.10.0"
+    libraryDependencies += "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
   )
   .enablePlugins(PlayScala)
   .enablePlugins(ScalaUnidocPlugin)
@@ -105,4 +98,9 @@ lazy val root = (project in file("."))
   .dependsOn(fileutils)
 
 //to generate models/db/Tables.scala
-addCommandAlias("tables", "run-main utils.db.SourceCodeGenerator")
+addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
+
+// sbt-scoverage:
+coverageMinimum := 33.47
+coverageFailOnMinimum := true
+coverageHighlighting := true

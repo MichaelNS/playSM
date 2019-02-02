@@ -12,23 +12,44 @@
         <link rel="stylesheet" href="@assetsFinder.path("css/jquery-ui.css")">
         <link rel="stylesheet" href="@assetsFinder.path("css/style.css")">
         <link rel="stylesheet" href="@assetsFinder.path("css/autocomplete.css")"/>
+        <link rel="stylesheet" href="@assetsFinder.path("css/jquery.dataTables.min.css")"/>
 
         <script src="@assetsFinder.path("javascripts/jquery.js")" type="text/javascript"></script>
         <script src="@assetsFinder.path("javascripts/jquery-ui.js")" type="text/javascript"></script>
         <script src="@assetsFinder.path("javascripts/autocomplete.js")" type="text/javascript"></script>
+        <script src="@assetsFinder.path("javascripts/jquery.dataTables.min.js")" type="text/javascript"></script>
     </head>
 
     <body>
 
         <div class="ui-widget">
-            <label for="fname">find by filename: </label>
-            <input id="fname">
+            <label for="f-name">find by filename: </label>
+            <input id="f-name">
         </div>
 
-        <div class="ui-widget">
-            Result:
-            <div id="log" class="ui-widget-content"></div>
-        </div>
+        @*<div class="ui-widget">*@
+            @*Result:*@
+            @*<div id="log" class="ui-widget-content"></div>*@
+        @*</div>*@
+
+        <table id="fc-table-filter" class="display" style="width: 100%">
+            <thead>
+                <tr>
+                    @*<th>id</th>*@
+                    <th>name</th>
+                    <th>path</th>
+                    <th>sha256</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    @*<th>id</th>*@
+                    <th>name</th>
+                    <th>path</th>
+                    <th>sha256</th>
+                </tr>
+            </tfoot>
+        </table>
 
     </body>
 </html>

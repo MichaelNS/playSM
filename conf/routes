@@ -1,73 +1,87 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
-GET         /                                                    controllers.SmApplication.smIndex
-GET         /deviceIndex/:device                                 controllers.SmApplication.deviceIndex(device)
-GET         /debugQry/:device                                    controllers.SmApplication.debugQry(device)
+GET         /                                                         controllers.SmApplication.smIndex
+GET         /deviceIndex/:device                                      controllers.SmApplication.deviceIndex(device)
+GET         /debugQry/:device                                         controllers.SmApplication.debugQry(device)
+
 
 + nocsrf
-POST        /refreshDevice                                       controllers.SmSync.refreshDevice
-+ nocsrf
-POST        /syncDevice/:device                                  controllers.SmSync.syncDevice(device: String)
-+ nocsrf
-POST        /calcCRC/:device                                     controllers.SmSync.calcCRC(device: String)
-
-GET         /deviceImport                                        controllers.SmSync.deviceImport
+POST        /refreshDevice                                            controllers.SmSyncDeviceStream.refreshDevice
 
 + nocsrf
-POST        /syncDeviceStream/:device                            controllers.SmSyncStream.syncDevice(device: String)
+POST        /calcCRC/:device                                          controllers.SmSyncDeviceStream.calcCRC(device: String)
 
-GET         /fc/byDevice/:device                                 controllers.SmApplication.getByDevice(device: String)
-GET         /fc/getByDeviceByLastModifDate/:device               controllers.SmApplication.getByDeviceByLastModifDate(device: String)
-GET         /fc/listStoreNameAndCnt                              controllers.SmApplication.listStoreNameAndCnt
-
-GET         /cntFilesWithoutSha256ByDevice/:device               controllers.SmReport.cntFilesWithoutSha256ByDevice(device: String)
-GET         /listFilesWithoutSha256ByDevice/:device              controllers.SmReport.listFilesWithoutSha256ByDevice(device: String)
-GET         /checkBackUp/:device                                 controllers.SmReport.checkBackUp(device: String)
-GET         /checkBackAllFiles                                   controllers.SmReport.checkBackAllFiles
-GET         /checkBackFilesLastYear                              controllers.SmReport.checkBackFilesLastYear
-GET         /checkDuplicates/:device                             controllers.SmReport.checkDuplicates(device: String)
-GET         /getFcByDeviceSha256/:device/:sha256                 controllers.SmReport.getFcByDeviceSha256(device: String, sha256: String)
-GET         /explorerDevice                                      controllers.SmReport.explorerDevice(device: String, path: String, depth: Int)
-GET         /lstDirByDevice/:device/:maxFiles                    controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
-
-GET         /listCategoryAndCnt                                  controllers.SmCategory.listCategoryAndCnt
-GET         /listDescriptionAndCnt                               controllers.SmCategory.listDescriptionAndCnt(categoryType: String)
-
-
-GET         /listPathByDescription                               controllers.SmMove.listPathByDescription(categoryType: String, description: String)
-GET         /listAllPathsByLstCrc                                controllers.SmMove.listAllPathsByLstCrc(fParent: String)
+GET         /deviceImport                                             controllers.SmSyncDeviceStream.deviceImport
 
 + nocsrf
-POST        /createJobToMove                                     controllers.SmMove.createJobToMove(categoryType: String, description: String, device: String, oldPath: String)
-+ nocsrf
-POST        /delJobToMove                                        controllers.SmMove.delJobToMove(categoryType: String, description: String, device: String, path: String)
+POST        /syncDeviceStream/:device                                 controllers.SmSyncDeviceStream.syncDevice(device: String)
 
 + nocsrf
-POST        /moveAllDevices                                      controllers.SmMove.moveAllDevices
+POST        /syncDeviceStream/deleteNonExistsFpathInDb/:device        controllers.SmSyncDeviceStream.deleteNonExistsFpathInDb(device: String)
 
 
-GET         /listDirWithoutCatByLastDate                         controllers.SmCategory.listDirWithoutCatByLastDate
-GET         /listFcWithoutCatByLastDate                          controllers.SmCategory.listFcWithoutCatByLastDate
-GET         /listDirWithoutCatByParent/:isBegins/:device         controllers.SmCategory.listDirWithoutCatByParent(device: String, isBegins: Boolean)
-+ nocsrf
-POST        /setCategoryAndDescription/:isBegins/:fParent        controllers.SmCategory.assignCategoryAndDescription(fParent: String, isBegins: Boolean)
 
 + nocsrf
-POST        /convertDeviceIdBatch                                controllers.SmMigrateDb.convertDeviceIdBatch(device)
+POST        /calcExif/:device                                         controllers.SmSyncExif.calcExif(device:String)
+GET         /exif/:fileName                                           controllers.SmSyncExif.getExif(fileName:String)
+
+
+
+GET         /fc/byDevice/:device                                      controllers.SmApplication.getByDevice(device: String)
+GET         /fc/getByDeviceByLastModifDate/:device                    controllers.SmApplication.getByDeviceByLastModifDate(device: String)
+GET         /fc/listStoreNameAndCnt                                   controllers.SmApplication.listStoreNameAndCnt
+
+GET         /cntFilesWithoutSha256ByDevice/:device                    controllers.SmReport.cntFilesWithoutSha256ByDevice(device: String)
+GET         /listFilesWithoutSha256ByDevice/:device                   controllers.SmReport.listFilesWithoutSha256ByDevice(device: String)
+GET         /checkBackUp/:device                                      controllers.SmReport.checkBackUp(device: String)
+GET         /checkBackAllFiles                                        controllers.SmReport.checkBackAllFiles
+GET         /checkBackFilesLastYear                                   controllers.SmReport.checkBackFilesLastYear
+GET         /checkDuplicates/:device                                  controllers.SmReport.checkDuplicates(device: String)
+GET         /getFcByDeviceSha256/:device/:sha256                      controllers.SmReport.getFcByDeviceSha256(device: String, sha256: String)
+GET         /explorerDevice                                           controllers.SmReport.explorerDevice(device: String, path: String, depth: Int)
+GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
+
+GET         /listCategoryAndCnt                                       controllers.SmCategory.listCategoryAndCnt
+GET         /listSubCategoryAndCnt                                    controllers.SmCategory.listSubCategoryAndCnt(categoryType: String)
+GET         /listDescriptionAndCnt                                    controllers.SmCategory.listDescriptionAndCnt(categoryType: String, subCategoryType: String)
+
+
+GET         /listPathByDescription                                    controllers.SmMove.listPathByDescription(categoryType: String, description: String)
+GET         /listAllPathsByLstCrc                                     controllers.SmMove.listAllPathsByLstCrc(fParent: String)
 
 + nocsrf
-POST        /apply-rules-set-cathegory                           controllers.SmCategory.applyRulesSetCategory
+POST        /createJobToMove                                          controllers.SmMove.createJobToMove(categoryType: String, description: String, device: String, oldPath: String)
++ nocsrf
+POST        /delJobToMove                                             controllers.SmMove.delJobToMove(categoryType: String, description: String, device: String, path: String)
+
++ nocsrf
+POST        /moveAllDevices                                           controllers.SmMove.moveAllDevices
+
+
+GET         /listDirWithoutCatByLastDate                              controllers.SmCategory.listDirWithoutCatByLastDate
+GET         /listFcWithoutCatByLastDate                               controllers.SmCategory.listFcWithoutCatByLastDate
+GET         /listDirWithoutCategoryByExtension                        controllers.SmCategory.listDirWithoutCategoryByExtension(extension: String)
+GET         /listDirWithoutCatByParent/:isBegins/:device              controllers.SmCategory.listDirWithoutCatByParent(device: String, isBegins: Boolean)
++ nocsrf
+POST        /setCategoryAndDescription/:isBegins/:fParent             controllers.SmCategory.assignCategoryAndDescription(fParent: String, isBegins: Boolean)
+
++ nocsrf
+POST        /convertDeviceIdBatch                                     controllers.SmMigrateDb.convertDeviceIdBatch(device)
+
++ nocsrf
+POST        /apply-rules-set-cathegory                                controllers.SmCategory.applyRulesSetCategory
 
 #view-file
-GET         /view-storage                                        controllers.SmView.viewStorage(device: String)
-GET         /view-file                                           controllers.SmView.viewFile(sha256: Option[String])
+GET         /view-storage                                             controllers.SmView.viewStorage(device: String)
+GET         /view-file                                                controllers.SmView.viewFile(sha256: Option[String])
+GET         /view-file-by-natural-key                                 controllers.SmView.viewFileByNaturalKey(deviceUid: String, path: String, fName: String)
 
-GET         /viewPathBySha256                                    controllers.SmView.viewPathBySha256(sha256: String)
+GET         /viewPathBySha256                                         controllers.SmView.viewPathBySha256(sha256: String)
 
 #search
-GET         /search-form                                         controllers.SmSearch.queryForm
-GET         /search-by-file-name                                 controllers.SmSearch.byFileName(name: String, limit: Int ?= 50)
-GET         /get-files-by-file-name                              controllers.SmSearch.getFilesbyName(name: String, limit: Int ?= 50)
+GET         /search-form                                              controllers.SmSearch.queryForm
+GET         /search-by-file-name                                      controllers.SmSearch.byFileName(name: String, limit: Int ?= 50)
+GET         /get-files-by-file-name                                   controllers.SmSearch.getFilesbyName(name: String, limit: Int ?= 50)
 
-GET         /assets/*file                                        controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file                                             controllers.Assets.versioned(path="/public", file: Asset)

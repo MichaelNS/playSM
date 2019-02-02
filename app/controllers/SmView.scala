@@ -4,7 +4,6 @@ import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
-import play.api.Logger
 import play.api.http.HttpEntity
 import play.api.mvc._
 import ru.ns.model.{Device, OsConf}
@@ -22,6 +21,7 @@ import scala.concurrent.{Await, Future}
 class SmView @Inject()(val database: DBService)
   extends InjectedController {
 
+  val logger = play.api.Logger(getClass)
 
   def viewStorage(deviceName: String, depth: Int = 1): Action[AnyContent] = Action.async {
     debugParam
@@ -52,6 +52,30 @@ class SmView @Inject()(val database: DBService)
       lstDevices <- FileUtils.getDevicesInfo()
     } yield (lstFiles, lstDevices)
 
+    val res: (Seq[(String, String, String, Option[String])], ArrayBuffer[Device]) = Await.result(result, 10.seconds)
+
+    if (res._1.nonEmpty) {
+      val lstDeviceUuid: Seq[String] = res._1.map(_._1)
+      val mountPoints = res._2.filter(device => lstDeviceUuid.contains(device.uuid))
+
+      logger.debug(s"lstDeviceUuid=$lstDeviceUuid")
+      logger.debug(s"mountPoints=$mountPoints")
+
+      val headFileCard = res._1.filter(fc => fc._1 == mountPoints.head.uuid).head
+      Future.successful(openFile(mountPoint = mountPoints.head.mountpoint, fPath = headFileCard._2, name = headFileCard._3, mimeType = headFileCard._4))
+    }
+    else {
+      Future.successful(BadRequest(s"can't show file with ID sha256 = ${sha256.getOrElse("")}"))
+    }
+  }
+
+  @deprecated
+  def viewFileByNaturalKey(deviceUid: String, path: String, fName: String): Action[AnyContent] = Action.async {
+    val result: Future[(Seq[(String, String, String, Option[String])], ArrayBuffer[Device])] = for {
+      lstFiles <- getFilesByNaturalKey(deviceUid, path, fName)
+      lstDevices <- FileUtils.getDevicesInfo()
+    } yield (lstFiles, lstDevices)
+
     val res = Await.result(result, 10.seconds)
     val mountPoints = ArrayBuffer[String]()
 
@@ -62,11 +86,11 @@ class SmView @Inject()(val database: DBService)
           mountPoints += device.mountpoint
         }
       }
-      Logger.debug(s"mountPoints=$mountPoints")
+      logger.debug(s"mountPoints=$mountPoints")
       Future.successful(openFile(mountPoints.head, resFc._2, resFc._3, resFc._4))
     }
     else {
-      Future.successful(BadRequest(s"can't show file with ID sha256 = ${sha256.getOrElse("")}"))
+      Future.successful(BadRequest(s"can't show file with NaturalKey = $path $fName"))
     }
   }
 
@@ -80,6 +104,26 @@ class SmView @Inject()(val database: DBService)
   def getFilesFromSha256(sha256: Option[String]): Future[List[(String, String, String, Option[String])]] = {
     val rowSeq = database.runAsync(Tables.SmFileCard
       .filter(_.sha256 === sha256)
+      .map(fc => (fc.storeName, fc.fParent, fc.fName, fc.fMimeTypeJava)).to[List].result)
+      .map(rowSeq => rowSeq)
+
+    rowSeq
+  }
+
+  /**
+    * get files by NaturalKey
+    * used [[SmView.viewFile]]
+    *
+    * @param deviceUid deviceUid
+    * @param path      path
+    * @param fName     fName
+    * @return list files
+    */
+  def getFilesByNaturalKey(deviceUid: String, path: String, fName: String): Future[List[(String, String, String, Option[String])]] = {
+    val rowSeq = database.runAsync(Tables.SmFileCard
+      .filter(_.storeName === deviceUid)
+      .filter(_.fParent === path)
+      .filter(_.fName === fName)
       .map(fc => (fc.storeName, fc.fParent, fc.fName, fc.fMimeTypeJava)).to[List].result)
       .map(rowSeq => rowSeq)
 
@@ -152,7 +196,7 @@ class SmView @Inject()(val database: DBService)
       .as[String]
 
     database.runAsync(qry).map { rowSeq =>
-      Logger.info(s"viewStorage rowSeq.size = ${rowSeq.size}")
+      logger.info(s"viewStorage rowSeq.size = ${rowSeq.size}")
 
       val dirs = scala.collection.mutable.SortedSet[String]()
 
@@ -171,7 +215,7 @@ class SmView @Inject()(val database: DBService)
         folders = folders :+ q
       }
 
-      Logger.info(s"viewStorage folders =\n${folders.mkString("\n")}")
+      logger.info(s"viewStorage folders =\n${folders.mkString("\n")}")
       //      Ok(views.html.smd_explorer(deviceName, folders, depth + 1))
       Ok("")
     }

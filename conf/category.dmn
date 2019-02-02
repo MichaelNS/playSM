@@ -9,6 +9,7 @@
       </input>
       <output id="OutputClause_1iuzaa8" label="isBegins" name="isBegins" typeRef="boolean" />
       <output id="output_1" label="Category" name="category" typeRef="string" />
+      <output id="OutputClause_12fki04" label="Subcategory" name="subcategory" typeRef="string" />
       <output id="OutputClause_1fk3qpf" label="Description" name="description" typeRef="string" />
       <rule id="DecisionRule_13u7oxh">
         <inputEntry id="UnaryTests_16vovh6">
@@ -19,6 +20,9 @@
         </outputEntry>
         <outputEntry id="LiteralExpression_1rqi7ke">
           <text>"Category"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1tt6n4r">
+          <text>"SubCategory"</text>
         </outputEntry>
         <outputEntry id="LiteralExpression_1kvw6st">
           <text>"Description"</text>

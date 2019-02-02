@@ -5,7 +5,7 @@
     </div>
 
     <div class="input-group-button">
-        <form action="@routes.SmSync.refreshDevice" method="post">
+        <form action="@routes.SmSyncDeviceStream.refreshDevice" method="post">
             <button class="button success">refresh devices</button>
         </form>
     </div>
@@ -20,8 +20,10 @@
                     <th>Descr</th>
                     <th>last sync</th>
                     <th>visible</th>
+                    <th>reliable</th>
                     <th>syncDevice</th>
                     <th>calcCRC</th>
+                    <th>calcExif</th>
                 </tr>
             </thead>
             <tbody>
@@ -46,12 +48,12 @@
                     }
 
                     <td>@device.visible</td>
-
+                    <td>@device.reliable</td>
 
 
                     <td>
                         <div class="input-group-button">
-                            <form action="@routes.SmSyncStream.syncDevice(device.uid)" method="post">
+                            <form action="@routes.SmSyncDeviceStream.syncDevice(device.uid)" method="post">
                                 <button class="button success">sync Device</button>
                             </form>
                         </div>
@@ -59,8 +61,16 @@
 
                     <td>
                         <div class="input-group-button">
-                            <form action="@routes.SmSync.calcCRC(device.uid)" method="post">
+                            <form action="@routes.SmSyncDeviceStream.calcCRC(device.uid)" method="post">
                                 <button class="button primary">calcCRC</button>
+                            </form>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="input-group-button">
+                            <form action="@routes.SmSyncExif.calcExif(device.uid)" method="post">
+                                <button class="button primary">calcExif</button>
                             </form>
                         </div>
                     </td>
