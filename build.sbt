@@ -71,12 +71,12 @@ lazy val root = (project in file("."))
   .settings(
     libraryDependencies += ehcache,
 
-    libraryDependencies += "com.typesafe.slick" %% "slick" % "3.2.3",
-    libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.2.3",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.17.0",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.17.0",
-    libraryDependencies += "com.typesafe.play" %% "play-slick" % "3.0.3",
-    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "3.0.3",
+    libraryDependencies += "com.typesafe.slick" %% "slick" % "3.3.0",
+    libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.3.0",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.17.1",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.17.1",
+    libraryDependencies += "com.typesafe.play" %% "play-slick" % "4.0.0",
+    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "4.0.0",
 
     libraryDependencies += "com.github.t3hnar" %% "scala-bcrypt" % "3.1",
 
@@ -106,3 +106,4 @@ lazy val root = (project in file("."))
 
 //to generate models/db/Tables.scala
 addCommandAlias("tables", "run-main utils.db.SourceCodeGenerator")
+

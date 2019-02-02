@@ -39,6 +39,8 @@ object FormCrMove {
 class SmMove @Inject()(val database: DBService)
   extends InjectedController {
 
+  private val logger = Logger(classOf[SmMove])
+
   /**
     * show list path from [[models.db.Tables.SmFileCard]]
     *
@@ -118,8 +120,8 @@ class SmMove @Inject()(val database: DBService)
   def delJobToMove(categoryType: String, description: String, device: String, path: String): Action[AnyContent] = Action.async {
     val insRes = database.runAsync(Tables.SmPathMove.filter(_.storeName === device).filter(_.pathFrom === path).delete)
     insRes onComplete {
-      case Success(suc) => Logger.debug(s"del [$suc] row - device = [$device]")
-      case Failure(t) => Logger.error(s"An error has occured: = ${t.getMessage}")
+      case Success(suc) => logger.debug(s"del [$suc] row - device = [$device]")
+      case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
     }
 
     Future.successful(Redirect(routes.SmMove.listPathByDescription(categoryType, description)))
@@ -129,7 +131,7 @@ class SmMove @Inject()(val database: DBService)
     FormCrMove.form.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest(views.html.move_form(formWithErrors, categoryType, description, device, oldPath))),
       success = path => {
-        Logger.warn(path.newPath)
+        logger.warn(path.newPath)
         if (path.newPath.isEmpty) {
           val form = FormCrMove.form.fill(path).withError("newPath", " isEmpty")
           Future.successful(BadRequest(views.html.move_form(form, categoryType, description, device, oldPath)))
@@ -139,8 +141,8 @@ class SmMove @Inject()(val database: DBService)
 
           val insRes = database.runAsync((Tables.SmPathMove returning Tables.SmPathMove.map(_.id)) += cRow)
           insRes onComplete {
-            case Success(insSuc) => Logger.debug(s"Inserted row move = $insSuc   $cRow")
-            case Failure(t) => Logger.error(s"An error has occured: = ${t.getMessage}")
+            case Success(insSuc) => logger.debug(s"Inserted row move = $insSuc   $cRow")
+            case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
           }
           debug(insRes)
 
@@ -167,7 +169,7 @@ class SmMove @Inject()(val database: DBService)
         for (device <- lstDevices) {
           moveByDevice(device = device, maxJob: Int, maxMoveFiles)
         }
-      case Failure(t) => Logger.error(s"An error has occured: = ${t.getMessage}")
+      case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
     }
 
     Future.successful(Ok("run moveAllDevices"))
@@ -204,7 +206,7 @@ class SmMove @Inject()(val database: DBService)
               moveAction(rowFc, device.mountpoint, pathTo)
             } catch {
               case ex: InvalidPathException =>
-                Logger.error(s"moveAction error = ${ex.toString}")
+                logger.error(s"moveAction error = ${ex.toString}")
                 throw ex
             }
           }
@@ -212,7 +214,7 @@ class SmMove @Inject()(val database: DBService)
         clearJob(idJob = rowMove.id, storeName = rowMove.storeName, mountPoint = device.mountpoint, pathFrom = pathFrom)
       }
     }
-    Logger.info("moveByDevice is DONE")
+    logger.info("moveByDevice is DONE")
     "moveByDevice is DONE"
   }
 
@@ -231,8 +233,8 @@ class SmMove @Inject()(val database: DBService)
     val fileTo = File(mountPoint + OsConf.fsSeparator + pathTo + rowFc.fName)
     val dirTo = File(mountPoint + OsConf.fsSeparator + pathTo)
 
-    Logger.info(s"fileName = ${rowFc.fName}   exists=${fileTo.exists()}")
-    Logger.info(s"dirTo    = $dirTo   exists=${dirTo.exists()}")
+    logger.info(s"fileName = ${rowFc.fName}   exists=${fileTo.exists()}")
+    logger.info(s"dirTo    = $dirTo   exists=${dirTo.exists()}")
 
     if (!fileTo.exists) {
       if (dirTo.exists() || dirTo.createDirectories().exists) {
@@ -243,8 +245,8 @@ class SmMove @Inject()(val database: DBService)
         // insert
         val insRes = database.runAsync((Tables.SmFileCard returning Tables.SmFileCard.map(_.id)) += cRow)
         insRes onComplete {
-          case Success(insSuc) => Logger.debug(s"Inserted row move = $insSuc   $cRow")
-          case Failure(t) => Logger.error(s"An error has occured: = ${t.getMessage}")
+          case Success(insSuc) => logger.debug(s"Inserted row move = $insSuc   $cRow")
+          case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
         }
         // move + delete
         try {
@@ -252,24 +254,24 @@ class SmMove @Inject()(val database: DBService)
 
           val insRes = database.runAsync(Tables.SmFileCard.filter(_.id === rowFc.id).delete)
           insRes onComplete {
-            case Success(suc) => Logger.debug(s"del [$suc] row , id = [$rowFc.id]")
-            case Failure(t) => Logger.error(s"An error has occured: = ${t.getMessage}")
+            case Success(suc) => logger.debug(s"del [$suc] row , id = [$rowFc.id]")
+            case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
           }
         } catch {
           case ex: IOException =>
-            Logger.error(s"err move = ${ex.toString}")
+            logger.error(s"err move = ${ex.toString}")
 
             val insRes = database.runAsync(Tables.SmFileCard.filter(_.id === rowFc.id).delete)
             insRes onComplete {
-              case Success(suc) => Logger.debug(s"del [$suc] row , id = [$rowFc.id]")
-              case Failure(t) => Logger.error(s"An error has occured: = ${t.getMessage}")
+              case Success(suc) => logger.debug(s"del [$suc] row , id = [$rowFc.id]")
+              case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
             }
         }
       } else {
-        Logger.warn(s"Can`t create path = ${mountPoint + dirTo}")
+        logger.warn(s"Can`t create path = ${mountPoint + dirTo}")
       }
     } else {
-      Logger.warn(s"File exists = $fileTo")
+      logger.warn(s"File exists = $fileTo")
     }
   }
 
@@ -291,7 +293,7 @@ class SmMove @Inject()(val database: DBService)
       .filter(_.fParent === pathFrom)
       .length.result).map { rowFcCnt =>
 
-      Logger.debug(s"clearJob - device = [$storeName] mountPoint = [$mountPoint] pathFrom = [$pathFrom]   rowFcCnt.size = $rowFcCnt")
+      logger.debug(s"clearJob - device = [$storeName] mountPoint = [$mountPoint] pathFrom = [$pathFrom]   rowFcCnt.size = $rowFcCnt")
 
       if (rowFcCnt == 0) {
         val dir = better.files.File(mountPoint + OsConf.fsSeparator + pathFrom)
@@ -301,18 +303,18 @@ class SmMove @Inject()(val database: DBService)
 
             val insRes = database.runAsync(Tables.SmPathMove.filter(_.id === idJob).delete)
             insRes onComplete {
-              case Success(suc) => Logger.debug(s"del [$suc] row , id = [$idJob]")
-              case Failure(t) => Logger.error(s"An error has occured: = ${t.getMessage}")
+              case Success(suc) => logger.debug(s"del [$suc] row , id = [$idJob]")
+              case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
             }
           } catch {
-            case ex: IOException => Logger.error(s"err delete = ${ex.toString}")
+            case ex: IOException => logger.error(s"err delete = ${ex.toString}")
           }
         } else {
-          Logger.warn(s"clearJob - Can`t remove = $pathFrom   ${dir.toString()}")
+          logger.warn(s"clearJob - Can`t remove = $pathFrom   ${dir.toString()}")
         }
       }
     }
-    Logger.info("clearJob is DONE")
+    logger.info("clearJob is DONE")
     "clearJob is DONE"
   }
 }

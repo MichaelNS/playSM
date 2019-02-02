@@ -22,6 +22,7 @@ import scala.concurrent.{Await, Future}
 class SmView @Inject()(val database: DBService)
   extends InjectedController {
 
+  private val logger = Logger(classOf[SmView])
 
   def viewStorage(deviceName: String, depth: Int = 1): Action[AnyContent] = Action.async {
     debugParam
@@ -62,7 +63,7 @@ class SmView @Inject()(val database: DBService)
           mountPoints += device.mountpoint
         }
       }
-      Logger.debug(s"mountPoints=$mountPoints")
+      logger.debug(s"mountPoints=$mountPoints")
       Future.successful(openFile(mountPoints.head, resFc._2, resFc._3, resFc._4))
     }
     else {
@@ -152,7 +153,7 @@ class SmView @Inject()(val database: DBService)
       .as[String]
 
     database.runAsync(qry).map { rowSeq =>
-      Logger.info(s"viewStorage rowSeq.size = ${rowSeq.size}")
+      logger.info(s"viewStorage rowSeq.size = ${rowSeq.size}")
 
       val dirs = scala.collection.mutable.SortedSet[String]()
 
@@ -171,7 +172,7 @@ class SmView @Inject()(val database: DBService)
         folders = folders :+ q
       }
 
-      Logger.info(s"viewStorage folders =\n${folders.mkString("\n")}")
+      logger.info(s"viewStorage folders =\n${folders.mkString("\n")}")
       //      Ok(views.html.smd_explorer(deviceName, folders, depth + 1))
       Ok("")
     }

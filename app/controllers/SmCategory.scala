@@ -43,6 +43,8 @@ object FormCategoryUpdate {
 class SmCategory @Inject()(val database: DBService)
   extends InjectedController {
 
+  private val logger = Logger(classOf[SmCategory])
+
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
@@ -240,8 +242,8 @@ class SmCategory @Inject()(val database: DBService)
       .mapAsync(2)(writeToCategoryTbl(_, categoryType, description))
       .runWith(Sink.ignore)
       .onComplete {
-        case Success(insSuc) => Logger.debug(s"Upsert cat = $insSuc")
-        case Failure(t) => Logger.error(s"An error has occured (Upsert cat): = ${t.getMessage}")
+        case Success(insSuc) => logger.debug(s"Upsert cat = $insSuc")
+        case Failure(t) => logger.error(s"An error has occured (Upsert cat): = ${t.getMessage}")
       }
   }
 
@@ -253,12 +255,12 @@ class SmCategory @Inject()(val database: DBService)
     val inputStream: InputStream = getClass.getResourceAsStream(ruleFilePath)
     try {
       val decision: DmnDecision = dmnEngine.parseDecision("decision", inputStream)
-      Logger.info(s"decision.getKey = ${decision.getKey}   decision.getName = ${decision.getName}")
+      logger.info(s"decision.getKey = ${decision.getKey}   decision.getName = ${decision.getName}")
 
       val lstPath = getXmlRule(ruleFilePath)
-      Logger.info(s"lstPath = $lstPath")
+      logger.info(s"lstPath = $lstPath")
       lstPath.foreach { rulePath =>
-        Logger.info(s"rulePath = $rulePath")
+        logger.info(s"rulePath = $rulePath")
 
         // prepare variables for decision evaluation
         val variables: VariableMap = Variables.putValue("path", rulePath)
@@ -275,7 +277,7 @@ class SmCategory @Inject()(val database: DBService)
             description = outMap.get("description").toString
           )
         } else {
-          Logger.warn(s"applyRules -> out DMN has < 3 values - $rulePath")
+          logger.warn(s"applyRules -> out DMN has < 3 values - $rulePath")
         }
       }
 
@@ -283,7 +285,7 @@ class SmCategory @Inject()(val database: DBService)
     } finally try
       inputStream.close()
     catch {
-      case e: IOException => Logger.error(s"Could not close stream: ${e.getMessage}")
+      case e: IOException => logger.error(s"Could not close stream: ${e.getMessage}")
     }
   }
 
@@ -303,7 +305,7 @@ class SmCategory @Inject()(val database: DBService)
     } finally try
       isDmn.close()
     catch {
-      case e: IOException => Logger.error(s"Could not close stream: ${e.getMessage}")
+      case e: IOException => logger.error(s"Could not close stream: ${e.getMessage}")
     }
   }
 

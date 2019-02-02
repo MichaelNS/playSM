@@ -69,6 +69,6 @@ lazy val fileutils = (project in file("."))
     libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.5",
     libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.3",
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.3"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.4"
   )
 

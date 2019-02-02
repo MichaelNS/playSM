@@ -51,7 +51,7 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
       (JsPath \ "sha256").write[String]
     ) (unlift(FilePath.unapply))
 
-  def getFilesbyName(fileName: String, limit: Int): Action[AnyContent] = Action.async { implicit request =>
+  def getFilesbyName(fileName: String, limit: Int): Action[AnyContent] = Action.async {
     val maxLimit: Int = Math.min(limit, gLimit)
 
     val qry = sql"""

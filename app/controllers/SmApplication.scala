@@ -22,6 +22,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmApplication @Inject()(val database: DBService)
   extends InjectedController {
 
+  private val logger = Logger(classOf[SmApplication])
+
   def smIndex: Action[AnyContent] = Action.async {
     implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
 
@@ -39,7 +41,7 @@ class SmApplication @Inject()(val database: DBService)
       """
       .as[(String, String, String, String, DateTime, Int)]
     database.runAsync(qry).map { rowSeq =>
-      //      Logger.debug(pprint.apply(rowSeq).toString())
+      //      logger.debug(pprint.apply(rowSeq).toString())
 
       val devices = ArrayBuffer[DeviceView]()
       rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = true, withOutCrc = p._6) }
@@ -55,7 +57,7 @@ class SmApplication @Inject()(val database: DBService)
   def getByDevice(device: String): Action[AnyContent] = Action.async {
     val maxRes = 200
 
-    Logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
+    logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
 
     database.runAsync(Tables.SmFileCard.filter(_.storeName === device).take(maxRes).to[List].result).map { rowSeq =>
       val fcSeq = rowSeq.map(SmFileCard(_))
@@ -66,7 +68,7 @@ class SmApplication @Inject()(val database: DBService)
   def getByDeviceByLastModifDate(device: String): Action[AnyContent] = Action.async {
     val maxRes = 200
 
-    Logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
+    logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
 
     database.runAsync(
       Tables.SmFileCard
@@ -111,7 +113,7 @@ class SmApplication @Inject()(val database: DBService)
     database.runAsync(
       qry.result
     ).map { rowSeq =>
-      Logger.warn(rowSeq.head.toString())
+      logger.warn(rowSeq.head.toString())
     }
 
 

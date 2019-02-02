@@ -2,7 +2,7 @@ logLevel := Level.Warn
 
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.21")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.0")
 
 // To check dependency updates: https://github.com/rtimush/sbt-updates
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.3.2")
