@@ -80,7 +80,7 @@ lazy val root = (project in file("."))
 
     libraryDependencies += "com.github.t3hnar" %% "scala-bcrypt" % "3.1",
 
-    libraryDependencies += "org.webjars" %% "webjars-play" % "2.6.3",
+    libraryDependencies += "org.webjars" %% "webjars-play" % "2.7.0",
     libraryDependencies += "org.webjars" % "foundation" % "6.4.3",
 
     libraryDependencies += guice,
