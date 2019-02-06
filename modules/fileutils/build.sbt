@@ -72,3 +72,6 @@ lazy val fileutils = (project in file("."))
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.4"
   )
 
+// sbt-scoverage
+coverageMinimum := 77.08
+coverageFailOnMinimum := true

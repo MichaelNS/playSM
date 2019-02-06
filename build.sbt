@@ -107,3 +107,7 @@ lazy val root = (project in file("."))
 //to generate models/db/Tables.scala
 addCommandAlias("tables", "run-main utils.db.SourceCodeGenerator")
 
+// sbt-scoverage:
+coverageMinimum := 26.88
+coverageFailOnMinimum := true
+coverageHighlighting := true
