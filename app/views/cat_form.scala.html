@@ -13,6 +13,14 @@
             </label>
         </div>
         <div class="row column">
+            <label>SubCategory
+                <input type="text" name="subcategory" value="" placeholder="subcategory" required>
+                @catForm.error("subcategory").map { formError =>
+                    <span class="form-error is-visible">@formError.message</span>
+                }
+            </label>
+        </div>
+        <div class="row column">
             <label>Description
                 <input type="text" name="description" value="" placeholder="description" required>
                 @catForm.error("description").map { formError =>

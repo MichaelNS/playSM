@@ -25,7 +25,7 @@ class MyFixtureScript extends FixtureScript {
   val file_1: File = File.newTemporaryFile("test-play-sm-", "-tst_1", Some(dir_from))
   file_1.deleteOnExit()
 
-  val devUiid: String = "111-222"
+  val devUid: String = "111-222"
 
 
   val lstDevices: ArrayBuffer[Device] = Await.result(FileUtils.getDevicesInfo(), 15.seconds)
@@ -34,7 +34,7 @@ class MyFixtureScript extends FixtureScript {
   override def setUp(connection: Connection): Unit = {
     connection
       .prepareStatement("INSERT INTO sm_path_move (ID, STORE_NAME, PATH_FROM, PATH_TO) " +
-        "VALUES ('1', '" + devUiid + "', '" + dir_from.toString + "', '" + dir_to.toString + "');")
+        "VALUES ('1', '" + devUid + "', '" + dir_from.toString + "', '" + dir_to.toString + "');")
       .execute()
 
     connection.prepareStatement("" +
@@ -42,7 +42,7 @@ class MyFixtureScript extends FixtureScript {
       "F_NAME, F_EXTENSION, F_CREATION_DATE, F_LAST_MODIFIED_DATE, F_SIZE, F_MIME_TYPE_JAVA, " +
       "SHA256, F_NAME_LC)" +
 
-      "VALUES ('qwe-asd', '" + devUiid + "', '" + dir_from.toString + "', " +
+      "VALUES ('qwe-asd', '" + devUid + "', '" + dir_from.toString + "', " +
       "'" + file_1.toString + "', '', '2017-05-25 12:34:47.000000', '2015-08-23 13:42:04.000000', '140', '', " +
       "'ADD5487EFD4FD4186CC350B66EF35AAE89FF6752', '"+ file_1.toString.toLowerCase() +"')" +
       ";").execute()

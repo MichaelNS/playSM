@@ -71,6 +71,30 @@ class SmView @Inject()(val database: DBService)
     }
   }
 
+  def viewFileByNaturalKey(deviceUid: String, path: String, fName: String): Action[AnyContent] = Action.async {
+    val result: Future[(Seq[(String, String, String, Option[String])], ArrayBuffer[Device])] = for {
+      lstFiles <- getFilesByNaturalKey(deviceUid, path, fName)
+      lstDevices <- FileUtils.getDevicesInfo()
+    } yield (lstFiles, lstDevices)
+
+    val res = Await.result(result, 10.seconds)
+    val mountPoints = ArrayBuffer[String]()
+
+    if (res._1.nonEmpty) {
+      val resFc = res._1.head
+      res._2.foreach { device =>
+        if (device.uuid == resFc._1) {
+          mountPoints += device.mountpoint
+        }
+      }
+      logger.debug(s"mountPoints=$mountPoints")
+      Future.successful(openFile(mountPoints.head, resFc._2, resFc._3, resFc._4))
+    }
+    else {
+      Future.successful(BadRequest(s"can't show file with NaturalKey = $path $fName"))
+    }
+  }
+
   /**
     * get files by sha256
     * used [[SmView.viewFile]]
@@ -81,6 +105,26 @@ class SmView @Inject()(val database: DBService)
   def getFilesFromSha256(sha256: Option[String]): Future[List[(String, String, String, Option[String])]] = {
     val rowSeq = database.runAsync(Tables.SmFileCard
       .filter(_.sha256 === sha256)
+      .map(fc => (fc.storeName, fc.fParent, fc.fName, fc.fMimeTypeJava)).to[List].result)
+      .map(rowSeq => rowSeq)
+
+    rowSeq
+  }
+
+  /**
+    * get files by NaturalKey
+    * used [[SmView.viewFile]]
+    *
+    * @param deviceUid deviceUid
+    * @param path      path
+    * @param fName     fName
+    * @return list files
+    */
+  def getFilesByNaturalKey(deviceUid: String, path: String, fName: String): Future[List[(String, String, String, Option[String])]] = {
+    val rowSeq = database.runAsync(Tables.SmFileCard
+      .filter(_.storeName === deviceUid)
+      .filter(_.fParent === path)
+      .filter(_.fName === fName)
       .map(fc => (fc.storeName, fc.fParent, fc.fName, fc.fMimeTypeJava)).to[List].result)
       .map(rowSeq => rowSeq)
 

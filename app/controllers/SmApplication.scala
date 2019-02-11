@@ -34,17 +34,18 @@ class SmApplication @Inject()(val database: DBService)
         x2."UID",
         x2."DESCRIBE",
         x2."SYNC_DATE",
+        x2."RELIABLE",
       (SELECT count(1) FROM "sm_file_card" x3 WHERE x3."STORE_NAME" = x2."UID" AND (x3."SHA256" IS NULL)  AND (x3."F_SIZE" > 0))
       FROM "sm_device" x2
       where x2."VISIBLE" is true
       ORDER BY x2."LABEL"
       """
-      .as[(String, String, String, String, DateTime, Int)]
+      .as[(String, String, String, String, DateTime, Boolean, Int)]
     database.runAsync(qry).map { rowSeq =>
       //      logger.debug(pprint.apply(rowSeq).toString())
 
       val devices = ArrayBuffer[DeviceView]()
-      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = true, withOutCrc = p._6) }
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
 
       Ok(views.html.smr_index(devices))
     }

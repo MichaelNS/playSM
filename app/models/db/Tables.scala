@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2018-02-14T06:58:26.653+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2019-02-08T20:19:32.301+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -23,25 +23,26 @@ trait Tables {
 
   /** Entity class storing rows of table SmCategoryFc
     *
-    * @param id           Database column ID SqlType(varchar)
-    * @param fName        Database column F_NAME SqlType(varchar)
-    * @param categoryType Database column CATEGORY_TYPE SqlType(varchar), Default(None)
-    * @param description  Database column DESCRIPTION SqlType(varchar), Default(None) */
-  case class SmCategoryFcRow(id: String, fName: String, categoryType: Option[String] = None, description: Option[String] = None)
+    * @param id              Database column ID SqlType(varchar)
+    * @param fName           Database column F_NAME SqlType(varchar)
+    * @param categoryType    Database column CATEGORY_TYPE SqlType(varchar), Default(None)
+    * @param subCategoryType Database column SUB_CATEGORY_TYPE SqlType(varchar), Default(None)
+    * @param description     Database column DESCRIPTION SqlType(varchar), Default(None) */
+  case class SmCategoryFcRow(id: String, fName: String, categoryType: Option[String] = None, subCategoryType: Option[String] = None, description: Option[String] = None)
 
   /** GetResult implicit for fetching SmCategoryFcRow objects using plain SQL queries */
   implicit def GetResultSmCategoryFcRow(implicit e0: GR[String], e1: GR[Option[String]]): GR[SmCategoryFcRow] = GR {
     prs =>
       import prs._
-      SmCategoryFcRow.tupled((<<[String], <<[String], <<?[String], <<?[String]))
+      SmCategoryFcRow.tupled((<<[String], <<[String], <<?[String], <<?[String], <<?[String]))
   }
 
   /** Table description of table sm_category_fc. Objects of this class serve as prototypes for rows in queries. */
   class SmCategoryFc(_tableTag: Tag) extends profile.api.Table[SmCategoryFcRow](_tableTag, "sm_category_fc") {
-    def * = (id, fName, categoryType, description) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
+    def * = (id, fName, categoryType, subCategoryType, description) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(fName), categoryType, description).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3, _4))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(fName), categoryType, subCategoryType, description).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3, _4, _5))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column ID SqlType(varchar) */
     val id: Rep[String] = column[String]("ID")
@@ -49,6 +50,8 @@ trait Tables {
     val fName: Rep[String] = column[String]("F_NAME")
     /** Database column CATEGORY_TYPE SqlType(varchar), Default(None) */
     val categoryType: Rep[Option[String]] = column[Option[String]]("CATEGORY_TYPE", O.Default(None))
+    /** Database column SUB_CATEGORY_TYPE SqlType(varchar), Default(None) */
+    val subCategoryType: Rep[Option[String]] = column[Option[String]]("SUB_CATEGORY_TYPE", O.Default(None))
     /** Database column DESCRIPTION SqlType(varchar), Default(None) */
     val description: Rep[Option[String]] = column[Option[String]]("DESCRIPTION", O.Default(None))
 
@@ -60,20 +63,23 @@ trait Tables {
   lazy val SmCategoryFc = new TableQuery(tag => new SmCategoryFc(tag))
 
   /** Entity class storing rows of table SmDevice
+    *
     * @param id       Database column ID SqlType(serial), AutoInc, PrimaryKey
     * @param name     Database column NAME SqlType(varchar)
     * @param label    Database column LABEL SqlType(varchar)
     * @param uid      Database column UID SqlType(varchar)
     * @param syncDate Database column SYNC_DATE SqlType(timestamp)
     * @param describe Database column DESCRIBE SqlType(varchar), Default(None)
-    * @param visible  Database column VISIBLE SqlType(bool), Default(true) */
+    * @param visible  Database column VISIBLE SqlType(bool), Default(true)
+    * @param reliable Database column RELIABLE SqlType(bool), Default(true) */
   case class SmDeviceRow(id: Int,
                          name: String,
                          label: String,
                          uid: String,
                          syncDate: java.time.LocalDateTime,
                          describe: Option[String] = None,
-                         visible: Boolean = true)
+                         visible: Boolean = true,
+                         reliable: Boolean = true)
 
   /** GetResult implicit for fetching SmDeviceRow objects using plain SQL queries */
   implicit def GetResultSmDeviceRow(implicit e0: GR[Int],
@@ -89,15 +95,16 @@ trait Tables {
         <<[String],
         <<[java.time.LocalDateTime],
         <<?[String],
+        <<[Boolean],
         <<[Boolean]))
   }
 
   /** Table description of table sm_device. Objects of this class serve as prototypes for rows in queries. */
   class SmDevice(_tableTag: Tag) extends profile.api.Table[SmDeviceRow](_tableTag, "sm_device") {
-    def * = (id, name, label, uid, syncDate, describe, visible) <> (SmDeviceRow.tupled, SmDeviceRow.unapply)
+    def * = (id, name, label, uid, syncDate, describe, visible, reliable) <> (SmDeviceRow.tupled, SmDeviceRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(name), Rep.Some(label), Rep.Some(uid), Rep.Some(syncDate), describe, Rep.Some(visible)).shaped.<>({ r => import r._; _1.map(_ => SmDeviceRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6, _7.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(name), Rep.Some(label), Rep.Some(uid), Rep.Some(syncDate), describe, Rep.Some(visible), Rep.Some(reliable)).shaped.<>({ r => import r._; _1.map(_ => SmDeviceRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6, _7.get, _8.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column ID SqlType(serial), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("ID", O.AutoInc, O.PrimaryKey)
@@ -113,6 +120,8 @@ trait Tables {
     val describe: Rep[Option[String]] = column[Option[String]]("DESCRIBE", O.Default(None))
     /** Database column VISIBLE SqlType(bool), Default(true) */
     val visible: Rep[Boolean] = column[Boolean]("VISIBLE", O.Default(true))
+    /** Database column RELIABLE SqlType(bool), Default(true) */
+    val reliable: Rep[Boolean] = column[Boolean]("RELIABLE", O.Default(true))
   }
 
   /** Collection-like TableQuery object for table SmDevice */
@@ -130,7 +139,7 @@ trait Tables {
     * @param fSize             Database column F_SIZE SqlType(int8), Default(None)
     * @param fMimeTypeJava     Database column F_MIME_TYPE_JAVA SqlType(varchar), Default(None)
     * @param sha256            Database column SHA256 SqlType(varchar), Default(None)
-    */
+    * @param fNameLc           Database column F_NAME_LC SqlType(varchar) */
   case class SmFileCardRow(id: String,
                            storeName: String,
                            fParent: String,
@@ -141,8 +150,7 @@ trait Tables {
                            fSize: Option[Long] = None,
                            fMimeTypeJava: Option[String] = None,
                            sha256: Option[String] = None,
-                           fNameLc: String
-                          )
+                           fNameLc: String)
 
   /** GetResult implicit for fetching SmFileCardRow objects using plain SQL queries */
   implicit def GetResultSmFileCardRow(implicit e0: GR[String],
@@ -161,9 +169,7 @@ trait Tables {
         <<?[Long],
         <<?[String],
         <<?[String],
-        <<[String]
-      )
-      )
+        <<[String]))
   }
 
   /** Table description of table sm_file_card. Objects of this class serve as prototypes for rows in queries. */
@@ -172,7 +178,6 @@ trait Tables {
 
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(id), Rep.Some(storeName), Rep.Some(fParent), Rep.Some(fName), fExtension, Rep.Some(fCreationDate), Rep.Some(fLastModifiedDate), fSize, fMimeTypeJava, sha256, Rep.Some(fNameLc)).shaped.<>({ r => import r._; _1.map(_ => SmFileCardRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8, _9, _10, _11.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
-
 
     val id: Rep[String] = column[String]("ID", O.PrimaryKey)
 
@@ -196,10 +201,6 @@ trait Tables {
 
     val fNameLc: Rep[String] = column[String]("F_NAME_LC")
 
-//    val categoryType: Rep[Option[String]] = column[Option[String]]("CATEGORY_TYPE", O.Default(None))
-//
-//    val description: Rep[Option[String]] = column[Option[String]]("DESCRIPTION", O.Default(None))
-
     /** Index over (fParent) (database name f_parent_idx) */
     val index1 = index("f_parent_idx", fParent)
     /** Index over (fLastModifiedDate) (database name last_modified_idx) */
@@ -212,6 +213,7 @@ trait Tables {
   lazy val SmFileCard = new TableQuery(tag => new SmFileCard(tag))
 
   /** Entity class storing rows of table SmPathMove
+    *
     * @param id        Database column ID SqlType(serial), AutoInc, PrimaryKey
     * @param storeName Database column STORE_NAME SqlType(varchar)
     * @param pathFrom  Database column PATH_FROM SqlType(varchar)

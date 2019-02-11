@@ -85,16 +85,18 @@ object SmFileCard {
 }
 
 case class SmCategoryFc(
-                       id: String,
-                       fName: String,
-                       categoryType: Option[String] = None,
-                       description: Option[String] = None
-                     ) {
+                         id: String,
+                         fName: String,
+                         categoryType: Option[String] = None,
+                         subCategoryType: Option[String] = None,
+                         description: Option[String] = None
+                       ) {
   def toRow: Tables.SmCategoryFcRow = {
     Tables.SmCategoryFcRow(
       id = id,
       fName = fName,
       categoryType = categoryType,
+      subCategoryType = subCategoryType,
       description = description
     )
   }
@@ -108,6 +110,7 @@ object SmCategoryFc {
         id = row.id,
         fName = row.fName,
         categoryType = row.categoryType,
+        subCategoryType = row.subCategoryType,
         description = row.description
       )
     )

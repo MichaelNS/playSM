@@ -1,0 +1,27 @@
+@(fileCardSeq: Seq[(String, Int)])()
+@_template {
+    <div class="row column">
+        <h2>smr category</h2>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th>COUNT(*)</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(fileCard <- fileCardSeq) {
+                <tr>
+                    <td><a href="@routes.SmCategory.listDirWithoutCatByParent(fileCard._1, isBegins = false)" >@fileCard._1</a></td>
+                    <td>@fileCard._2</td>
+                </tr>
+            }
+
+            </tbody>
+        </table>
+    </div>
+}
+

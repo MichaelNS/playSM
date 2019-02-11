@@ -30,11 +30,12 @@ import scala.util.{Failure, Success}
 /**
   * Created by ns on 13.03.2017.
   */
-case class FormCategoryUpdate(categoryType: String, description: String)
+case class FormCategoryUpdate(categoryType: String, subCategoryType: String, description: String)
 
 object FormCategoryUpdate {
   val form = Form(mapping(
     "category" -> text.verifying(Constraints.nonEmpty),
+    "subcategory" -> text.verifying(Constraints.nonEmpty),
     "description" -> text.verifying(Constraints.nonEmpty)
   )(FormCategoryUpdate.apply)(FormCategoryUpdate.unapply))
 }
@@ -70,12 +71,12 @@ class SmCategory @Inject()(val database: DBService)
   }
 
   /**
-    * listDescriptionAndCnt
+    * listSubCategoryAndCnt
     *
     * @param categoryType categoryType
-    * @return [[views.html.smr_description]]
+    * @return [[views.html.smr_sub_category]]
     */
-  def listDescriptionAndCnt(categoryType: String): Action[AnyContent] = Action.async {
+  def listSubCategoryAndCnt(categoryType: String): Action[AnyContent] = Action.async {
     database.runAsync(
       (for {
         (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
@@ -83,6 +84,31 @@ class SmCategory @Inject()(val database: DBService)
         })} yield catRow
         )
         .filter(_.categoryType === categoryType)
+        .groupBy(p => p.subCategoryType)
+        .map { case (subcategoryType, cnt) => (subcategoryType, cnt.map(_.subCategoryType).length) }
+        .sortBy(_._2.desc)
+        .to[List].result)
+      .map { rowSeq =>
+        Ok(views.html.smr_sub_category(categoryType, rowSeq))
+      }
+  }
+
+  /**
+    * listDescriptionAndCnt
+    *
+    * @param categoryType    categoryType
+    * @param subCategoryType subCategoryType
+    * @return [[views.html.smr_description]]
+    */
+  def listDescriptionAndCnt(categoryType: String, subCategoryType: String): Action[AnyContent] = Action.async {
+    database.runAsync(
+      (for {
+        (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
+          fc.sha256 === cat.id && fc.fName === cat.fName
+        })} yield catRow
+        )
+        .filter(_.categoryType === categoryType)
+        .filter(_.subCategoryType === subCategoryType)
         .groupBy(p => p.description)
         .map { case (description, cnt) => (description, cnt.map(_.description).length) }
         .sortBy(_._2.desc)
@@ -140,7 +166,7 @@ class SmCategory @Inject()(val database: DBService)
       for {
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
           fc.sha256 === cat.id && fc.fName === cat.fName
-        }) if catRow.isEmpty &&  fcRow.fSize > 0L
+        }) if catRow.isEmpty && fcRow.fSize > 0L
       } yield (fcRow.sha256, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate)
       )
       .groupBy { p => (p._1, p._2, p._3, p._4) }
@@ -175,7 +201,7 @@ class SmCategory @Inject()(val database: DBService)
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
           fc.sha256 === cat.id && fc.fName === cat.fName
         }) if fcRow.fParent.startsWith(fParent)
-      } yield (fcRow.storeName, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.description))
+      } yield (fcRow.storeName, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.subCategoryType), catRow.map(_.description))
 
     }
     else {
@@ -183,7 +209,7 @@ class SmCategory @Inject()(val database: DBService)
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
           fc.sha256 === cat.id && fc.fName === cat.fName
         }) if fcRow.fParent === fParent
-      } yield (fcRow.storeName, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.description))
+      } yield (fcRow.storeName, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.subCategoryType), catRow.map(_.description))
     }
 
     database.runAsync(
@@ -196,11 +222,46 @@ class SmCategory @Inject()(val database: DBService)
       val catForm: Form[FormCategoryUpdate] = Form(
         mapping(
           "categoryType" -> nonEmptyText,
+          "subCategoryType" -> nonEmptyText,
           "description" -> nonEmptyText
         )(FormCategoryUpdate.apply)(FormCategoryUpdate.unapply)
       )
 
       Ok(views.html.cat_fc_path("path", fParent, rowSeq, catForm, isBegins))
+    }
+  }
+
+
+  /**
+    * get Dirs without category by extension, order count files
+    *
+    * @return [[views.html.smr_category_dir_by_ext]]
+    */
+  def listDirWithoutCategoryByExtension(extension: String): Action[AnyContent] = Action.async {
+    val config = ConfigFactory.load("scanImport.conf")
+    val maxFilesTake: Long = config.getBytes("Category.maxFilesTake")
+
+    val qry = if (extension == "") {
+      for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
+        fc.sha256 === cat.id && fc.fName === cat.fName
+      }) if catRow.isEmpty && fcRow.fSize > 0L
+      } yield (fcRow.sha256, fcRow.fParent)
+    } else {
+      for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
+        fc.sha256 === cat.id && fc.fName === cat.fName
+      }) if catRow.isEmpty && fcRow.fSize > 0L && fcRow.fExtension.getOrElse("").toLowerCase === extension
+      } yield (fcRow.sha256, fcRow.fParent)
+    }
+    database.runAsync(
+      qry
+        .groupBy(p => p._2)
+        .map { case (fParent, cnt) => (fParent, cnt.map(_._2).length) }
+        .sortBy(_._2.desc)
+        .filterNot(_._1 endsWith "_files")
+        .take(maxFilesTake)
+        .result
+    ).map { rowSeq =>
+      Ok(views.html.smr_category_dir_by_ext(rowSeq))
     }
   }
 
@@ -217,11 +278,11 @@ class SmCategory @Inject()(val database: DBService)
     FormCategoryUpdate.form.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest(views.html.cat_form(formWithErrors, fParent, isBegins))),
       success = category => {
-        if (category.categoryType.isEmpty || category.description.isEmpty) {
+        if (category.categoryType.isEmpty || category.subCategoryType.isEmpty || category.description.isEmpty) {
           val form = FormCategoryUpdate.form.fill(category).withError("category", "categoryType isEmpty")
           Future.successful(BadRequest(views.html.cat_form(form, fParent, isBegins)))
         } else {
-          batchAssignCategoryAndDescription(fParent, isBegins, category.categoryType, category.description)
+          batchAssignCategoryAndDescription(fParent, isBegins, category.categoryType, category.subCategoryType, category.description)
 
           Future.successful(Redirect(routes.SmCategory.listDirWithoutCatByParent(fParent, isBegins)))
         }
@@ -232,6 +293,7 @@ class SmCategory @Inject()(val database: DBService)
   def batchAssignCategoryAndDescription(fParent: String,
                                         isBegins: Boolean = false,
                                         categoryType: String,
+                                        subCategoryType: String,
                                         description: String
                                        ): Unit = {
     debugParam
@@ -239,7 +301,7 @@ class SmCategory @Inject()(val database: DBService)
     val dbFcStream: Source[(Option[String], String), NotUsed] = getStreamFcByParent(fParent, isBegins)
     dbFcStream
       .throttle(elements = 50, 10.millisecond, maximumBurst = 1, ThrottleMode.shaping)
-      .mapAsync(2)(writeToCategoryTbl(_, categoryType, description))
+      .mapAsync(2)(writeToCategoryTbl(_, categoryType, subCategoryType, description))
       .runWith(Sink.ignore)
       .onComplete {
         case Success(insSuc) => logger.debug(s"Upsert cat = $insSuc")
@@ -269,15 +331,16 @@ class SmCategory @Inject()(val database: DBService)
         val result: DmnDecisionTableResult = dmnEngine.evaluateDecisionTable(decision, variables)
         val outMap = result.getSingleResult.getEntryMap
 
-        if (outMap.size() == 3) {
+        if (outMap.size() == 4) {
           batchAssignCategoryAndDescription(
             fParent = rulePath,
             isBegins = java.lang.Boolean.valueOf(outMap.get("isBegins").toString),
             categoryType = outMap.get("category").toString,
+            subCategoryType = outMap.get("subcategory").toString,
             description = outMap.get("description").toString
           )
         } else {
-          logger.warn(s"applyRules -> out DMN has < 3 values - $rulePath")
+          logger.warn(s"applyRules -> out DMN has < 4 values - $rulePath")
         }
       }
 
@@ -339,13 +402,14 @@ class SmCategory @Inject()(val database: DBService)
   /**
     * upsert [[models.SmCategoryFc]]
     *
-    * @param message      sha256 & fileName from SmFileCard
-    * @param categoryType categoryType
-    * @param description  description
+    * @param message         sha256 & fileName from SmFileCard
+    * @param categoryType    categoryType
+    * @param subCategoryType subCategoryType
+    * @param description     description
     * @return count upsert records SmCategoryFc
     */
-  def writeToCategoryTbl(message: (Option[String], String), categoryType: String, description: String): Future[Int] = {
-    val cRow = Tables.SmCategoryFcRow(message._1.get, message._2, Some(categoryType), Some(description))
+  def writeToCategoryTbl(message: (Option[String], String), categoryType: String, subCategoryType: String, description: String): Future[Int] = {
+    val cRow = Tables.SmCategoryFcRow(message._1.get, message._2, Some(categoryType), Some(subCategoryType), Some(description))
     val insRes = database.runAsync(Tables.SmCategoryFc.insertOrUpdate(models.SmCategoryFc.apply(cRow).data.toRow))
 
     insRes

@@ -33,14 +33,12 @@ class BrowserSpec extends PlaySpec
   flyway.setLocations("db/migration/default")
 
   // fix - org.flywaydb.core.api.FlywayException: Found non-empty schema(s) "PUBLIC" without schema history table! Use baseline() or set baselineOnMigrate to true to initialize the schema history table.
-  flyway.setBaselineOnMigrate(true)
-  //  flyway.baseline()
-  flyway.setSchemas("public")
+  flyway.baseline()
 
   logger.debug(url)
   logger.debug(username)
   logger.debug(password)
-  flyway.getLocations.foreach(q => logger.debug(q.toString))
+  flyway.getConfiguration.getLocations.foreach(q => logger.info(q.toString))
 
   flyway.migrate()
 

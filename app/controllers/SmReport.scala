@@ -169,7 +169,7 @@ class SmReport @Inject()(val database: DBService)
     * check duplicates SmFileCard
     * Call from [[views.html.smd_index]]
     *
-    * @param device device uiid
+    * @param device device uid
     * @return [[views.html.f_duplicates]]
     */
   def checkDuplicates(device: String): Action[AnyContent] = Action.async {
@@ -202,7 +202,7 @@ class SmReport @Inject()(val database: DBService)
   /**
     * Call from [[SmReport.checkDuplicates()]] -> [[views.html.f_duplicates]]
     *
-    * @param device device uiid
+    * @param device device uid
     * @param sha256 sha256
     * @return [[views.html.sm_device_sha256]]
     */
@@ -259,7 +259,7 @@ class SmReport @Inject()(val database: DBService)
     * Show dirs without SmCategoryFc and files HAVING count(1) > maxFiles
     * Call from [[SmApplication.listStoreNameAndCnt]] -> [[views.html.storename]]
     *
-    * @param device   device uiid
+    * @param device   device uid
     * @param maxFiles maximum files - group by F_PARENT having count(1) > maxFiles
     * @return [[views.html.dirs_fc]]
     */

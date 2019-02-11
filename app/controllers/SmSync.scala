@@ -69,14 +69,15 @@ class SmSync @Inject()(val database: DBService)
         x2."UID",
         x2."DESCRIBE",
         x2."SYNC_DATE",
-        x2."VISIBLE"
+        x2."VISIBLE",
+        x2."RELIABLE"
       FROM "sm_device" x2
       ORDER BY x2."LABEL"
       """
-      .as[(String, String, String, String, DateTime, Boolean)]
+      .as[(String, String, String, String, DateTime, Boolean, Boolean)]
     database.runAsync(qry).map { rowSeq =>
       val devices = ArrayBuffer[DeviceView]()
-      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = p._6, withOutCrc = 0) }
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = p._6, reliable = p._7, withOutCrc = 0) }
 
       Ok(views.html.device_import(devices))
     }

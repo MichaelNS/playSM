@@ -34,14 +34,12 @@ class SmCategorySpec extends PlaySpec
   flyway.setLocations("db/migration/default")
 
   // fix - org.flywaydb.core.api.FlywayException: Found non-empty schema(s) "PUBLIC" without schema history table! Use baseline() or set baselineOnMigrate to true to initialize the schema history table.
-  flyway.setBaselineOnMigrate(true)
-  //  flyway.baseline()
-  flyway.setSchemas("public")
+  flyway.baseline()
 
   logger.debug(url)
   logger.debug(username)
   logger.debug(password)
-  flyway.getLocations.foreach(q => logger.debug(q.toString))
+  flyway.getConfiguration.getLocations.foreach(q => logger.info(q.toString))
 
   flyway.migrate()
 
@@ -70,10 +68,28 @@ class SmCategorySpec extends PlaySpec
       contentType(result) mustBe Some("text/html")
     }
 
+    "run listSubCategoryAndCnt" in {
+      val controller = app.injector.instanceOf[SmCategory]
+      val request = FakeRequest()
+      val result = controller.listSubCategoryAndCnt("").apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+
     "run listDescriptionAndCnt" in {
       val controller = app.injector.instanceOf[SmCategory]
       val request = FakeRequest()
-      val result = controller.listDescriptionAndCnt("").apply(request)
+      val result = controller.listDescriptionAndCnt("", "").apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+
+    "run listDirWithoutCatByLastDate" in {
+      val controller = app.injector.instanceOf[SmCategory]
+      val request = FakeRequest()
+      val result = controller.listDirWithoutCatByLastDate.apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
@@ -84,8 +100,8 @@ class SmCategorySpec extends PlaySpec
       val request = FakeRequest()
       val result = controller.listFcWithoutCatByLastDate.apply(request)
 
-      //      status(result) mustBe OK
-      //      contentType(result) mustBe Some("text/html")
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
     }
 
 
@@ -96,8 +112,8 @@ class SmCategorySpec extends PlaySpec
       val request = FakeRequest()
       val result = controller.listDirWithoutCatByParent("", isBegins = true).apply(request)
 
-      //      status(result) mustBe OK
-      //      contentType(result) mustBe Some("text/html")
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
     }
     "run listDirWithoutCatByParent" in {
       val controller = app.injector.instanceOf[SmCategory]
@@ -108,6 +124,23 @@ class SmCategorySpec extends PlaySpec
       contentType(result) mustBe Some("text/html")
     }
 
+
+    "run listDirWithoutCategoryByExtension" in {
+      val controller = app.injector.instanceOf[SmCategory]
+      val request = FakeRequest()
+      val result = controller.listDirWithoutCategoryByExtension("").apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+    "run listDirWithoutCategoryByExtension NON empty" in {
+      val controller = app.injector.instanceOf[SmCategory]
+      val request = FakeRequest()
+      val result = controller.listDirWithoutCategoryByExtension("jpg").apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
 
     "run assignCategoryAndDescription" in {
       val controller = app.injector.instanceOf[SmCategory]
@@ -132,7 +165,7 @@ class SmCategorySpec extends PlaySpec
       val controller = app.injector.instanceOf[SmCategory]
       val message: (Option[String], String) = (Some("sha_id"), "fileName")
 
-      controller.writeToCategoryTbl(message, "categoryType", "description")
+      controller.writeToCategoryTbl(message, "categoryType", "subCategoryType", "description")
       //      val result = controller.writeToCategoryTbl(message, "categoryType", "description")
       //      result.onComplete {
       //        case Success(insSuc) => logger.warn(s"Upsert cat = $insSuc")

@@ -73,8 +73,8 @@ lazy val root = (project in file("."))
 
     libraryDependencies += "com.typesafe.slick" %% "slick" % "3.3.0",
     libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.3.0",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.17.1",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.17.1",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.17.2",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.17.2",
     libraryDependencies += "com.typesafe.play" %% "play-slick" % "4.0.0",
     libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "4.0.0",
 
@@ -85,7 +85,7 @@ lazy val root = (project in file("."))
 
     libraryDependencies += guice,
 
-    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
+    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.1" % Test,
 
     libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.5",
     libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.3",
@@ -94,8 +94,8 @@ lazy val root = (project in file("."))
 
     //    scala-fixture:
     libraryDependencies += "com.github.tototoshi" %% "scala-fixture" % "0.3.0",
-    libraryDependencies += "com.h2database" % "h2" % "1.4.192" % Test,
-    libraryDependencies += "org.flywaydb" % "flyway-core" % "5.1.4" % "test",
+    libraryDependencies += "com.h2database" % "h2" % "1.4.197" % Test,
+    libraryDependencies += "org.flywaydb" % "flyway-core" % "5.2.4" % "test",
 
     libraryDependencies += "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.10.0"
   )
@@ -105,9 +105,9 @@ lazy val root = (project in file("."))
   .dependsOn(fileutils)
 
 //to generate models/db/Tables.scala
-addCommandAlias("tables", "run-main utils.db.SourceCodeGenerator")
+addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 26.88
+coverageMinimum := 31.99
 coverageFailOnMinimum := true
 coverageHighlighting := true
