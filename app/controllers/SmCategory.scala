@@ -270,7 +270,7 @@ class SmCategory @Inject()(val database: DBService)
     *
     * @param fParent  name dir for get SmFileCard
     * @param isBegins if true = get by startsWith, else by Equals
-    * @return redirect [[SmCategory.listDirWithoutCatByParent()]]
+    * @return redirect [[SmCategory.listDirWithoutCatByParent]]
     */
   def assignCategoryAndDescription(fParent: String,
                                    isBegins: Boolean = false

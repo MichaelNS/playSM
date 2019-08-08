@@ -44,7 +44,7 @@ class MyFixtureScript extends FixtureScript {
 
       "VALUES ('qwe-asd', '" + devUid + "', '" + dir_from.toString + "', " +
       "'" + file_1.toString + "', '', '2017-05-25 12:34:47.000000', '2015-08-23 13:42:04.000000', '140', '', " +
-      "'ADD5487EFD4FD4186CC350B66EF35AAE89FF6752', '"+ file_1.toString.toLowerCase() +"')" +
+      "'ADD5487EFD4FD4186CC350B66EF35AAE89FF6752', '" + file_1.toString.toLowerCase() + "')" +
       ";").execute()
 
     // add real device for test SmSync.refreshDevice

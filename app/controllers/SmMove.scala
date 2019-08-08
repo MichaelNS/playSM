@@ -1,9 +1,11 @@
 package controllers
 
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.nio.file.InvalidPathException
 
 import better.files.File
+import com.google.common.hash.Hashing
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
@@ -227,8 +229,6 @@ class SmMove @Inject()(val database: DBService)
     * @return Any
     */
   def moveAction(rowFc: Tables.SmFileCard#TableElementType, mountPoint: String, pathTo: String): Any = {
-    import com.roundeights.hasher.Implicits._
-
     val fileFrom = File(mountPoint + OsConf.fsSeparator + rowFc.fParent + rowFc.fName)
     val fileTo = File(mountPoint + OsConf.fsSeparator + pathTo + rowFc.fName)
     val dirTo = File(mountPoint + OsConf.fsSeparator + pathTo)
@@ -239,7 +239,7 @@ class SmMove @Inject()(val database: DBService)
     if (!fileTo.exists) {
       if (dirTo.exists() || dirTo.createDirectories().exists) {
         // get file from DB
-        val cRow = rowFc.copy(id = (rowFc.storeName + pathTo + rowFc.fName).sha256.toUpperCase,
+        val cRow = rowFc.copy(id = Hashing.sha256().hashString(rowFc.storeName + pathTo + rowFc.fName, StandardCharsets.UTF_8).toString.toUpperCase,
           fParent = pathTo)
 
         // insert
@@ -250,7 +250,7 @@ class SmMove @Inject()(val database: DBService)
         }
         // move + delete
         try {
-          fileFrom.moveTo(fileTo, overwrite = false)
+          fileFrom.moveTo(fileTo)
 
           val insRes = database.runAsync(Tables.SmFileCard.filter(_.id === rowFc.id).delete)
           insRes onComplete {

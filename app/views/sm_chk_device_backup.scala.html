@@ -1,0 +1,27 @@
+@(rows: Seq[(String, String, org.joda.time.DateTime)]
+)()
+@_template {
+    <div class="row column">
+        <h2>Check device backup</h2>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th>Name</th>
+                    <th>LastModifiedDate</th>
+            </thead>
+            <tbody>
+            @for(row <- rows) {
+                <tr>
+                    <td>@row._1</td>
+                    <td>@row._2</td>
+                    <td>@row._3.toLocalDateTime.toString("dd.MM.yyyy HH:mm")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

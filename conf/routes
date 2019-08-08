@@ -5,17 +5,18 @@ GET         /                                                    controllers.SmA
 GET         /deviceIndex/:device                                 controllers.SmApplication.deviceIndex(device)
 GET         /debugQry/:device                                    controllers.SmApplication.debugQry(device)
 
-+ nocsrf
-POST        /refreshDevice                                       controllers.SmSync.refreshDevice
-+ nocsrf
-POST        /syncDevice/:device                                  controllers.SmSync.syncDevice(device: String)
-+ nocsrf
-POST        /calcCRC/:device                                     controllers.SmSync.calcCRC(device: String)
-
-GET         /deviceImport                                        controllers.SmSync.deviceImport
 
 + nocsrf
-POST        /syncDeviceStream/:device                            controllers.SmSyncStream.syncDevice(device: String)
+POST        /refreshDevice                                       controllers.SmSyncDeviceStream.refreshDevice
+
++ nocsrf
+POST        /calcCRC/:device                                     controllers.SmSyncDeviceStream.calcCRC(device: String)
+
+GET         /deviceImport                                        controllers.SmSyncDeviceStream.deviceImport
+
++ nocsrf
+POST        /syncDeviceStream/:device                            controllers.SmSyncDeviceStream.syncDevice(device: String)
+
 
 GET         /fc/byDevice/:device                                 controllers.SmApplication.getByDevice(device: String)
 GET         /fc/getByDeviceByLastModifDate/:device               controllers.SmApplication.getByDeviceByLastModifDate(device: String)

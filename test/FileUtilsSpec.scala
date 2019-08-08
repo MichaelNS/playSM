@@ -1,4 +1,5 @@
 import java.io.{File, FileNotFoundException, IOException}
+import java.nio.charset.StandardCharsets
 import java.nio.file.FileStore
 import java.nio.file.attribute.{FileAttributeView, FileStoreAttributeView}
 import java.time.ZoneId
@@ -7,11 +8,11 @@ import java.{lang, util}
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import org.scalatestplus.play.PlaySpec
-import ru.ns.model.{Device, FileCardSt, OsConf}
+import ru.ns.model.{Device, FileCardSt, OsConf, SmPath}
 import ru.ns.tools.FileUtils
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
+import scala.jdk.CollectionConverters._
 
 class FileUtilsSpec extends PlaySpec {
 
@@ -129,8 +130,6 @@ class FileUtilsSpec extends PlaySpec {
     import java.nio.file.attribute.BasicFileAttributes
     import java.nio.file.{Files, Paths}
 
-    import com.roundeights.hasher.Implicits._
-
     val file_1 = Paths.get("./test/tmp/test1.txt")
     val attrs_1 = Files.readAttributes(file_1, classOf[BasicFileAttributes])
 
@@ -141,9 +140,11 @@ class FileUtilsSpec extends PlaySpec {
     var mountPoint = Paths.get(fParent).toFile.getAbsolutePath.replace(fParent, "")
     mountPoint = mountPoint.substring(0, mountPoint.length() - 1)
 
+    val path_1 = SmPath("test/tmp/")
+
     val fName1 = "test1.txt"
     val fc_1 = FileCardSt(
-      id = (deviceUid + fParent + OsConf.fsSeparator + fName1).sha256.toUpperCase,
+      id = Hashing.sha256().hashString(deviceUid + fParent + OsConf.fsSeparator + fName1, StandardCharsets.UTF_8).toString.toUpperCase,
       storeName = deviceUid,
       fParent = fParent + "/",
       fName = fName1,
@@ -161,7 +162,7 @@ class FileUtilsSpec extends PlaySpec {
     val fName2 = "test2.txt"
 
     val fc_2 = FileCardSt(
-      id = (deviceUid + fParent + OsConf.fsSeparator + fName2).sha256.toUpperCase,
+      id = Hashing.sha256().hashString(deviceUid + fParent + OsConf.fsSeparator + fName2, StandardCharsets.UTF_8).toString.toUpperCase,
       storeName = deviceUid,
       fParent = fParent + "/",
       fName = fName2,
@@ -176,16 +177,23 @@ class FileUtilsSpec extends PlaySpec {
     val sExclusionDir: List[String] = List("")
     val sExclusionFile: List[String] = List("")
 
-    val hSmBoFileCard: ArrayBuffer[FileCardSt] = FileUtils.readDirRecursive(
+    val hSmBoSmPath: ArrayBuffer[SmPath] = FileUtils.getPathesRecursive(
+      "test" + OsConf.fsSeparator + "tmp",
+      mountPoint,
+      sExclusionDir.asJava
+    )
+    val hSmPathTest = ArrayBuffer[SmPath](path_1)
+    hSmBoSmPath.size mustBe 1
+    hSmBoSmPath.head.toString must equal(hSmPathTest.head.toString)
+
+
+    val hSmBoFileCardTest = ArrayBuffer[FileCardSt](fc_1, fc_2)
+    val hSmBoFileCard: ArrayBuffer[FileCardSt] = FileUtils.getFilesFromStore(
       "test" + OsConf.fsSeparator + "tmp",
       deviceUid,
       mountPoint,
-      sExclusionDir.asJava,
       sExclusionFile.asJava
     )
-
-    val hSmBoFileCardTest = ArrayBuffer[FileCardSt](fc_1, fc_2)
-
     hSmBoFileCard.size mustBe 2
     hSmBoFileCard.head.toString must equal(hSmBoFileCardTest.head.toString)
     hSmBoFileCard.take(2).toString must equal(hSmBoFileCardTest.take(2).toString)

@@ -2,8 +2,8 @@ package controllers
 
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
-import models.{DeviceView, SmFileCard}
 import models.db.Tables
+import models.{DeviceView, SmFileCard}
 import org.joda.time.DateTime
 import play.api.Logger
 import play.api.mvc._

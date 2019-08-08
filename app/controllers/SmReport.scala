@@ -4,12 +4,15 @@ import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
 import models.SmFileCard
 import models.db.Tables
+import org.joda.time.DateTime
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import ru.ns.model.OsConf
 import services.db.DBService
+import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.jdk.CollectionConverters._
 
 /**
   * Created by ns on 02.03.2017.
@@ -47,36 +50,38 @@ class SmReport @Inject()(val database: DBService)
   }
 
   def checkBackUp(device: String): Action[AnyContent] = Action.async {
-    import scala.collection.JavaConverters._
     val config = ConfigFactory.load("scanImport.conf")
-    val backUpVolumes: Set[String] = config.getStringList("BackUp.volumes").asScala.toSet
-    val maxResult: Long = config.getLong("BackUp.maxResult")
+    val backUpVolumes: String = config.getStringList("BackUp.volumes").asScala.toSet.mkString("'", "', '", "'")
+    val maxRows: Long = config.getLong("BackUp.maxResult")
 
-    val lstBackUpSha256 = Tables.SmFileCard
-      .filter(_.sha256.nonEmpty)
-      .filter(_.storeName =!= device)
-      .filterNot(_.fParent endsWith "_files")
-      .filter(_.storeName inSet backUpVolumes)
-      .map(_.sha256).distinct
+    implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
 
-    database.runAsync(
-      Tables.SmFileCard
-        .filter(_.storeName === device)
-        .filter(_.sha256.nonEmpty)
-        .filterNot(_.fParent endsWith "_files")
-        .filterNot(_.sha256 in lstBackUpSha256)
-        .sortBy(_.fName)
-        .sortBy(_.fParent)
-        .take(maxResult)
-        .result)
-      .map { rowSeq =>
-        val smFcs = rowSeq.map(SmFileCard(_))
-        Ok(views.html.filecards(smFcs))
-      }
+    val qry = sql"""
+      SELECT "F_PARENT",
+             "F_NAME",
+             "F_LAST_MODIFIED_DATE"
+      FROM "sm_file_card" fc
+      WHERE "STORE_NAME" = '#$device'
+      AND   "SHA256" IS NOT NULL
+      AND   NOT EXISTS (SELECT 1
+                        FROM "sm_file_card"
+                        WHERE "SHA256" IS NOT NULL
+                        AND   fc."SHA256" = "SHA256"
+                        AND   "STORE_NAME" != '#$device'
+                        AND   "STORE_NAME" IN (#$backUpVolumes))
+                        AND   NOT "F_PARENT" LIKE '%^_files' ESCAPE '^'
+      AND   NOT "F_PARENT" LIKE '%^_files' escape '^'
+      ORDER BY "F_PARENT",
+               "F_NAME"
+       LIMIT #$maxRows
+      """
+      .as[(String, String, DateTime)]
+    database.runAsync(qry).map { rowSeq =>
+      Ok(views.html.sm_chk_device_backup(rowSeq))
+    }
   }
 
   def checkBackAllFiles: Action[AnyContent] = Action.async {
-    import scala.collection.JavaConverters._
     val config = ConfigFactory.load("scanImport.conf")
     val cntFiles: Int = config.getInt("BackUp.allFiles.cntFiles")
     val maxRows: Int = config.getInt("BackUp.allFiles.maxRows")
@@ -124,7 +129,6 @@ class SmReport @Inject()(val database: DBService)
   }
 
   def checkBackFilesLastYear: Action[AnyContent] = Action.async {
-    import scala.collection.JavaConverters._
     val config = ConfigFactory.load("scanImport.conf")
     val cntFiles: Int = config.getInt("BackUp.allFiles.cntFiles")
     val maxRows: Int = config.getInt("BackUp.allFiles.maxRows")
@@ -200,7 +204,7 @@ class SmReport @Inject()(val database: DBService)
   }
 
   /**
-    * Call from [[SmReport.checkDuplicates()]] -> [[views.html.f_duplicates]]
+    * Call from [[SmReport.checkDuplicates]] -> [[views.html.f_duplicates]]
     *
     * @param device device uid
     * @param sha256 sha256

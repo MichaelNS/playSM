@@ -1,4 +1,3 @@
-import com.github.tototoshi.fixture._
 import controllers.SmCategory
 import org.flywaydb.core.Flyway
 import org.scalatest.BeforeAndAfter
@@ -26,12 +25,14 @@ class SmCategorySpec extends PlaySpec
 
   val driver = "org.h2.Driver"
   val url = "jdbc:h2:mem:play_test;DATABASE_TO_UPPER=false;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
-  val username = "play_user"
-  val password = "1234"
+  val username = "play_sm_user"
+  val password = "123"
 
-  val flyway = new Flyway()
-  flyway.setDataSource(url, username, password)
-  flyway.setLocations("db/migration/default")
+  val flyway: Flyway = Flyway
+    .configure()
+    .dataSource(url, username, password)
+    .locations("db/migration/default")
+    .load()
 
   // fix - org.flywaydb.core.api.FlywayException: Found non-empty schema(s) "PUBLIC" without schema history table! Use baseline() or set baselineOnMigrate to true to initialize the schema history table.
   flyway.baseline()
@@ -43,17 +44,13 @@ class SmCategorySpec extends PlaySpec
 
   flyway.migrate()
 
-  val fixture: Fixture = Fixture(driver, url, username, password)
-    .scriptLocation("db/fixtures/default")
-    .scriptPackage("ru.ns.fixtures")
-    .scripts(Seq("sm_device.sql", "sm_file_card.sql", "sm_path_move.sql", "MyFixtureScript"))
 
   before {
-    fixture.setUp()
+
   }
 
   after {
-    fixture.tearDown()
+
   }
 
   // SmCategory ---------------------------------------------------------------------------------------------------------

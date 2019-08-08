@@ -1,6 +1,5 @@
 import better.files.File
-import com.github.tototoshi.fixture._
-import controllers.{SmApplication, SmMove, SmSync}
+import controllers.{SmApplication, SmMove, SmSyncDeviceStream}
 import org.flywaydb.core.Flyway
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.play.guice.GuiceOneServerPerTest
@@ -25,12 +24,14 @@ class BrowserSpec extends PlaySpec
 
   val driver = "org.h2.Driver"
   val url = "jdbc:h2:mem:play_test;DATABASE_TO_UPPER=false;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
-  val username = "play_user"
-  val password = "1234"
+  val username = "play_sm_user"
+  val password = "123"
 
-  val flyway = new Flyway()
-  flyway.setDataSource(url, username, password)
-  flyway.setLocations("db/migration/default")
+  val flyway: Flyway = Flyway
+    .configure()
+    .dataSource(url, username, password)
+    .locations("db/migration/default")
+    .load()
 
   // fix - org.flywaydb.core.api.FlywayException: Found non-empty schema(s) "PUBLIC" without schema history table! Use baseline() or set baselineOnMigrate to true to initialize the schema history table.
   flyway.baseline()
@@ -42,17 +43,11 @@ class BrowserSpec extends PlaySpec
 
   flyway.migrate()
 
-  val fixture: Fixture = Fixture(driver, url, username, password)
-    .scriptLocation("db/fixtures/default")
-    .scriptPackage("ru.ns.fixtures")
-    .scripts(Seq("sm_device.sql", "sm_file_card.sql", "sm_path_move.sql", "MyFixtureScript"))
-
   before {
-    fixture.setUp()
+
   }
 
   after {
-    fixture.tearDown()
   }
 
 
@@ -157,7 +152,7 @@ class BrowserSpec extends PlaySpec
   // SmSync ---------------------------------------------------------------------------------------------------------
   "UserController refresh device" should {
     "render the refresh device" in {
-      val controller = app.injector.instanceOf[SmSync]
+      val controller = app.injector.instanceOf[SmSyncDeviceStream]
       val request = FakeRequest().withCSRFToken
       val result = controller.refreshDevice().apply(request)
 

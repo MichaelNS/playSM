@@ -5,7 +5,7 @@
     </div>
 
     <div class="input-group-button">
-        <form action="@routes.SmSync.refreshDevice" method="post">
+        <form action="@routes.SmSyncDeviceStream.refreshDevice" method="post">
             <button class="button success">refresh devices</button>
         </form>
     </div>
@@ -52,7 +52,7 @@
 
                     <td>
                         <div class="input-group-button">
-                            <form action="@routes.SmSyncStream.syncDevice(device.uid)" method="post">
+                            <form action="@routes.SmSyncDeviceStream.syncDevice(device.uid)" method="post">
                                 <button class="button success">sync Device</button>
                             </form>
                         </div>
@@ -60,7 +60,7 @@
 
                     <td>
                         <div class="input-group-button">
-                            <form action="@routes.SmSync.calcCRC(device.uid)" method="post">
+                            <form action="@routes.SmSyncDeviceStream.calcCRC(device.uid)" method="post">
                                 <button class="button primary">calcCRC</button>
                             </form>
                         </div>
