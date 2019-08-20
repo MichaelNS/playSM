@@ -62,7 +62,9 @@ lazy val fileutils = (project in file("."))
     libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.7",
     libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.5",
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7",
+
+    libraryDependencies += "com.drewnoakes" % "metadata-extractor" % "2.12.0"
   )
 
 // sbt-scoverage
