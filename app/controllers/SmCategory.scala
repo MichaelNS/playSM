@@ -2,10 +2,10 @@ package controllers
 
 import java.io.{IOException, InputStream}
 
-import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, ThrottleMode}
+import akka.{Done, NotUsed}
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
 import models.DirWithoutCat
@@ -25,7 +25,6 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
 /**
   * Created by ns on 13.03.2017.
@@ -129,7 +128,7 @@ class SmCategory @Inject()(val database: DBService)
     val qry = (for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
       fc.sha256 === cat.id && fc.fName === cat.fName
     }) if catRow.isEmpty && fcRow.fSize > 0L
-    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
+                    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
       ).groupBy { p => (p._2, p._3) }
       .map(fld => (fld._1._1, fld._1._2))
     database.runAsync(qry.filterNot(_._1 endsWith "_files")
@@ -245,12 +244,12 @@ class SmCategory @Inject()(val database: DBService)
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
       }) if catRow.isEmpty && fcRow.fSize > 0L
-      } yield (fcRow.sha256, fcRow.fParent)
+           } yield (fcRow.sha256, fcRow.fParent)
     } else {
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
       }) if catRow.isEmpty && fcRow.fSize > 0L && fcRow.fExtension.getOrElse("").toLowerCase === extension
-      } yield (fcRow.sha256, fcRow.fParent)
+           } yield (fcRow.sha256, fcRow.fParent)
     }
     database.runAsync(
       qry
@@ -295,7 +294,7 @@ class SmCategory @Inject()(val database: DBService)
                                         categoryType: String,
                                         subCategoryType: String,
                                         description: String
-                                       ): Unit = {
+                                       ): Future[Done] = {
     debugParam
 
     val dbFcStream: Source[(Option[String], String), NotUsed] = getStreamFcByParent(fParent, isBegins)
@@ -303,10 +302,6 @@ class SmCategory @Inject()(val database: DBService)
       .throttle(elements = 50, 10.millisecond, maximumBurst = 1, ThrottleMode.shaping)
       .mapAsync(2)(writeToCategoryTbl(_, categoryType, subCategoryType, description))
       .runWith(Sink.ignore)
-      .onComplete {
-        case Success(insSuc) => logger.debug(s"Upsert cat = $insSuc")
-        case Failure(t) => logger.error(s"An error has occured (Upsert cat): = ${t.getMessage}")
-      }
   }
 
   def applyRulesSetCategory: Action[AnyContent] = Action.async {
@@ -321,28 +316,32 @@ class SmCategory @Inject()(val database: DBService)
 
       val lstPath = getXmlRule(ruleFilePath)
       logger.info(s"lstPath = $lstPath")
-      lstPath.foreach { rulePath =>
-        logger.info(s"rulePath = $rulePath")
 
-        // prepare variables for decision evaluation
-        val variables: VariableMap = Variables.putValue("path", rulePath)
+      Source.fromIterator(() => lstPath.iterator)
+        .throttle(elements = 1, 100.millisecond, maximumBurst = 2, ThrottleMode.shaping)
+        .map { rulePath =>
+          logger.info(s"rulePath = $rulePath")
 
-        // evaluate decision
-        val result: DmnDecisionTableResult = dmnEngine.evaluateDecisionTable(decision, variables)
-        val outMap = result.getSingleResult.getEntryMap
+          // prepare variables for decision evaluation
+          val variables: VariableMap = Variables.putValue("path", rulePath)
 
-        if (outMap.size() == 4) {
-          batchAssignCategoryAndDescription(
-            fParent = rulePath,
-            isBegins = java.lang.Boolean.valueOf(outMap.get("isBegins").toString),
-            categoryType = outMap.get("category").toString,
-            subCategoryType = outMap.get("subcategory").toString,
-            description = outMap.get("description").toString
-          )
-        } else {
-          logger.warn(s"applyRules -> out DMN has < 4 values - $rulePath")
+          // evaluate decision
+          val result: DmnDecisionTableResult = dmnEngine.evaluateDecisionTable(decision, variables)
+          val outMap = result.getSingleResult.getEntryMap
+
+          if (outMap.size() == 4) {
+            batchAssignCategoryAndDescription(
+              fParent = rulePath,
+              isBegins = java.lang.Boolean.valueOf(outMap.get("isBegins").toString),
+              categoryType = outMap.get("category").toString,
+              subCategoryType = outMap.get("subcategory").toString,
+              description = outMap.get("description").toString
+            )
+          } else {
+            logger.warn(s"applyRules -> out DMN has < 4 values - $rulePath")
+          }
         }
-      }
+        .runWith(Sink.ignore)
 
       Future.successful(Ok("startRule"))
     } finally try

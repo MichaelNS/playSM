@@ -66,5 +66,5 @@ lazy val fileutils = (project in file("."))
   )
 
 // sbt-scoverage
-coverageMinimum := 50.08
+coverageMinimum := 77.72
 coverageFailOnMinimum := true

@@ -53,24 +53,24 @@ class SmView @Inject()(val database: DBService)
       lstDevices <- FileUtils.getDevicesInfo()
     } yield (lstFiles, lstDevices)
 
-    val res = Await.result(result, 10.seconds)
-    val mountPoints = ArrayBuffer[String]()
+    val res: (Seq[(String, String, String, Option[String])], ArrayBuffer[Device]) = Await.result(result, 10.seconds)
 
     if (res._1.nonEmpty) {
-      val resFc = res._1.head
-      res._2.foreach { device =>
-        if (device.uuid == resFc._1) {
-          mountPoints += device.mountpoint
-        }
-      }
+      val lstDeviceUuid: Seq[String] = res._1.map(_._1)
+      val mountPoints = res._2.filter(device => lstDeviceUuid.contains(device.uuid))
+
+      logger.debug(s"lstDeviceUuid=$lstDeviceUuid")
       logger.debug(s"mountPoints=$mountPoints")
-      Future.successful(openFile(mountPoints.head, resFc._2, resFc._3, resFc._4))
+
+      val headFileCard = res._1.filter(fc => fc._1 == mountPoints.head.uuid).head
+      Future.successful(openFile(mountPoint = mountPoints.head.mountpoint, fPath = headFileCard._2, name = headFileCard._3, mimeType = headFileCard._4))
     }
     else {
       Future.successful(BadRequest(s"can't show file with ID sha256 = ${sha256.getOrElse("")}"))
     }
   }
 
+  @deprecated
   def viewFileByNaturalKey(deviceUid: String, path: String, fName: String): Action[AnyContent] = Action.async {
     val result: Future[(Seq[(String, String, String, Option[String])], ArrayBuffer[Device])] = for {
       lstFiles <- getFilesByNaturalKey(deviceUid, path, fName)

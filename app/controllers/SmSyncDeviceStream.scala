@@ -1,5 +1,6 @@
 package controllers
 
+import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.util
 
@@ -263,6 +264,34 @@ class SmSyncDeviceStream @Inject()(val database: DBService)
       + s"  Elapsed time: ${System.currentTimeMillis - start} ms")
   }
 
+  def deleteNonExistsFpathInDb(deviceUid: String): Action[AnyContent] = Action {
+    debugParam
+    FileUtils.getDevicesInfo(deviceUid).map { devices =>
+      debug(devices)
+      val device = devices.find(_.uuid == deviceUid)
+      debug(device)
+      if (device.isDefined) {
+        database.runAsync(Tables.SmFileCard
+          .filter(_.storeName === deviceUid)
+          .map(fld => fld.fParent)
+          .distinct.to[List].result)
+          .map { dbGet =>
+            dbGet.foreach { cPath =>
+              if (!Paths.get(device.get.mountpoint + OsConf.fsSeparator + cPath).toFile.exists) {
+                logger.debug(s"deleteNonExistsFpathInDb ${device.get.mountpoint + OsConf.fsSeparator + cPath}")
+                val insRes = database.runAsync(Tables.SmFileCard.filter(_.storeName === deviceUid).filter(_.fParent === cPath).delete)
+                insRes onComplete {
+                  case Success(suc) => logger.debug(s"deleted [$suc] row , fParent = [$cPath]")
+                  case Failure(ex) => logger.error(s"delFromDb -> Delete from DB error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+                }
+              }
+            }
+          }
+        logger.info("DONE deleteNonExistsFpathInDb")
+      }
+    }
+    Ok("Job run")
+  }
 
   def calcCRC(device: String): Action[AnyContent] = Action.async {
     val config = ConfigFactory.load("scanImport.conf")

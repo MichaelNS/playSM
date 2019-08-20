@@ -38,6 +38,12 @@
                 <button class="button success">convert device ID batch</button>
             </form>
         </div>
+
+        <div class="input-group-button">
+            <form action="@routes.SmSyncDeviceStream.deleteNonExistsFpathInDb(device)" method="post">
+                <button class="button success">delete non exists file path in DB</button>
+            </form>
+        </div>
     </div>
 
 </html>
