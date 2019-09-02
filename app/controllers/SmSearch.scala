@@ -1,6 +1,7 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
+import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, _}
 import play.api.mvc.{Action, _}
@@ -14,6 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsFinder)
   extends InjectedController {
 
+  private val logger = Logger(classOf[SmSearch])
   val gLimit: Int = 100
 
   def queryForm: Action[AnyContent] = Action {
@@ -22,7 +24,9 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
 
   def byFileName(fileName: String, limit: Int): Action[AnyContent] = Action.async {
     val maxLimit: Int = Math.min(limit, gLimit)
-    val fileNameFnd = fileName.replace(" ", "%")
+    val fileNameFnd = fileName.replace(" ", "%").toLowerCase()
+
+    logger.debug(s"fileName - $fileName")
 
     val qry = sql"""
        SELECT DISTINCT fc."F_NAME"
@@ -34,6 +38,8 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
       .as[String]
 
     database.runAsync(qry).map { rowSeq =>
+      logger.debug(rowSeq.size.toString)
+
       Ok(Json.toJson(rowSeq))
     }
   }
