@@ -45,6 +45,7 @@ $(function () {
                 data: {name: ui.item.value},
                 dataType: "json",
                 success: function (result) {
+                    table.clear();
                     table.rows.add(result).draw();
                 },
                 error: function (request, status, error) {
