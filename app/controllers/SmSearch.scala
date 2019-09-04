@@ -44,7 +44,8 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
     }
   }
 
-  case class FilePath(name: String,
+  case class FilePath(/*id: String,*/
+                      name: String,
                       path: String,
                       sha256: String
                      ) {
@@ -52,6 +53,7 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
   }
 
   implicit val locationFilePath: Writes[FilePath] = (
+    //    (JsPath \ "id").write[String] and
     (JsPath \ "name").write[String] and
       (JsPath \ "path").write[String] and
       (JsPath \ "sha256").write[String]
@@ -71,7 +73,11 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
 
     database.runAsync(qry).map { rowSeq =>
       val filePath = ArrayBuffer[FilePath]()
-      rowSeq.foreach { p => filePath += FilePath(name = p._1, path = p._2, sha256 = p._3) }
+      var cnt = 1
+      rowSeq.foreach { p =>
+        filePath += FilePath(/*cnt.toString,*/ name = p._1, path = p._2, sha256 = p._3)
+        cnt += 1
+      }
 
       Ok(Json.toJson(filePath))
     }
