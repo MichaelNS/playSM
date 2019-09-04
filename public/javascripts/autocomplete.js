@@ -9,9 +9,11 @@ $(function () {
             // {"data": "id"},
             {
                 "data": "name",
-                "render": function(data, type, row, meta){
-                    if(type === 'display'){
-                        data = '<a href="view-file?sha256=' + row.sha256 + '">' + data + '</a>';
+                "render": function (data, type, row, meta) {
+                    if (type === 'display') {
+                        if (row.sha256)
+                            data = '<a href="view-file?sha256=' + row.sha256 + '">' + data + '</a>';
+                        else data
                     }
                     return data;
                 }
