@@ -16,7 +16,7 @@ import org.joda.time.DateTime
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import ru.ns.model.OsConf
-import ru.ns.tools.{FileUtils, SmExif}
+import ru.ns.tools.{FileUtils, SmExifUtil}
 import services.db.DBService
 import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
@@ -338,7 +338,7 @@ class SmSyncDeviceStream @Inject()(val database: DBService)
   def getExif(fileName: String): Action[AnyContent] = Action {
     debugParam
 
-    SmExif.getExif(fileName)
+    SmExifUtil.getExif("/home/user/" + fileName)
 
     Ok("Job run")
   }
