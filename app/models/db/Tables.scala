@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2019-02-08T20:19:32.301+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2019-09-09T17:23:24.857+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -16,7 +16,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = SmCategoryFc.schema ++ SmDevice.schema ++ SmFileCard.schema ++ SmPathMove.schema
+  lazy val schema: profile.SchemaDescription = Array(SmCategoryFc.schema, SmDevice.schema, SmExif.schema, SmFileCard.schema, SmPathMove.schema).reduceLeft(_ ++ _)
 
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl: profile.DDL = schema
@@ -126,6 +126,56 @@ trait Tables {
 
   /** Collection-like TableQuery object for table SmDevice */
   lazy val SmDevice = new TableQuery(tag => new SmDevice(tag))
+
+  /** Entity class storing rows of table SmExif
+    *
+    * @param id                Database column ID SqlType(varchar), PrimaryKey
+    * @param dateTime          Database column DATE_TIME SqlType(timestamp), Default(None)
+    * @param dateTimeOriginal  Database column DATE_TIME_ORIGINAL SqlType(timestamp), Default(None)
+    * @param dateTimeDigitized Database column DATE_TIME_DIGITIZED SqlType(timestamp), Default(None)
+    * @param make              Database column MAKE SqlType(varchar), Default(None)
+    * @param model             Database column MODEL SqlType(varchar), Default(None)
+    * @param software          Database column SOFTWARE SqlType(varchar), Default(None)
+    * @param exifImageWidth    Database column EXIF_IMAGE_WIDTH SqlType(varchar), Default(None)
+    * @param exifImageHeight   Database column EXIF_IMAGE_HEIGHT SqlType(varchar), Default(None) */
+  case class SmExifRow(id: String, dateTime: Option[java.time.LocalDateTime] = None, dateTimeOriginal: Option[java.time.LocalDateTime] = None, dateTimeDigitized: Option[java.time.LocalDateTime] = None, make: Option[String] = None, model: Option[String] = None, software: Option[String] = None, exifImageWidth: Option[String] = None, exifImageHeight: Option[String] = None)
+
+  /** GetResult implicit for fetching SmExifRow objects using plain SQL queries */
+  implicit def GetResultSmExifRow(implicit e0: GR[String], e1: GR[Option[java.time.LocalDateTime]], e2: GR[Option[String]]): GR[SmExifRow] = GR {
+    prs =>
+      import prs._
+      SmExifRow.tupled((<<[String], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String]))
+  }
+
+  /** Table description of table sm_exif. Objects of this class serve as prototypes for rows in queries. */
+  class SmExif(_tableTag: Tag) extends profile.api.Table[SmExifRow](_tableTag, "sm_exif") {
+    def * = (id, dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight) <> (SmExifRow.tupled, SmExifRow.unapply)
+
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = ((Rep.Some(id), dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight)).shaped.<>({ r => import r._; _1.map(_ => SmExifRow.tupled((_1.get, _2, _3, _4, _5, _6, _7, _8, _9))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column ID SqlType(varchar), PrimaryKey */
+    val id: Rep[String] = column[String]("ID", O.PrimaryKey)
+    /** Database column DATE_TIME SqlType(timestamp), Default(None) */
+    val dateTime: Rep[Option[java.time.LocalDateTime]] = column[Option[java.time.LocalDateTime]]("DATE_TIME", O.Default(None))
+    /** Database column DATE_TIME_ORIGINAL SqlType(timestamp), Default(None) */
+    val dateTimeOriginal: Rep[Option[java.time.LocalDateTime]] = column[Option[java.time.LocalDateTime]]("DATE_TIME_ORIGINAL", O.Default(None))
+    /** Database column DATE_TIME_DIGITIZED SqlType(timestamp), Default(None) */
+    val dateTimeDigitized: Rep[Option[java.time.LocalDateTime]] = column[Option[java.time.LocalDateTime]]("DATE_TIME_DIGITIZED", O.Default(None))
+    /** Database column MAKE SqlType(varchar), Default(None) */
+    val make: Rep[Option[String]] = column[Option[String]]("MAKE", O.Default(None))
+    /** Database column MODEL SqlType(varchar), Default(None) */
+    val model: Rep[Option[String]] = column[Option[String]]("MODEL", O.Default(None))
+    /** Database column SOFTWARE SqlType(varchar), Default(None) */
+    val software: Rep[Option[String]] = column[Option[String]]("SOFTWARE", O.Default(None))
+    /** Database column EXIF_IMAGE_WIDTH SqlType(varchar), Default(None) */
+    val exifImageWidth: Rep[Option[String]] = column[Option[String]]("EXIF_IMAGE_WIDTH", O.Default(None))
+    /** Database column EXIF_IMAGE_HEIGHT SqlType(varchar), Default(None) */
+    val exifImageHeight: Rep[Option[String]] = column[Option[String]]("EXIF_IMAGE_HEIGHT", O.Default(None))
+  }
+
+  /** Collection-like TableQuery object for table SmExif */
+  lazy val SmExif = new TableQuery(tag => new SmExif(tag))
 
   /** Entity class storing rows of table SmFileCard
     *

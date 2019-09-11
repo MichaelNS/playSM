@@ -23,6 +23,7 @@
                     <th>reliable</th>
                     <th>syncDevice</th>
                     <th>calcCRC</th>
+                    <th>calcExif</th>
                 </tr>
             </thead>
             <tbody>
@@ -62,6 +63,14 @@
                         <div class="input-group-button">
                             <form action="@routes.SmSyncDeviceStream.calcCRC(device.uid)" method="post">
                                 <button class="button primary">calcCRC</button>
+                            </form>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="input-group-button">
+                            <form action="@routes.SmSyncExif.calcExif(device.uid)" method="post">
+                                <button class="button primary">calcExif</button>
                             </form>
                         </div>
                     </td>

@@ -116,3 +116,50 @@ object SmCategoryFc {
     )
   }
 }
+
+case class SmExif(
+                   id: String,
+                   dateTime: Option[java.time.LocalDateTime] = None,
+                   dateTimeOriginal: Option[java.time.LocalDateTime] = None,
+                   dateTimeDigitized: Option[java.time.LocalDateTime] = None,
+                   make: Option[String] = None,
+                   model: Option[String] = None,
+                   software: Option[String] = None,
+                   exifImageWidth: Option[String] = None,
+                   exifImageHeight: Option[String] = None
+                 ) {
+  def toRow: Tables.SmExifRow = {
+    Tables.SmExifRow(
+      id = id,
+      dateTime = dateTime,
+      dateTimeOriginal = dateTimeOriginal,
+      dateTimeDigitized = dateTimeDigitized,
+      make = make,
+      model = model,
+      software = software,
+      exifImageWidth = exifImageWidth,
+      exifImageHeight = exifImageHeight
+    )
+  }
+}
+
+object SmExif {
+  def apply(row: Tables.SmExifRow): EntitySmFc[SmExif] = {
+    EntitySmFc(
+      id = row.id,
+      data = SmExif(
+        id = row.id,
+        dateTime = row.dateTime,
+        dateTimeOriginal = row.dateTimeOriginal,
+        dateTimeDigitized = row.dateTimeDigitized,
+        make = row.make,
+        model = row.model,
+        software = row.software,
+        exifImageWidth = row.exifImageWidth,
+        exifImageHeight = row.exifImageHeight
+      )
+    )
+  }
+}
+
+

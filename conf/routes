@@ -20,7 +20,12 @@ POST        /syncDeviceStream/:device                                 controller
 + nocsrf
 POST        /syncDeviceStream/deleteNonExistsFpathInDb/:device        controllers.SmSyncDeviceStream.deleteNonExistsFpathInDb(device: String)
 
-GET         /exif/:fileName                                           controllers.SmSyncDeviceStream.getExif(fileName:String)
+
+
++ nocsrf
+POST        /calcExif/:device                                         controllers.SmSyncExif.calcExif(device:String)
+GET         /exif/:fileName                                           controllers.SmSyncExif.getExif(fileName:String)
+
 
 
 GET         /fc/byDevice/:device                                      controllers.SmApplication.getByDevice(device: String)
