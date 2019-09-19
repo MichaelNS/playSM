@@ -2,7 +2,6 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
-import play.api.Logger
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import ru.ns.model.{OsConf, SmExif}
 import ru.ns.tools.{FileUtils, SmExifUtil}
@@ -21,7 +20,7 @@ import scala.util.{Failure, Success}
 class SmSyncExif @Inject()(val database: DBService)
   extends InjectedController {
 
-  private val logger = Logger(classOf[SmSyncExif])
+  val logger = play.api.Logger(getClass)
 
 
   def calcExif(device: String): Action[AnyContent] = Action.async {

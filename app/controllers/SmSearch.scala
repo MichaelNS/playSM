@@ -1,7 +1,6 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, _}
 import play.api.mvc.{Action, _}
@@ -15,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsFinder)
   extends InjectedController {
 
-  private val logger = Logger(classOf[SmSearch])
+  val logger = play.api.Logger(getClass)
   val gLimit: Int = 100
 
   def queryForm: Action[AnyContent] = Action {

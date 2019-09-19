@@ -5,7 +5,6 @@ import javax.inject.{Inject, Singleton}
 import models.db.Tables
 import models.{DeviceView, SmFileCard}
 import org.joda.time.DateTime
-import play.api.Logger
 import play.api.mvc._
 import ru.ns.model.OsConf
 import services.db.DBService
@@ -22,7 +21,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmApplication @Inject()(val database: DBService)
   extends InjectedController {
 
-  private val logger = Logger(classOf[SmApplication])
+  val logger = play.api.Logger(getClass)
 
   def smIndex: Action[AnyContent] = Action.async {
     implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))

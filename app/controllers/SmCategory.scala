@@ -12,7 +12,6 @@ import models.DirWithoutCat
 import models.db.Tables
 import org.camunda.bpm.dmn.engine.{DmnDecision, DmnDecisionTableResult, DmnEngineConfiguration}
 import org.camunda.bpm.engine.variable.{VariableMap, Variables}
-import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.Constraints
@@ -43,7 +42,7 @@ object FormCategoryUpdate {
 class SmCategory @Inject()(val database: DBService)
   extends InjectedController {
 
-  private val logger = Logger(classOf[SmCategory])
+  val logger = play.api.Logger(getClass)
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()

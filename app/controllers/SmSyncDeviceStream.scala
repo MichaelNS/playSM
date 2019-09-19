@@ -13,7 +13,6 @@ import javax.inject.{Inject, Singleton}
 import models.db.Tables
 import models.{DeviceView, SmDevice}
 import org.joda.time.DateTime
-import play.api.Logger
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import ru.ns.model.OsConf
 import ru.ns.tools.FileUtils
@@ -35,7 +34,7 @@ import scala.util.{Failure, Success}
 class SmSyncDeviceStream @Inject()(val database: DBService)
   extends InjectedController {
 
-  private val logger = Logger(classOf[SmSyncDeviceStream])
+  val logger = play.api.Logger(getClass)
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()

@@ -1,8 +1,8 @@
-import play.api.Logger
+
 
 package object controllers {
 
-  private val logger = Logger(classOf[SmApplication])
+  val logger = play.api.Logger(getClass)
 
   def debugParam(implicit line: sourcecode.Line, enclosing: sourcecode.Enclosing, args: sourcecode.Args): Unit = {
     logger.debug(s"debugParam ${enclosing.value} : ${line.value}  - "

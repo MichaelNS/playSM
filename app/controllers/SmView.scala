@@ -4,7 +4,6 @@ import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
-import play.api.Logger
 import play.api.http.HttpEntity
 import play.api.mvc._
 import ru.ns.model.{Device, OsConf}
@@ -22,7 +21,7 @@ import scala.concurrent.{Await, Future}
 class SmView @Inject()(val database: DBService)
   extends InjectedController {
 
-  private val logger = Logger(classOf[SmView])
+  val logger = play.api.Logger(getClass)
 
   def viewStorage(deviceName: String, depth: Int = 1): Action[AnyContent] = Action.async {
     debugParam

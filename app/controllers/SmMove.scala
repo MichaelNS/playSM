@@ -9,7 +9,6 @@ import com.google.common.hash.Hashing
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
-import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.Constraints
@@ -41,7 +40,7 @@ object FormCrMove {
 class SmMove @Inject()(val database: DBService)
   extends InjectedController {
 
-  private val logger = Logger(classOf[SmMove])
+  val logger = play.api.Logger(getClass)
 
   /**
     * show list path from [[models.db.Tables.SmFileCard]]
