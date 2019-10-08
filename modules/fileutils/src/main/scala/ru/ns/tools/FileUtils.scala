@@ -138,6 +138,42 @@ object FileUtils {
     visitor.done()
   }
 
+  /**
+    * return list directories by path
+    *
+    * used [[SmSyncCmpDir]]
+    *
+    * @param path2scan  paths to scan - (home/user/Documents)
+    * @param mountPoint mountPoint
+    * @return ArrayBuffer[SmPath]
+    */
+
+  def getPathChildren(path2scan: String,
+                      mountPoint: String,
+                      maxDepth: Int = 1
+                         ): (ArrayBuffer[SmPath], ArrayBuffer[SmPath]) = {
+    debug(path2scan)
+
+    val visitor = new SmRootVisitor("", mountPoint)
+    val startingDir = Paths.get(mountPoint + OsConf.fsSeparator + path2scan)
+
+    debug(startingDir)
+
+    if (startingDir.toFile.exists) {
+      try
+        Files.walkFileTree(startingDir, util.EnumSet.noneOf(classOf[FileVisitOption]), maxDepth, visitor)
+      catch {
+        case ex: IOException =>
+          logger.error(s"getPathChildren error: ${ex.toString}\nStackTrace:\n${ex.getStackTrace.mkString("\n")}")
+          throw ex
+      }
+    } else {
+      logger.warn(s"getPathChildren -> Current path IS NOT EXISTS [$path2scan]   startingDir [$startingDir]")
+    }
+
+    visitor.done()
+  }
+
   def getFilesFromStore(impPath: String,
                         deviceUid: String,
                         mountPoint: String,
