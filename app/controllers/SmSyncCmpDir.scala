@@ -55,8 +55,7 @@ class SmSyncCmpDir @Inject()(implicit assetsFinder: AssetsFinder, config: Config
 
     val roots = ArrayBuffer[Root]()
 
-    FileUtils.getDevicesInfo(deviceUid).map { devices =>
-      val device = devices.find(_.uuid == deviceUid)
+    FileUtils.getDeviceInfo(deviceUid).map { device =>
       if (device.isDefined) {
         val impPaths: Seq[String] = config.get[Seq[String]]("paths2Scan.volumes." + deviceUid)
         debug(s"${impPaths.length} : $impPaths")

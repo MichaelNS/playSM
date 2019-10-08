@@ -23,20 +23,22 @@ class SmSyncExif @Inject()(val database: DBService)
   val logger = play.api.Logger(getClass)
 
 
-  def calcExif(device: String): Action[AnyContent] = Action.async {
+  def calcExif(deviceUid: String): Action[AnyContent] = Action.async {
 
     database.runAsync(
       (for {
         (fcRow, exifRow) <- Tables.SmFileCard joinLeft Tables.SmExif on ((fc, exif) => {
           fc.id === exif.id
-        }) if fcRow.storeName === device && fcRow.fMimeTypeJava === "image/jpeg" && exifRow.isEmpty}
+        }) if fcRow.storeName === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && exifRow.isEmpty}
         yield (fcRow.id, fcRow.fParent, fcRow.fName)
         ).to[List].result)
       .map { rowSeq =>
-        FileUtils.getDevicesInfo() onComplete {
-          case Success(sucLabel2Drive) =>
-            val mountPoint = sucLabel2Drive.filter(_.uuid == device).head.mountpoint
-            rowSeq.foreach { cFc => writeExif(cFc._1, mountPoint + OsConf.fsSeparator + cFc._2 + cFc._3) }
+        FileUtils.getDeviceInfo(deviceUid) onComplete {
+          case Success(device) =>
+            if (device.isDefined) {
+              val mountPoint = device.head.mountpoint
+              rowSeq.foreach { cFc => writeExif(cFc._1, mountPoint + OsConf.fsSeparator + cFc._2 + cFc._3) }
+            }
           case Failure(ex)
           => logger.error(s"calcCRC error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
         }
