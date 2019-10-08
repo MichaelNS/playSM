@@ -82,7 +82,6 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, langs: Langs, messa
         implicit val messagesProvider: MessagesProvider = {
           MessagesImpl(lang, messagesApi)
         }
-        val token = CSRF.getToken(request)
 
         Ok(views.html.smr_category(rowSeq, ExtensionForm.form))
       }

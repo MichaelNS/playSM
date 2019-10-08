@@ -65,7 +65,6 @@ lazy val root = (project in file("."))
   .settings(routesGenerator := InjectedRoutesGenerator)
   .settings(
     libraryDependencies += ehcache,
-    libraryDependencies += filters,
 
     libraryDependencies += "com.typesafe.slick" %% "slick" % "3.3.2",
     libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
