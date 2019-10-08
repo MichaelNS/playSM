@@ -73,7 +73,8 @@
 
 
     <!-- Shows sql to console -->
-    <!--    <logger name="slick.jdbc" level="DEBUG"/>-->
+    <!--<logger name="slick.jdbc" level="DEBUG"/>-->
+    <!--<logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG"/>-->
 
     <!-- Off these ones as they are annoying, and anyway we manage configuration ourself -->
     <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF"/>

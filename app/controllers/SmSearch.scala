@@ -86,34 +86,43 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
     */
   def getFilesbyName(draw: Int, start: Int, length: Int): Action[AnyContent] = Action.async { implicit request =>
     val search = request.getQueryString("search[value]").getOrElse("").replace(" ", "%").toLowerCase()
+    val sortCol = request.getQueryString("order[0][column]").getOrElse("").toInt
+    val sortDir = request.getQueryString("order[0][dir]").getOrElse("")
     debugParam
-    logger.debug(s"search = $search")
+    logger.debug(s"search = $search   sortCol = $sortCol   sortDir = $sortDir")
 
-    val cntAll = sql"""     SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc) res""".as[(Int)]
-    val cntFiltered = sql"""SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc WHERE fc.f_name_lc LIKE '%#$search%' ) res""".as[(Int)]
-    val qryBySearch = (for {
+    val baseQry = (for {
       (fcRow, device) <- Tables.SmFileCard joinLeft Tables.SmDevice on ((fc, device) => {
         fc.storeName === device.uid
-      }) if fcRow.fNameLc.like("%" + search + "%")
+      })
     } yield (fcRow, device))
       .groupBy(uRow => (uRow._1.fName, uRow._1.fParent, uRow._1.sha256, uRow._2.map(_.label)))
       .map({ case (uRow, cnt) => (uRow, cnt.map(_._1).length) })
-      .drop(start).take(length).result
+
+    val cntAll = baseQry.length.result
+    val filtered = baseQry.filter(_._1._1.like("%" + search + "%"))
+    val cntFiltered = filtered.length.result
+    val qryBySearch = filtered.drop(start).take(length)
+
+    val sortedQ = (sortCol, sortDir) match {
+      case (0, "desc") => qryBySearch.sortBy(_._1._1.desc)
+      case (1, "asc") => qryBySearch.sortBy(_._1._2)
+      case (1, "desc") => qryBySearch.sortBy(_._1._2.desc)
+      case (2, "asc") => qryBySearch.sortBy(_._1._3)
+      case (3, "desc") => qryBySearch.sortBy(_._1._3.desc)
+      case (_, _) => qryBySearch.sortBy(_._1._1)
+    }
 
     val composedAction = for {cntAll <- cntAll
                               cntFiltered <- cntFiltered
-                              qryBySearch <- qryBySearch
+                              qryBySearch <- sortedQ.result
     } yield (cntAll, cntFiltered, qryBySearch)
 
     database.runAsync(composedAction).map { rowSeq =>
       val filePath = ArrayBuffer[FilePath]()
       rowSeq._3.foreach { p => filePath += FilePath(name = p._1._1, path = p._1._2, sha256 = p._1._3.getOrElse("")) }
 
-      val ret = Paging(draw, rowSeq._1.head, rowSeq._2.head, filePath.toSeq, "")
-
-      //      val qwe = Json.toJson(ret)
-      //      println(Json.prettyPrint(qwe))
-      //      println(qwe)
+      val ret = Paging(draw, rowSeq._1, rowSeq._2, filePath.toSeq, "")
 
       Ok(Json.toJson(ret))
     }
