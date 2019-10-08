@@ -43,13 +43,11 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
     }
   }
 
-  case class Paging(data: Seq[FilePath],
-                    options: Seq[String],
-                    files: Seq[String],
-                    draw: Int,
-                    recordsTotal: String,
-                    recordsFiltered: String
-                    //                                        ,                     error: String
+  case class Paging(draw: Int,
+                    recordsTotal: Int,
+                    recordsFiltered: Int,
+                    data: Seq[FilePath],
+                    error: String
                    ) {
   }
 
@@ -62,58 +60,50 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
   }
 
   implicit val locationFilePath: Writes[FilePath] = (
-    //    (JsPath \ "id").write[String] and
     (JsPath \ "name").write[String] and
       (JsPath \ "path").write[String] and
       (JsPath \ "sha256").write[String]
     ) (unlift(FilePath.unapply))
 
   implicit lazy val pagingWrites: Writes[Paging] = (
-    (JsPath \ "data").write[Seq[FilePath]] and
-      (JsPath \ "options").write[Seq[String]] and
-      (JsPath \ "files").write[Seq[String]] and
-      (JsPath \ "draw").write[Int] and
-      (JsPath \ "recordsTotal").write[String] and
-      (JsPath \ "recordsFiltered").write[String]
+    (JsPath \ "draw").write[Int] and
+      (JsPath \ "recordsTotal").write[Int] and
+      (JsPath \ "recordsFiltered").write[Int] and
+      (JsPath \ "data").write[Seq[FilePath]] and
+      (JsPath \ "error").write[String]
     ) (unlift(Paging.unapply))
 
-  //      (JsPath \ "data").lazyWrite(Writes.seq[FilePath](pagingWrites))
-  //  (JsPath \ "error").write[String]
 
   def getFilesbyName(draw: Int, start: Int, length: Int, search: String): Action[AnyContent] = Action.async {
-    //    val maxLimit: Int = Math.min(limit, gLimit)
-    val maxLimit: Int = 50
     logger.info(draw.toString)
     logger.info(start.toString)
     logger.info(search)
+
+    val cntAll = sql"""     SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc) res""".as[(Int)]
+    val cntFiltered = sql"""SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc WHERE fc.f_name LIKE '%search%') res""".as[(Int)]
 
     val qry = sql"""
        SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256
        FROM sm_file_card fc
        WHERE fc.f_name like '%search%'
-       order by fc.f_name
-       offset '#$start'
-       limit '#$length'
-      """
-      .as[(String, String, String)]
+       order by fc.f_name offset '#$start' limit '#$length'
+      """.as[(String, String, String)]
 
-    database.runAsync(qry).map { rowSeq =>
+    val composedAction = for {cntAll <- cntAll
+                              cntFiltered <- cntFiltered
+                              qry <- qry} yield (cntAll, cntFiltered, qry)
+
+    database.runAsync(composedAction).map { rowSeq =>
       val filePath = ArrayBuffer[FilePath]()
-      var cnt = 1
-      rowSeq.foreach { p =>
-        filePath += FilePath(/*cnt.toString,*/ name = p._1, path = p._2, sha256 = p._3)
-        cnt += 1
-      }
+      rowSeq._3.foreach { p => filePath += FilePath(name = p._1, path = p._2, sha256 = p._3) }
 
-      //      val ret = Paging(1, "20", "15", filePath.toSeq, "123123")
-      val ret = Paging(filePath.toSeq, Seq.empty, Seq.empty, 1, "20", "20")
+      val ret = Paging(draw, rowSeq._1.head, rowSeq._2.head, filePath.toSeq, "")
 
       val qwe = Json.toJson(ret)
       //      println(Json.prettyPrint(qwe))
       println(qwe)
 
       Ok(Json.toJson(ret))
-      //            Ok(Json.toJson(filePath))
     }
   }
 }
