@@ -74,19 +74,29 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
     ) (unlift(Paging.unapply))
 
 
-  def getFilesbyName(draw: Int, start: Int, length: Int, search: String): Action[AnyContent] = Action.async {
-    logger.info(draw.toString)
-    logger.info(start.toString)
-    logger.info(search)
+  /**
+    * https://github.com/abdheshkumar/PlayFrameWork_DataTable/blob/master/app/controllers/Application.scala
+    * https://editor.datatables.net/examples/inline-editing/serverSide.html
+    *
+    * @param draw   draw
+    * @param start  start
+    * @param length length
+    * @return
+    */
+  def getFilesbyName(draw: Int, start: Int, length: Int): Action[AnyContent] = Action.async { implicit request =>
+    val search = request.getQueryString("search[value]").getOrElse("").replace(" ", "%").toLowerCase()
+    val where = sql"""WHERE fc.f_name_lc LIKE '%#$search%'"""
+
+    debugParam
+    logger.debug(s"search = $search")
+    logger.debug(where.toString)
 
     val cntAll = sql"""     SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc) res""".as[(Int)]
-    val cntFiltered = sql"""SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc WHERE fc.f_name LIKE '%search%') res""".as[(Int)]
+    val cntFiltered = sql"""SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc WHERE fc.f_name_lc LIKE '%#$search%' ) res""".as[(Int)]
 
-    val qry = sql"""
-       SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256
-       FROM sm_file_card fc
-       WHERE fc.f_name like '%search%'
-       order by fc.f_name offset '#$start' limit '#$length'
+    val qry = sql"""SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc
+       WHERE fc.f_name_lc LIKE '%#$search%'
+       ORDER BY fc.f_name offset '#$start' limit '#$length'
       """.as[(String, String, String)]
 
     val composedAction = for {cntAll <- cntAll
@@ -99,9 +109,9 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
 
       val ret = Paging(draw, rowSeq._1.head, rowSeq._2.head, filePath.toSeq, "")
 
-      val qwe = Json.toJson(ret)
+      //      val qwe = Json.toJson(ret)
       //      println(Json.prettyPrint(qwe))
-      println(qwe)
+      //      println(qwe)
 
       Ok(Json.toJson(ret))
     }
