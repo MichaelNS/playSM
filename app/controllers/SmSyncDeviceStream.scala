@@ -304,7 +304,7 @@ class SmSyncDeviceStream @Inject()(config: Configuration, val database: DBServic
     database.runAsync(Tables.SmFileCard
       .filter(_.storeName === device)
       .filter(_.sha256.isEmpty)
-      .filter(size => size.fSize.>(0L) && size.fSize.<=(maxSizeFiles))
+      .filter(size => size.fSize > 0L && size.fSize <= maxSizeFiles)
       .sortBy(_.fParent.asc)
       .take(maxCalcFiles)
       .result).map { rowSeq =>
