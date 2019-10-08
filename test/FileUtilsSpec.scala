@@ -137,7 +137,8 @@ class FileUtilsSpec extends PlaySpec {
 
     val fParent = "test" + OsConf.fsSeparator + "tmp"
     val deviceUid = "B6D40831D407F283"
-    var mountPoint = Paths.get(fParent).toFile.getAbsolutePath.replace(fParent, "")
+    var mountPoint = Paths.get(fParent).toFile.getAbsolutePath.replace(fParent.replace(OsConf.fsSeparator, OsConf.getOsSeparator), "")
+
     mountPoint = mountPoint.substring(0, mountPoint.length() - 1)
 
     val path_1 = SmPath("test/tmp/")
