@@ -50,14 +50,14 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     val backUpVolumes = config.get[Seq[String]]("BackUp.volumes")
     val maxRows: Long = config.get[Long]("BackUp.maxResult")
 
-    val baseQry = (for {
+    val baseQry = for {
       a <- Tables.SmFileCard
       if a.sha256.nonEmpty && a.storeName === device && !Tables.SmFileCard
         .filter(b => b.sha256.nonEmpty && b.sha256 === a.sha256 && b.storeName =!= device && b.storeName.inSet(backUpVolumes))
         .filterNot(b => b.fParent endsWith "_files")
         .map(p => p.fName)
         .exists
-    } yield (a.fParent, a.fName, a.fLastModifiedDate))
+    } yield (a.fParent, a.fName, a.fLastModifiedDate)
 
     val cnt = baseQry.length
     val filtQry = baseQry
