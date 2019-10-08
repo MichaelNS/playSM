@@ -93,16 +93,18 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
     debugParam
     logger.debug(s"search = $search   sortCol = $sortCol   sortDir = $sortDir")
 
-    val baseQry = (for {
+    val baseQry = for {
       (fcRow, device) <- Tables.SmFileCard joinLeft Tables.SmDevice on ((fc, device) => {
         fc.storeName === device.uid
       })
-    } yield (fcRow, device))
+    } yield (fcRow, device)
+
+    val cntAll = baseQry.groupBy(uRow => (uRow._1.fNameLc, uRow._1.fName, uRow._1.fParent, uRow._1.sha256, uRow._2.map(_.label)))
+      .map({ case (uRow, cnt) => (uRow, cnt.map(_._1).length) })
+      .length.result
+    val filtered = baseQry.filter(_._1.fNameLc.like("%" + search + "%"))
       .groupBy(uRow => (uRow._1.fNameLc, uRow._1.fName, uRow._1.fParent, uRow._1.sha256, uRow._2.map(_.label)))
       .map({ case (uRow, cnt) => (uRow, cnt.map(_._1).length) })
-
-    val cntAll = baseQry.length.result
-    val filtered = baseQry.filter(_._1._1.like("%" + search + "%"))
     val cntFiltered = filtered.length.result
     val qryBySearch = filtered.drop(start).take(length)
 
