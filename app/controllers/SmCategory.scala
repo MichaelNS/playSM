@@ -15,7 +15,9 @@ import org.camunda.bpm.engine.variable.{VariableMap, Variables}
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.Constraints
-import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.api.i18n._
+import play.api.mvc._
+import play.filters.csrf.CSRF
 import services.db.DBService
 import slick.basic.DatabasePublisher
 import utils.db.SmPostgresDriver.api._
@@ -38,9 +40,21 @@ object FormCategoryUpdate {
   )(FormCategoryUpdate.apply)(FormCategoryUpdate.unapply))
 }
 
+case class ExtensionForm(extension: String)
+
+object ExtensionForm {
+  val form: Form[ExtensionForm] = Form(
+    mapping(
+      "extension" -> text
+    )(ExtensionForm.apply)(ExtensionForm.unapply)
+  )
+}
+
+
 @Singleton
-class SmCategory @Inject()(val database: DBService)
-  extends InjectedController {
+class SmCategory @Inject()(cc: MessagesControllerComponents, langs: Langs, messagesApi: MessagesApi, val database: DBService)
+  extends MessagesAbstractController(cc)
+    with play.api.i18n.I18nSupport {
 
   val logger = play.api.Logger(getClass)
 
@@ -52,7 +66,7 @@ class SmCategory @Inject()(val database: DBService)
     *
     * @return [[views.html.smr_category]]
     */
-  def listCategoryAndCnt: Action[AnyContent] = Action.async {
+  def listCategoryAndCnt: Action[AnyContent] = Action.async { implicit request: MessagesRequest[AnyContent] =>
     database.runAsync(
       (for {
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
@@ -64,7 +78,13 @@ class SmCategory @Inject()(val database: DBService)
         .sortBy(_._2.desc)
         .result)
       .map { rowSeq =>
-        Ok(views.html.smr_category(rowSeq))
+        val lang: Lang = langs.availables.head
+        implicit val messagesProvider: MessagesProvider = {
+          MessagesImpl(lang, messagesApi)
+        }
+        val token = CSRF.getToken(request)
+
+        Ok(views.html.smr_category(rowSeq, ExtensionForm.form))
       }
   }
 
@@ -127,7 +147,7 @@ class SmCategory @Inject()(val database: DBService)
     val qry = (for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
       fc.sha256 === cat.id && fc.fName === cat.fName
     }) if catRow.isEmpty && fcRow.fSize > 0L
-                    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
+    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
       ).groupBy { p => (p._2, p._3) }
       .map(fld => (fld._1._1, fld._1._2))
     database.runAsync(qry.filterNot(_._1 endsWith "_files")
@@ -235,20 +255,22 @@ class SmCategory @Inject()(val database: DBService)
     *
     * @return [[views.html.smr_category_dir_by_ext]]
     */
-  def listDirWithoutCategoryByExtension(extension: String): Action[AnyContent] = Action.async {
+  def listDirWithoutCategoryByExtension(): Action[AnyContent] = Action.async { implicit request =>
     val config = ConfigFactory.load("scanImport.conf")
     val maxFilesTake: Long = config.getBytes("Category.maxFilesTake")
 
-    val qry = if (extension == "") {
+    val formData: ExtensionForm = ExtensionForm.form.bindFromRequest.get
+
+    val qry = if (formData.extension.isEmpty) {
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
       }) if catRow.isEmpty && fcRow.fSize > 0L
-           } yield (fcRow.sha256, fcRow.fParent)
+      } yield (fcRow.sha256, fcRow.fParent)
     } else {
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
-      }) if catRow.isEmpty && fcRow.fSize > 0L && fcRow.fExtension.getOrElse("").toLowerCase === extension
-           } yield (fcRow.sha256, fcRow.fParent)
+      }) if catRow.isEmpty && fcRow.fSize > 0L && fcRow.fExtension.getOrElse("").toLowerCase === formData.extension.toLowerCase
+      } yield (fcRow.sha256, fcRow.fParent)
     }
     database.runAsync(
       qry

@@ -1,4 +1,5 @@
-@(fileCardSeq: Seq[(Option[Option[String]], Int)])()
+@import helper._
+@(fileCardSeq: Seq[(Option[Option[String]], Int)], extFcForm: Form[ExtensionForm])(implicit request: MessagesRequestHeader)
 @_template {
     <div class="row column">
         <h2>smr category</h2>
@@ -6,7 +7,13 @@
 
     <li><a href="@routes.SmCategory.listDirWithoutCatByLastDate">listDirWithoutCatByLastDate</a></li>
     <li><a href="@routes.SmCategory.listFcWithoutCatByLastDate">listFcWithoutCatByLastDate</a></li>
-    <li><a href="@routes.SmCategory.listDirWithoutCategoryByExtension("")">listDirWithoutCategoryByExtension</a></li>
+
+    @form(routes.SmCategory.listDirWithoutCategoryByExtension()) {
+        @CSRF.formField
+        @inputText(extFcForm("extension"))
+
+        <input type="submit" value="Submit">
+    }
 
     <div class="input-group-button2">
         <form method="post" action="@routes.SmMove.moveAllDevices()">
@@ -38,7 +45,7 @@
 
                         <td><a href="@routes.SmCategory.listSubCategoryAndCnt(fileCard._1.flatten.get)" >@fileCard._1</a></td>
                     }
-                    <td>@fileCard._2</td>
+                <td>@fileCard._2</td>
                 </tr>
             }
 

@@ -76,7 +76,7 @@ POST        /moveAllDevices                                           controller
 
 GET         /listDirWithoutCatByLastDate                              controllers.SmCategory.listDirWithoutCatByLastDate
 GET         /listFcWithoutCatByLastDate                               controllers.SmCategory.listFcWithoutCatByLastDate
-GET         /listDirWithoutCategoryByExtension                        controllers.SmCategory.listDirWithoutCategoryByExtension(extension: String)
+POST        /listDirWithoutCategoryByExtension                        controllers.SmCategory.listDirWithoutCategoryByExtension
 GET         /listDirWithoutCatByParent/:isBegins/:device              controllers.SmCategory.listDirWithoutCatByParent(device: String, isBegins: Boolean)
 + nocsrf
 POST        /setCategoryAndDescription/:isBegins/:fParent             controllers.SmCategory.assignCategoryAndDescription(fParent: String, isBegins: Boolean)
