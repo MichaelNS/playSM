@@ -12,7 +12,7 @@ import models.db.Tables
 import models.{DeviceView, SmDevice}
 import org.joda.time.DateTime
 import play.api.Configuration
-import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.api.mvc._
 import ru.ns.model.OsConf
 import ru.ns.tools.FileUtils
 import services.db.DBService
@@ -29,8 +29,8 @@ import scala.util.{Failure, Success}
   * Created by ns on 12.03.2018
   */
 @Singleton
-class SmSyncDeviceStream @Inject()(config: Configuration, val database: DBService)
-  extends InjectedController {
+class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Configuration, val database: DBService)
+  extends MessagesAbstractController(cc) {
 
   val logger = play.api.Logger(getClass)
 
@@ -65,7 +65,7 @@ class SmSyncDeviceStream @Inject()(config: Configuration, val database: DBServic
     }
   }
 
-  def deviceImport: Action[AnyContent] = Action.async {
+  def deviceImport: Action[AnyContent] = Action.async { implicit request: MessagesRequest[AnyContent] =>
     implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
 
     val qry = sql"""

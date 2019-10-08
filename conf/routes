@@ -9,7 +9,6 @@ GET         /debugQry/:device                                         controller
 POST        /deviceTree/:device                                       controllers.SmApplication.deviceTree(device)
 
 
-+ nocsrf
 POST        /refreshDevice                                            controllers.SmSyncDeviceStream.refreshDevice
 
 + nocsrf

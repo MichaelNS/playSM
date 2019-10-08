@@ -1,14 +1,15 @@
-@(devices: scala.collection.mutable.Seq[DeviceView])()
+@import helper._
+@(devices: scala.collection.mutable.Seq[DeviceView])(implicit request: MessagesRequestHeader)
 @_template {
     <div class="row column">
         <h2>Device import</h2>
     </div>
 
-    <div class="input-group-button">
-        <form action="@routes.SmSyncDeviceStream.refreshDevice" method="post">
-            <button class="button success">refresh devices</button>
-        </form>
-    </div>
+    @form(routes.SmSyncDeviceStream.refreshDevice()) {
+        @CSRF.formField
+
+        <button class="button success">refresh devices</button>
+    }
 
     <div class="row column">
         <table class="stack">
