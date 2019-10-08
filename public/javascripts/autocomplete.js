@@ -5,6 +5,9 @@ $(function () {
     }
 
     var table = $('#fc-table-filter').DataTable({
+        "serverSide": true,
+        "ajax": "/get-files-by-file-name",
+
         "columns": [
             // {"data": "id"},
             {
@@ -21,38 +24,8 @@ $(function () {
             {"data": "path"},
             {"data": "sha256"}
         ]
+        // "paging": true
+        // "processing": true,
     });
 
-    $("#f-name").autocomplete({
-        source: function (request, response) {
-            $.ajax({
-                url: "/search-by-file-name",
-                data: {name: request.term},
-                dataType: "json",
-                success: response,
-                error: function () {
-                    response([]);
-                }
-            });
-        },
-        // open: function() {
-        //     $('#f-name').autocomplete("widget").width(900)
-        // },
-        minLength: 2,
-        select: function (event, ui) {
-            $.ajax({
-                url: "/get-files-by-file-name",
-                data: {name: ui.item.value},
-                dataType: "json",
-                success: function (result) {
-                    table.clear();
-                    table.rows.add(result).draw();
-                },
-                error: function (request, status, error) {
-                    alert(request.responseText);
-                }
-            });
-
-        }
-    });
 });

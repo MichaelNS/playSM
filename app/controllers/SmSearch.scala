@@ -43,6 +43,16 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
     }
   }
 
+  case class Paging(data: Seq[FilePath],
+                    options: Seq[String],
+                    files: Seq[String],
+                    draw: Int,
+                    recordsTotal: String,
+                    recordsFiltered: String
+                    //                                        ,                     error: String
+                   ) {
+  }
+
   case class FilePath(/*id: String,*/
                       name: String,
                       path: String,
@@ -58,15 +68,32 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
       (JsPath \ "sha256").write[String]
     ) (unlift(FilePath.unapply))
 
-  def getFilesbyName(fileName: String, limit: Int): Action[AnyContent] = Action.async {
-    val maxLimit: Int = Math.min(limit, gLimit)
+  implicit lazy val pagingWrites: Writes[Paging] = (
+    (JsPath \ "data").write[Seq[FilePath]] and
+      (JsPath \ "options").write[Seq[String]] and
+      (JsPath \ "files").write[Seq[String]] and
+      (JsPath \ "draw").write[Int] and
+      (JsPath \ "recordsTotal").write[String] and
+      (JsPath \ "recordsFiltered").write[String]
+    ) (unlift(Paging.unapply))
+
+  //      (JsPath \ "data").lazyWrite(Writes.seq[FilePath](pagingWrites))
+  //  (JsPath \ "error").write[String]
+
+  def getFilesbyName(draw: Int, start: Int, length: Int, search: String): Action[AnyContent] = Action.async {
+    //    val maxLimit: Int = Math.min(limit, gLimit)
+    val maxLimit: Int = 50
+    logger.info(draw.toString)
+    logger.info(start.toString)
+    logger.info(search)
 
     val qry = sql"""
        SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256
        FROM sm_file_card fc
-       WHERE fc.f_name = '#$fileName'
+       WHERE fc.f_name like '%search%'
        order by fc.f_name
-       limit '#$maxLimit'
+       offset '#$start'
+       limit '#$length'
       """
       .as[(String, String, String)]
 
@@ -78,7 +105,15 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
         cnt += 1
       }
 
-      Ok(Json.toJson(filePath))
+      //      val ret = Paging(1, "20", "15", filePath.toSeq, "123123")
+      val ret = Paging(filePath.toSeq, Seq.empty, Seq.empty, 1, "20", "20")
+
+      val qwe = Json.toJson(ret)
+      //      println(Json.prettyPrint(qwe))
+      println(qwe)
+
+      Ok(Json.toJson(ret))
+      //            Ok(Json.toJson(filePath))
     }
   }
 }
