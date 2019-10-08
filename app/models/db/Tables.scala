@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2019-11-07T08:11:41.895+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2019-11-28T10:18:43.200+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -16,10 +16,10 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Array(SmCategoryFc.schema, SmDevice.schema, SmExif.schema, SmFileCard.schema, SmPathMove.schema).reduceLeft(_ ++ _)
+  lazy val schema: profile.SchemaDescription = SmCategoryFc.schema ++ SmDevice.schema ++ SmExif.schema ++ SmFileCard.schema ++ SmPathMove.schema
 
   @deprecated("Use .schema instead of .ddl", "3.0")
-  def ddl: profile.DDL = schema
+  def ddl = schema
 
   /** Entity class storing rows of table SmCategoryFc
     *
@@ -42,7 +42,7 @@ trait Tables {
     def * = (id, fName, categoryType, subCategoryType, description) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(fName), categoryType, subCategoryType, description).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3, _4, _5))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(fName), categoryType, subCategoryType, description)).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3, _4, _5))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(varchar) */
     val id: Rep[String] = column[String]("id")
@@ -72,31 +72,13 @@ trait Tables {
     * @param describe Database column describe SqlType(varchar), Default(None)
     * @param visible  Database column visible SqlType(bool), Default(true)
     * @param reliable Database column reliable SqlType(bool), Default(true) */
-  case class SmDeviceRow(id: Int,
-                         name: String,
-                         label: String,
-                         uid: String,
-                         syncDate: java.time.LocalDateTime,
-                         describe: Option[String] = None,
-                         visible: Boolean = true,
-                         reliable: Boolean = true)
+  case class SmDeviceRow(id: Int, name: String, label: String, uid: String, syncDate: java.time.LocalDateTime, describe: Option[String] = None, visible: Boolean = true, reliable: Boolean = true)
 
   /** GetResult implicit for fetching SmDeviceRow objects using plain SQL queries */
-  implicit def GetResultSmDeviceRow(implicit e0: GR[Int],
-                                    e1: GR[String],
-                                    e2: GR[java.time.LocalDateTime],
-                                    e3: GR[Option[String]],
-                                    e4: GR[Boolean]): GR[SmDeviceRow] = GR {
+  implicit def GetResultSmDeviceRow(implicit e0: GR[Int], e1: GR[String], e2: GR[java.time.LocalDateTime], e3: GR[Option[String]], e4: GR[Boolean]): GR[SmDeviceRow] = GR {
     prs =>
       import prs._
-      SmDeviceRow.tupled((<<[Int],
-        <<[String],
-        <<[String],
-        <<[String],
-        <<[java.time.LocalDateTime],
-        <<?[String],
-        <<[Boolean],
-        <<[Boolean]))
+      SmDeviceRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[java.time.LocalDateTime], <<?[String], <<[Boolean], <<[Boolean]))
   }
 
   /** Table description of table sm_device. Objects of this class serve as prototypes for rows in queries. */
@@ -226,36 +208,13 @@ trait Tables {
     * @param fMimeTypeJava     Database column f_mime_type_java SqlType(varchar), Default(None)
     * @param sha256            Database column sha256 SqlType(varchar), Default(None)
     * @param fNameLc           Database column f_name_lc SqlType(varchar) */
-  case class SmFileCardRow(id: String,
-                           storeName: String,
-                           fParent: String,
-                           fName: String,
-                           fExtension: Option[String] = None,
-                           fCreationDate: java.time.LocalDateTime,
-                           fLastModifiedDate: java.time.LocalDateTime,
-                           fSize: Option[Long] = None,
-                           fMimeTypeJava: Option[String] = None,
-                           sha256: Option[String] = None,
-                           fNameLc: String)
+  case class SmFileCardRow(id: String, storeName: String, fParent: String, fName: String, fExtension: Option[String] = None, fCreationDate: java.time.LocalDateTime, fLastModifiedDate: java.time.LocalDateTime, fSize: Option[Long] = None, fMimeTypeJava: Option[String] = None, sha256: Option[String] = None, fNameLc: String)
 
   /** GetResult implicit for fetching SmFileCardRow objects using plain SQL queries */
-  implicit def GetResultSmFileCardRow(implicit e0: GR[String],
-                                      e1: GR[Option[String]],
-                                      e2: GR[java.time.LocalDateTime],
-                                      e3: GR[Option[Long]]): GR[SmFileCardRow] = GR {
+  implicit def GetResultSmFileCardRow(implicit e0: GR[String], e1: GR[Option[String]], e2: GR[java.time.LocalDateTime], e3: GR[Option[Long]]): GR[SmFileCardRow] = GR {
     prs =>
       import prs._
-      SmFileCardRow.tupled((<<[String],
-        <<[String],
-        <<[String],
-        <<[String],
-        <<?[String],
-        <<[java.time.LocalDateTime],
-        <<[java.time.LocalDateTime],
-        <<?[Long],
-        <<?[String],
-        <<?[String],
-        <<[String]))
+      SmFileCardRow.tupled((<<[String], <<[String], <<[String], <<[String], <<?[String], <<[java.time.LocalDateTime], <<[java.time.LocalDateTime], <<?[Long], <<?[String], <<?[String], <<[String]))
   }
 
   /** Table description of table sm_file_card. Objects of this class serve as prototypes for rows in queries. */
@@ -263,7 +222,7 @@ trait Tables {
     def * = (id, storeName, fParent, fName, fExtension, fCreationDate, fLastModifiedDate, fSize, fMimeTypeJava, sha256, fNameLc) <> (SmFileCardRow.tupled, SmFileCardRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(storeName), Rep.Some(fParent), Rep.Some(fName), fExtension, Rep.Some(fCreationDate), Rep.Some(fLastModifiedDate), fSize, fMimeTypeJava, sha256, Rep.Some(fNameLc)).shaped.<>({ r => import r._; _1.map(_ => SmFileCardRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8, _9, _10, _11.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(storeName), Rep.Some(fParent), Rep.Some(fName), fExtension, Rep.Some(fCreationDate), Rep.Some(fLastModifiedDate), fSize, fMimeTypeJava, sha256, Rep.Some(fNameLc))).shaped.<>({ r => import r._; _1.map(_ => SmFileCardRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8, _9, _10, _11.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(varchar), PrimaryKey */
     val id: Rep[String] = column[String]("id", O.PrimaryKey)
@@ -319,7 +278,7 @@ trait Tables {
     def * = (id, storeName, pathFrom, pathTo) <> (SmPathMoveRow.tupled, SmPathMoveRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(storeName), Rep.Some(pathFrom), Rep.Some(pathTo)).shaped.<>({ r => import r._; _1.map(_ => SmPathMoveRow.tupled((_1.get, _2.get, _3.get, _4.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(storeName), Rep.Some(pathFrom), Rep.Some(pathTo))).shaped.<>({ r => import r._; _1.map(_ => SmPathMoveRow.tupled((_1.get, _2.get, _3.get, _4.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(serial), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
