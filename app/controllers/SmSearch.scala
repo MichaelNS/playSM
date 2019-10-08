@@ -1,6 +1,7 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
+import models.db.Tables
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, _}
 import play.api.mvc.{Action, _}
@@ -85,27 +86,28 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
     */
   def getFilesbyName(draw: Int, start: Int, length: Int): Action[AnyContent] = Action.async { implicit request =>
     val search = request.getQueryString("search[value]").getOrElse("").replace(" ", "%").toLowerCase()
-    val where = sql"""WHERE fc.f_name_lc LIKE '%#$search%'"""
-
     debugParam
     logger.debug(s"search = $search")
-    logger.debug(where.toString)
 
     val cntAll = sql"""     SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc) res""".as[(Int)]
     val cntFiltered = sql"""SELECT COUNT(*) FROM (SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc WHERE fc.f_name_lc LIKE '%#$search%' ) res""".as[(Int)]
-
-    val qry = sql"""SELECT DISTINCT fc.f_name, fc.f_parent, fc.sha256 FROM sm_file_card fc
-       WHERE fc.f_name_lc LIKE '%#$search%'
-       ORDER BY fc.f_name offset '#$start' limit '#$length'
-      """.as[(String, String, String)]
+    val qryBySearch = (for {
+      (fcRow, device) <- Tables.SmFileCard joinLeft Tables.SmDevice on ((fc, device) => {
+        fc.storeName === device.uid
+      }) if fcRow.fNameLc.like("%" + search + "%")
+    } yield (fcRow, device))
+      .groupBy(uRow => (uRow._1.fName, uRow._1.fParent, uRow._1.sha256, uRow._2.map(_.label)))
+      .map({ case (uRow, cnt) => (uRow, cnt.map(_._1).length) })
+      .drop(start).take(length).result
 
     val composedAction = for {cntAll <- cntAll
                               cntFiltered <- cntFiltered
-                              qry <- qry} yield (cntAll, cntFiltered, qry)
+                              qryBySearch <- qryBySearch
+    } yield (cntAll, cntFiltered, qryBySearch)
 
     database.runAsync(composedAction).map { rowSeq =>
       val filePath = ArrayBuffer[FilePath]()
-      rowSeq._3.foreach { p => filePath += FilePath(name = p._1, path = p._2, sha256 = p._3) }
+      rowSeq._3.foreach { p => filePath += FilePath(name = p._1._1, path = p._1._2, sha256 = p._1._3.getOrElse("")) }
 
       val ret = Paging(draw, rowSeq._1.head, rowSeq._2.head, filePath.toSeq, "")
 
