@@ -15,7 +15,8 @@ $(function () {
                 }
             },
             {"data": "path"},
-            {"data": "sha256"}
+            {"data": "sha256"},
+            {"data": "device"}
         ]
     });
 });

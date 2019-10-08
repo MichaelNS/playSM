@@ -55,7 +55,8 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
   case class FilePath(/*id: String,*/
                       name: String,
                       path: String,
-                      sha256: String
+                      sha256: String,
+                      device: String
                      ) {
 
   }
@@ -63,7 +64,8 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
   implicit val locationFilePath: Writes[FilePath] = (
     (JsPath \ "name").write[String] and
       (JsPath \ "path").write[String] and
-      (JsPath \ "sha256").write[String]
+      (JsPath \ "sha256").write[String] and
+      (JsPath \ "device").write[String]
     ) (unlift(FilePath.unapply))
 
   implicit lazy val pagingWrites: Writes[Paging] = (
@@ -109,7 +111,9 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
       case (1, "asc") => qryBySearch.sortBy(_._1._2)
       case (1, "desc") => qryBySearch.sortBy(_._1._2.desc)
       case (2, "asc") => qryBySearch.sortBy(_._1._3)
-      case (3, "desc") => qryBySearch.sortBy(_._1._3.desc)
+      case (2, "desc") => qryBySearch.sortBy(_._1._3.desc)
+      case (3, "asc") => qryBySearch.sortBy(_._1._4)
+      case (3, "desc") => qryBySearch.sortBy(_._1._4.desc)
       case (_, _) => qryBySearch.sortBy(_._1._1)
     }
 
@@ -120,7 +124,7 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
 
     database.runAsync(composedAction).map { rowSeq =>
       val filePath = ArrayBuffer[FilePath]()
-      rowSeq._3.foreach { p => filePath += FilePath(name = p._1._1, path = p._1._2, sha256 = p._1._3.getOrElse("")) }
+      rowSeq._3.foreach { p => filePath += FilePath(name = p._1._1, path = p._1._2, sha256 = p._1._3.getOrElse(""), device = p._1._4.getOrElse("")) }
 
       val ret = Paging(draw, rowSeq._1, rowSeq._2, filePath.toSeq, "")
 
