@@ -48,6 +48,7 @@ GET         /fc/listStoreNameAndCnt                                   controller
 
 GET         /listFilesWithoutSha256ByDevice/:device                   controllers.SmReport.listFilesWithoutSha256ByDevice(device: String)
 GET         /checkBackUp/:device                                      controllers.SmReport.checkBackUp(device: String)
+GET         /checkBackUp2/:device                                      controllers.SmReport.checkBackUp2(device: String)
 GET         /checkBackAllFiles                                        controllers.SmReport.checkBackAllFiles
 GET         /checkBackFilesLastYear                                   controllers.SmReport.checkBackFilesLastYear
 GET         /checkDuplicates/:device                                  controllers.SmReport.checkDuplicates(device: String)

@@ -2,9 +2,9 @@ package controllers
 
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
-import models.SmFileCard
 import models.db.Tables
 import org.joda.time.DateTime
+import play.api.Configuration
 import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
 import ru.ns.model.OsConf
 import services.db.DBService
@@ -18,7 +18,7 @@ import scala.jdk.CollectionConverters._
   * Created by ns on 02.03.2017.
   */
 @Singleton
-class SmReport @Inject()(cc: MessagesControllerComponents, val database: DBService)
+class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration, val database: DBService)
   extends MessagesAbstractController(cc) {
 
   def listFilesWithoutSha256ByDevice(device: String): Action[AnyContent] = Action.async {
@@ -36,6 +36,38 @@ class SmReport @Inject()(cc: MessagesControllerComponents, val database: DBServi
       )
     }
   }
+
+  /**
+    * https://stackoverflow.com/questions/32262353/how-to-do-a-correlated-subquery-in-slick
+    * for {
+    * a <- A if !B.filter(b => b.fieldK === a.fieldA).exists
+    * } yield (a.fieldA)
+    *
+    * @param device device
+    * @return
+    */
+  def checkBackUp2(device: String): Action[AnyContent] = Action.async {
+    val backUpVolumes = config.get[Seq[String]]("BackUp.volumes")
+    val maxRows: Long = config.get[Long]("BackUp.maxResult")
+
+    val qry2 = (for {
+      a <- Tables.SmFileCard
+      if a.sha256.nonEmpty && a.storeName === device && !Tables.SmFileCard
+        .filter(b => b.sha256.nonEmpty && b.sha256 === a.sha256 && b.storeName === device && b.storeName.inSet(backUpVolumes))
+        .filterNot(b => b.fParent endsWith "_files")
+        .map(p => p.fName)
+        .exists
+    } yield (a.fParent, a.fName, a.fLastModifiedDate))
+      .sortBy(r => (r._1, r._2))
+      .take(maxRows)
+
+    database.runAsync(qry2.result).map { rowSeq =>
+      //      rowSeq.foreach { p => println(p) }
+
+      Ok("")
+    }
+  }
+
 
   def checkBackUp(device: String): Action[AnyContent] = Action.async {
     val config = ConfigFactory.load("scanImport.conf")
