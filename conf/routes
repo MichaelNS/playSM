@@ -46,7 +46,6 @@ GET         /fc/byDevice/:device                                      controller
 GET         /fc/getByDeviceByLastModifDate/:device                    controllers.SmApplication.getByDeviceByLastModifDate(device: String)
 GET         /fc/listStoreNameAndCnt                                   controllers.SmApplication.listStoreNameAndCnt
 
-GET         /cntFilesWithoutSha256ByDevice/:device                    controllers.SmReport.cntFilesWithoutSha256ByDevice(device: String)
 GET         /listFilesWithoutSha256ByDevice/:device                   controllers.SmReport.listFilesWithoutSha256ByDevice(device: String)
 GET         /checkBackUp/:device                                      controllers.SmReport.checkBackUp(device: String)
 GET         /checkBackAllFiles                                        controllers.SmReport.checkBackAllFiles

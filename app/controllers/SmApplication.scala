@@ -63,9 +63,8 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
 
     logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
 
-    database.runAsync(Tables.SmFileCard.filter(_.storeName === device).take(maxRes).result).map { rowSeq =>
-      val fcSeq = rowSeq.map(SmFileCard(_))
-      Ok(views.html.filecards(fcSeq))
+    database.runAsync(Tables.SmFileCard.filter(_.storeName === device).take(maxRes).map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate)).result).map { rowSeq =>
+      Ok(views.html.filecards(None, None, rowSeq))
     }
   }
 
@@ -79,11 +78,11 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
         .filter(_.storeName === device)
         .filterNot(_.fParent endsWith "_files")
         .sortBy(_.fLastModifiedDate.desc)
+        .map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate))
         .take(maxRes)
         .result
     ).map { rowSeq =>
-      val fcSeq = rowSeq.map(SmFileCard(_))
-      Ok(views.html.filecards(fcSeq))
+      Ok(views.html.filecards(None, None, rowSeq))
     }
   }
 
@@ -125,11 +124,11 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
       .unionAll(Tables.SmFileCard
         .filter(_.storeName === device).filter(_.fParent startsWith path + OsConf.fsSeparator)
       )
+      .map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate))
       .take(ctnRec)
       .result
     ).map { rowSeq =>
-      val fcSeq = rowSeq.map(SmFileCard(_))
-      Ok(views.html.filecards(fcSeq))
+      Ok(views.html.filecards(None, None, rowSeq))
     }
   }
 }

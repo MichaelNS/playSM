@@ -18,35 +18,23 @@ import scala.jdk.CollectionConverters._
   * Created by ns on 02.03.2017.
   */
 @Singleton
-class SmReport @Inject()(cc: MessagesControllerComponents,val database: DBService)
+class SmReport @Inject()(cc: MessagesControllerComponents, val database: DBService)
   extends MessagesAbstractController(cc) {
 
-  def cntFilesWithoutSha256ByDevice(device: String): Action[AnyContent] = Action.async {
-    database.runAsync(
-      Tables.SmFileCard
-        .filter(_.storeName === device)
-        .filter(_.sha256.isEmpty)
-        .filter(_.fSize > 0L)
-        .length
-        .result)
-      .map { rowSeq =>
-        Ok(rowSeq.toString)
-      }
-  }
-
   def listFilesWithoutSha256ByDevice(device: String): Action[AnyContent] = Action.async {
-    database.runAsync(
-      Tables.SmFileCard
-        .filter(_.storeName === device)
-        .filter(_.sha256.isEmpty)
-        .filter(_.fSize > 0L)
-        .sortBy(_.fLastModifiedDate.desc)
-        .take(200)
-        .result)
-      .map { rowSeq =>
-        val smFcs = rowSeq.map(SmFileCard(_))
-        Ok(views.html.filecards(smFcs))
-      }
+    val maxRows = 200
+    val baseQry = Tables.SmFileCard
+      .filter(fc => fc.storeName === device && fc.sha256.isEmpty && fc.fSize > 0L)
+      .sortBy(_.fLastModifiedDate.desc)
+      .map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate))
+
+    val composedAction = for {cnt <- baseQry.length.result
+                              qry <- baseQry.take(maxRows).result} yield (cnt, qry)
+
+    database.runAsync(composedAction).map { rowSeq =>
+      Ok(views.html.filecards(Some(rowSeq._1), Some(maxRows), rowSeq._2)
+      )
+    }
   }
 
   def checkBackUp(device: String): Action[AnyContent] = Action.async {
@@ -269,7 +257,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents,val database: DBServic
       """
       .as[(String, Int, Int, String)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.fc_explorer(device, treePath,  rowSeq, depth))
+      Ok(views.html.fc_explorer(device, treePath, rowSeq, depth))
     }
   }
 
