@@ -13,11 +13,9 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   *
-  * @param glob       glob
   * @param mountPoint mount point
   */
-class SmRootVisitor(glob: String,
-                    mountPoint: String)
+class SmRootVisitor(mountPoint: String)
   extends SimpleFileVisitor[Path] {
 
   private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))

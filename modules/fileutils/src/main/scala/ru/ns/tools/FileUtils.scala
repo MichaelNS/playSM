@@ -168,7 +168,7 @@ object FileUtils {
                      ): (ArrayBuffer[SmPath], ArrayBuffer[SmPath]) = {
     debug(path2scan)
 
-    val visitor = new SmRootVisitor("", mountPoint)
+    val visitor = new SmRootVisitor(mountPoint)
     val startingDir = Paths.get(mountPoint + OsConf.fsSeparator + path2scan)
 
     debug(startingDir)

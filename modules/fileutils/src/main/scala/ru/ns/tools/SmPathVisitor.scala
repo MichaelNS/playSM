@@ -4,8 +4,6 @@ import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
 import java.util
 
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
 import ru.ns.model.{OsConf, SmPath}
 
 import scala.collection.mutable.ArrayBuffer
@@ -20,8 +18,6 @@ import scala.collection.mutable.ArrayBuffer
 class SmPathVisitor(glob: String,
                     mountPoint: String, sExclusionDir: util.List[String])
   extends SimpleFileVisitor[Path] {
-
-  private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))
 
   val fileCardSt_lst: ArrayBuffer[SmPath] = ArrayBuffer[SmPath]()
   val pathMatcher: PathMatcher = FileSystems.getDefault.getPathMatcher("glob:" + glob)
