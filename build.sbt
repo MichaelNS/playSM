@@ -4,7 +4,7 @@ name := "playSM"
 lazy val commonSettings = Seq(
   organization := "ru.ns",
   version := "0.1.3",
-  scalaVersion := "2.13.1",
+  scalaVersion := "2.13.0",
 
   //  https://tpolecat.github.io/2017/04/25/scalac-flags.html
   // https://nathankleyn.com/2019/05/13/recommended-scalac-flags-for-2-13/
@@ -101,7 +101,7 @@ lazy val root = (project in file("."))
 addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 33.47
+coverageMinimum := 30.81
 coverageFailOnMinimum := true
 coverageHighlighting := true
 

@@ -4,7 +4,7 @@ name := "fileutils"
 lazy val commonSettings = Seq(
   organization := "ru.ns",
   version := "0.0.2",
-  scalaVersion := "2.13.1",
+  scalaVersion := "2.13.0",
 
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
@@ -68,5 +68,5 @@ lazy val fileutils = (project in file("."))
   )
 
 // sbt-scoverage
-coverageMinimum := 77.72
+coverageMinimum := 45.25
 coverageFailOnMinimum := true
