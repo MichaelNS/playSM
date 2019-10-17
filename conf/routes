@@ -5,6 +5,9 @@ GET         /                                                         controller
 GET         /deviceIndex/:device                                      controllers.SmApplication.deviceIndex(device)
 GET         /debugQry/:device                                         controllers.SmApplication.debugQry(device)
 
++ nocsrf
+POST        /deviceTree/:device                                       controllers.SmApplication.deviceTree(device)
+
 
 + nocsrf
 POST        /refreshDevice                                            controllers.SmSyncDeviceStream.refreshDevice
@@ -19,6 +22,9 @@ POST        /syncDeviceStream/:device                                 controller
 
 + nocsrf
 POST        /syncDeviceStream/deleteNonExistsFpathInDb/:device        controllers.SmSyncDeviceStream.deleteNonExistsFpathInDb(device: String)
+
+
+GET         /sync-compare-directory/children/:device                  controllers.SmSyncCmpDir.getChildren(device: String, id:String)
 
 
 

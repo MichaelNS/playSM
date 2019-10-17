@@ -9,6 +9,7 @@ import com.typesafe.scalalogging._
 import org.slf4j.LoggerFactory
 import ru.ns.model.{Device, FileCardSt, OsConf, SmPath}
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -27,6 +28,12 @@ object FileUtils {
 
   def debug[V](value: sourcecode.Text[V])(implicit fullName: sourcecode.FullName): Unit = {
     logger.debug(s"${fullName.value} = ${value.source} : [${value.value}]")
+  }
+
+  def getDeviceInfo(deviceUid: String = ""): Future[Option[Device]] = {
+    getDevicesInfo(deviceUid)
+      .map { p => Some(p.head) }
+      .recover { case _: NoSuchElementException => None }
   }
 
   def getDevicesInfo(deviceUid: String = ""): Future[ArrayBuffer[Device]] = Future[ArrayBuffer[Device]] {
@@ -81,13 +88,20 @@ object FileUtils {
 
     import scala.jdk.CollectionConverters._
 
-    val lstAll = fileStores.asScala.map(x => x.name()).toSeq.filter(_ != "")
-    val lstDist = lstAll.distinct
+    val fsAll: mutable.Buffer[String] = fileStores.asScala.map(x => x.name()).toBuffer.filter(_ != "")
+    val fsDistinct: mutable.Buffer[String] = fsAll.distinct
+    val fsDuplicates: mutable.Buffer[String] = fsAll.diff(fsDistinct)
 
-    if (lstAll == lstDist) {
+    if (fsDuplicates.nonEmpty) logger.error(s"fileStores duplicate label ${fsDuplicates.toString()}")
+    val fsUniq = fsDistinct --= fsDuplicates
+
+    debug(fsDistinct)
+    debug(fsUniq)
+
+    if (fsUniq.nonEmpty) {
       val pp = Pattern.compile("\\(([^)]+)\\)")
 
-      for (cFileStore <- fileStores.asScala.filter(_.name() != "")) {
+      for (cFileStore <- fileStores.asScala.filter(fs => fsUniq.contains(fs.name))) {
 
         val m = pp.matcher(cFileStore.toString)
         if (m.find) {
@@ -122,17 +136,53 @@ object FileUtils {
     val startingDir = Paths.get(mountPoint + OsConf.fsSeparator + path2scan)
 
     if (startingDir.toFile.exists) {
-      //      logger.debug(s"readDirRecursive2 -> Current path [$impPath]   startingDir [$startingDir]")
+      //      logger.debug(s"getPathesRecursive -> Current path [$impPath]   startingDir [$startingDir]")
 
       try {
         Files.walkFileTree(startingDir, visitor)
       } catch {
         case ex: IOException =>
-          logger.error(s"readDirRecursive2 error: ${ex.toString}\nStackTrace:\n${ex.getStackTrace.mkString("\n")}")
+          logger.error(s"getPathesRecursive error: ${ex.toString}\nStackTrace:\n${ex.getStackTrace.mkString("\n")}")
           throw ex
       }
     } else {
-      logger.warn(s"readDirRecursive -> Current path IS NOT EXISTS [$path2scan]   startingDir [$startingDir]")
+      logger.warn(s"getPathesRecursive -> Current path IS NOT EXISTS [$path2scan]   startingDir [$startingDir]")
+    }
+
+    visitor.done()
+  }
+
+  /**
+    * return list directories by path
+    *
+    * used [[SmSyncCmpDir]]
+    *
+    * @param path2scan  paths to scan - (home/user/Documents)
+    * @param mountPoint mountPoint
+    * @return ArrayBuffer[SmPath]
+    */
+
+  def getPathChildren(path2scan: String,
+                      mountPoint: String,
+                      maxDepth: Int = 1
+                     ): (ArrayBuffer[SmPath], ArrayBuffer[SmPath]) = {
+    debug(path2scan)
+
+    val visitor = new SmRootVisitor("", mountPoint)
+    val startingDir = Paths.get(mountPoint + OsConf.fsSeparator + path2scan)
+
+    debug(startingDir)
+
+    if (startingDir.toFile.exists) {
+      try
+        Files.walkFileTree(startingDir, util.EnumSet.noneOf(classOf[FileVisitOption]), maxDepth, visitor)
+      catch {
+        case ex: IOException =>
+          logger.error(s"getPathChildren error: ${ex.toString}\nStackTrace:\n${ex.getStackTrace.mkString("\n")}")
+          throw ex
+      }
+    } else {
+      logger.warn(s"getPathChildren -> Current path IS NOT EXISTS [$path2scan]   startingDir [$startingDir]")
     }
 
     visitor.done()

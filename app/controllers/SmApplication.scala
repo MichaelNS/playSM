@@ -18,7 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Created by ns on 23.01.2017.
   */
 @Singleton
-class SmApplication @Inject()(val database: DBService)
+class SmApplication @Inject()(implicit assetsFinder: AssetsFinder,val database: DBService)
   extends InjectedController {
 
   val logger = play.api.Logger(getClass)
@@ -52,6 +52,10 @@ class SmApplication @Inject()(val database: DBService)
 
   def deviceIndex(device: String): Action[AnyContent] = Action {
     Ok(views.html.smd_index(device, ConfigFactory.load("scanImport.conf").getInt("Category.maxFilesInDir")))
+  }
+
+  def deviceTree(device: String): Action[AnyContent] = Action {
+    Ok(views.html.tree(device, assetsFinder))
   }
 
   def getByDevice(device: String): Action[AnyContent] = Action.async {

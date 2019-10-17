@@ -101,10 +101,7 @@ class SmSyncDeviceStream @Inject()(val database: DBService)
     */
   def syncDevice(deviceUid: String): Action[AnyContent] = Action.async {
     debugParam
-    FileUtils.getDevicesInfo(deviceUid).map { devices =>
-      debug(devices)
-      val device = devices.find(_.uuid == deviceUid)
-      debug(device)
+    FileUtils.getDeviceInfo(deviceUid).map { device =>
       if (device.isDefined) {
         val config = ConfigFactory.load("scanImport.conf")
         try {

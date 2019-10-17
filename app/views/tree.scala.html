@@ -1,0 +1,33 @@
+@(deviceUid: String, assetsFinder: AssetsFinder)
+
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
+
+    <body>
+        <div class="row column">
+            <h2>tree device - @deviceUid</h2>
+        </div>
+
+        <link rel='stylesheet' href="@assetsFinder.path("css/style.min.css")">
+        <script src="@assetsFinder.path("javascripts/jquery.js")"> type = "text/javascript" </script>
+        <script src="@assetsFinder.path("javascripts/jstree.min.js")"> type = "text/javascript" </script>
+
+        <form id="search-js-tree">
+            <label for="qry-js-tree">highlight path</label><input type="search" id="qry-js-tree" />
+            @*<button type="submit">Search</button>*@
+        </form>
+
+        @*<div id="js-tree" data-param1=@deviceUid></div>*@
+        <div id="js-tree"></div>
+
+        <script>
+                var DeviceUid = {};
+                @* pass parameter to JS https://stackoverflow.com/questions/30693562/playframework-html-variable-into-javascript *@
+                @* https://stackoverflow.com/questions/16589655/pass-play-framework-parameter-to-javascript *@
+                @* https://stackoverflow.com/questions/21170148/using-html5-custom-data-attributes-to-pass-data-from-div-to-javascript *@
+                DeviceUid["value"] = "@deviceUid";
+        </script>
+        <script src="@assetsFinder.path("javascripts/jstree_sm.js")"> type = "text/javascript" </script>
+
+    </body>
+</html>
