@@ -47,7 +47,8 @@ object SourceCodeGenerator extends App {
   )
 
   //the table spatial_ref_sys is an internal table of the postgis extension
-  val modelAction = SmPostgresDriver.createModel(Some(SmPostgresDriver.defaultTables))
+  val filteredTables = SmPostgresDriver.defaultTables.map(_.filter(t => t.name.name.toLowerCase().startsWith("sm_") && !t.name.name.toLowerCase.endsWith("_back")))
+  val modelAction = SmPostgresDriver.createModel(Some(filteredTables))
 
   val codegen = db.run(modelAction).map { model =>
 
@@ -63,12 +64,21 @@ object SourceCodeGenerator extends App {
             case "java.sql.Time" => "java.time.LocalTime"
             case "java.sql.Timestamp" => "java.time.LocalDateTime"
 
+            case "scala.collection.immutable.Seq" => model.options.find(_.isInstanceOf[ColumnOption.SqlType])
+              .map(_.asInstanceOf[ColumnOption.SqlType].typeName).map({
+
+              //array of text
+              case "_text" => "List[String]"
+              case unknown => throw new IllegalArgumentException(s"Undefined type [$unknown]")
+
+            }).getOrElse("String")
             // currently, all types that's not built-in support were mapped to `String`
             case "String" => model.options.find(_.isInstanceOf[ColumnOption.SqlType])
               .map(_.asInstanceOf[ColumnOption.SqlType].typeName).map({
 
               //array of text
-              case "_text" => "List[String]"
+              // 25.12.2019 = don`t work, use - case "scala.collection.immutable.Seq"
+              //              case "_text" => "List[String]"
 
               case "text" => "String"
               case "varchar" => "String"

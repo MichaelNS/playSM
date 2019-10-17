@@ -13,16 +13,24 @@
                     <th>Count <br>
                         Category is null</th>
                     <th>Category</th>
+                    <th>Sync path</th>
                 </tr>
             </thead>
             <tbody>
             @for(folder <- folders) {
                 <tr>
-                    <td><a href="@routes.SmReport.explorerDevice(device, folder._1, depth)" >@folder._1</a></td>
+                    <td><a href="@routes.SmView.explorerDevice(device, folder._1, folder._1, depth)" >@folder._1</a></td>
                     <td>@folder._2</td>
                     <td>@folder._3</td>
                     <td>@folder._4</td>
                     <td>@folder._5</td>
+                    <td>
+                        <div class="input-group-button">
+                            <form action="@routes.SmSyncDeviceStream.syncSingleNamePath(folder._1, device)" method="post">
+                                <button class="button primary">Sync path</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
             }
             </tbody>

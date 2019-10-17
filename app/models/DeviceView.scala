@@ -5,7 +5,7 @@ import org.joda.time.DateTime
 case class DeviceView(name: String,
                       label: String,
                       uid: String,
-                      describe: String,
+                      description: String,
                       syncDate: DateTime,
                       visible: Boolean,
                       reliable: Boolean,

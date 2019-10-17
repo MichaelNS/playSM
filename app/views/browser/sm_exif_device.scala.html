@@ -1,0 +1,29 @@
+@(exifDevices: scala.Vector[(String, String, org.joda.time.DateTime, Int)])()
+@_template {
+    <div class="row column">
+        <h2>exif device</h2>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>Make</th>
+                    <th>LabelModel</th>
+                    <th>Last date</th>
+                    <th>Cnt</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(exDevice <- exifDevices) {
+                <tr>
+                    <td>@exDevice._1</td>
+                    <td><a href="@controllers.browser.routes.SmExifDevice.listFilesByExifDevice(exDevice._1, exDevice._2)" >@exDevice._2</a></td>
+                    <td>@exDevice._3.toLocalDateTime.toString("yyy.MM.dd HH:mm:ss")</td>
+                    <td>@exDevice._4</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

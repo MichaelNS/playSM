@@ -31,7 +31,7 @@
     <logger name="application" level="DEBUG"/>
 
     <!-- Shows sql to console -->
-    <logger name="slick.jdbc" level="DEBUG"/>
+    <!--    <logger name="slick.jdbc" level="DEBUG"/>-->
     <!--<logger name="slick.basic.BasicBackend" level="ALL" />-->
     <logger name="slick.compiler" level="OFF"/>
     <logger name="slick.relational.ResultConverterCompiler" level="OFF"/>

@@ -1,9 +1,11 @@
-import controllers.SmCategory
+import com.typesafe.config.{Config, ConfigFactory}
+import controllers.{SmCategory, SmCategoryView}
 import org.flywaydb.core.Flyway
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.play.guice.GuiceOneServerPerTest
 import org.scalatestplus.play.{HtmlUnitFactory, OneBrowserPerTest, PlaySpec, ServerProvider}
 import play.api.Logger
+import play.api.test.CSRFTokenHelper._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
@@ -23,10 +25,12 @@ class SmCategorySpec extends PlaySpec
 
   private val logger = Logger(classOf[SmCategorySpec])
 
-  val driver = "org.h2.Driver"
-  val url = "jdbc:h2:mem:play_test;DATABASE_TO_UPPER=false;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
-  val username = "play_sm_user"
-  val password = "123"
+  val config: Config = ConfigFactory.load("application.conf")
+
+  val driver: String = config.getString("slick.dbs.default.db.profile")
+  val url: String = config.getString("slick.dbs.default.db.url")
+  val username: String = config.getString("slick.dbs.default.db.user")
+  val password: String = config.getString("slick.dbs.default.db.password")
 
   val flyway: Flyway = Flyway
     .configure()
@@ -56,35 +60,36 @@ class SmCategorySpec extends PlaySpec
   // SmCategory ---------------------------------------------------------------------------------------------------------
   "UserController SmCategory" should {
 
+    "run listCategoryTypeAndCnt" in {
+      val controller = app.injector.instanceOf[SmCategoryView]
+      val request = FakeRequest().withCSRFToken
+      val result = controller.listCategoryTypeAndCnt.apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+
     "run listCategoryAndCnt" in {
-      val controller = app.injector.instanceOf[SmCategory]
-      val request = FakeRequest()
-      val result = controller.listCategoryAndCnt.apply(request)
+      val controller = app.injector.instanceOf[SmCategoryView]
+      val request = FakeRequest().withCSRFToken
+      val result = controller.listCategoryAndCnt("").apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
     }
 
     "run listSubCategoryAndCnt" in {
-      val controller = app.injector.instanceOf[SmCategory]
+      val controller = app.injector.instanceOf[SmCategoryView]
       val request = FakeRequest()
-      val result = controller.listSubCategoryAndCnt("").apply(request)
+      val result = controller.listSubCategoryAndCnt("", "").apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
     }
 
-    "run listDescriptionAndCnt" in {
-      val controller = app.injector.instanceOf[SmCategory]
-      val request = FakeRequest()
-      val result = controller.listDescriptionAndCnt("", "").apply(request)
-
-      status(result) mustBe OK
-      contentType(result) mustBe Some("text/html")
-    }
 
     "run listDirWithoutCatByLastDate" in {
-      val controller = app.injector.instanceOf[SmCategory]
+      val controller = app.injector.instanceOf[SmCategoryView]
       val request = FakeRequest()
       val result = controller.listDirWithoutCatByLastDate.apply(request)
 
@@ -93,7 +98,7 @@ class SmCategorySpec extends PlaySpec
     }
 
     "run listFcWithoutCatByLastDate" in {
-      val controller = app.injector.instanceOf[SmCategory]
+      val controller = app.injector.instanceOf[SmCategoryView]
       val request = FakeRequest()
       val result = controller.listFcWithoutCatByLastDate.apply(request)
 
@@ -123,17 +128,21 @@ class SmCategorySpec extends PlaySpec
 
 
     "run listDirWithoutCategoryByExtension" in {
-      val controller = app.injector.instanceOf[SmCategory]
+      val controller = app.injector.instanceOf[SmCategoryView]
       val request = FakeRequest()
-      val result = controller.listDirWithoutCategoryByExtension("").apply(request)
+        .withFormUrlEncodedBody("extension" -> "")
+        .withCSRFToken
+      val result = controller.listDirWithoutCategoryByExtension().apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
     }
     "run listDirWithoutCategoryByExtension NON empty" in {
-      val controller = app.injector.instanceOf[SmCategory]
+      val controller = app.injector.instanceOf[SmCategoryView]
       val request = FakeRequest()
-      val result = controller.listDirWithoutCategoryByExtension("jpg").apply(request)
+        .withFormUrlEncodedBody("extension" -> "jpg")
+        .withCSRFToken
+      val result = controller.listDirWithoutCategoryByExtension().apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
@@ -162,7 +171,7 @@ class SmCategorySpec extends PlaySpec
       val controller = app.injector.instanceOf[SmCategory]
       val message: (Option[String], String) = (Some("sha_id"), "fileName")
 
-      controller.writeToCategoryTbl(message, "categoryType", "subCategoryType", "description")
+      controller.writeToCategoryTbl(message, -1)
       //      val result = controller.writeToCategoryTbl(message, "categoryType", "description")
       //      result.onComplete {
       //        case Success(insSuc) => logger.warn(s"Upsert cat = $insSuc")

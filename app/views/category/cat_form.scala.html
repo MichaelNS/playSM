@@ -5,6 +5,14 @@
 @_template {
     <form method="post" action="@routes.SmCategory.assignCategoryAndDescription(fParent, isBegins)">
         <div class="row column">
+            <label>CategoryType
+                <input type="text" name="categoryType" value="" placeholder="categoryType" required>
+                @catForm.error("categoryType").map { formError =>
+                    <span class="form-error is-visible">@formError.message</span>
+                }
+            </label>
+        </div>
+        <div class="row column">
             <label>Category
                 <input type="text" name="category" value="" placeholder="category" required>
                 @catForm.error("category").map { formError =>

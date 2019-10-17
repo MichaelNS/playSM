@@ -63,16 +63,24 @@
     <logger name="play" level="INFO"/>
     <logger name="application" level="INFO"/>
 
-    <logger name="controllers" level="INFO"/>
+    <logger name="controllers" level="DEBUG"/>
     <logger name="controllers.SmApplication" level="INFO"/>
+    <logger name="controllers.SmCategory" level="INFO"/>
+    <logger name="controllers.SmCategoryView" level="INFO"/>
     <logger name="controllers.SmSearch" level="INFO"/>
     <logger name="controllers.SmSyncDeviceStream" level="INFO"/>
+    <logger name="controllers.SmImage" level="INFO"/>
 
     <logger name="models" level="INFO"/>
 
 
     <!-- Shows sql to console -->
-    <!--<logger name="slick.jdbc" level="DEBUG" />-->
+<!--    <logger name="slick.jdbc" level="DEBUG"/>-->
+<!--    <logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG"/>-->
+<!--    <logger name="slick.jdbc.JdbcBackend.statementAndParameter" level="DEBUG"/>-->
+
+    <logger name="akka" level="INFO"/>
+    <logger name="actors.MyActor" level="DEBUG"/>
 
     <!-- Off these ones as they are annoying, and anyway we manage configuration ourself -->
     <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF"/>

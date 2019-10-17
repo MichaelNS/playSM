@@ -1,25 +1,27 @@
-@(categoryType: String, fileCardSeq: List[(Option[String], Int)])()
+@(categoryType: String, fileCardSeq: Seq[(Option[String], Int)])()
 @_template {
     <div class="row column">
-        <h2>SmDescription</h2>
+        <h2>smr category</h2>
     </div>
 
     <div class="row column">
         <table class="stack">
             <thead>
                 <tr>
-                    <th>Description</th>
+                    <th>category</th>
                     <th>COUNT(*)</th>
                 </tr>
             </thead>
             <tbody>
             @for(fileCard <- fileCardSeq) {
                 <tr>
-                    <td><a href="@routes.SmMove.listPathByDescription(categoryType, fileCard._1.getOrElse("?"))" >@fileCard._1</a> </td>
+                    <td><a href="@routes.SmCategoryView.listSubCategoryAndCnt(categoryType, fileCard._1.getOrElse("?"))" >@fileCard._1</a></td>
                     <td>@fileCard._2</td>
                 </tr>
             }
+
             </tbody>
         </table>
     </div>
 }
+

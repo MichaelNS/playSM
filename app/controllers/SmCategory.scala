@@ -3,215 +3,85 @@ package controllers
 import java.io.{IOException, InputStream}
 
 import akka.actor.ActorSystem
+import akka.stream.ThrottleMode
 import akka.stream.scaladsl.{Sink, Source}
-import akka.stream.{ActorMaterializer, ThrottleMode}
 import akka.{Done, NotUsed}
-import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
-import models.DirWithoutCat
+import models.SmCategoryRule
 import models.db.Tables
 import org.camunda.bpm.dmn.engine.{DmnDecision, DmnDecisionTableResult, DmnEngineConfiguration}
 import org.camunda.bpm.engine.variable.{VariableMap, Variables}
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.Constraints
-import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.api.mvc._
 import services.db.DBService
 import slick.basic.DatabasePublisher
 import utils.db.SmPostgresDriver.api._
 
-import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 /**
   * Created by ns on 13.03.2017.
   */
-case class FormCategoryUpdate(categoryType: String, subCategoryType: String, description: String)
+case class FormCategoryUpdate(categoryType: String, category: String, subCategory: String, description: String)
 
 object FormCategoryUpdate {
-  val form = Form(mapping(
+  val form: Form[FormCategoryUpdate] = Form(mapping(
+    "categoryType" -> text.verifying(Constraints.nonEmpty),
     "category" -> text.verifying(Constraints.nonEmpty),
-    "subcategory" -> text.verifying(Constraints.nonEmpty),
-    "description" -> text.verifying(Constraints.nonEmpty)
+    "subCategory" -> text.verifying(Constraints.nonEmpty),
+    "description" -> text
   )(FormCategoryUpdate.apply)(FormCategoryUpdate.unapply))
 }
 
-@Singleton
-class SmCategory @Inject()(val database: DBService)
-  extends InjectedController {
+case class ExtensionForm(extension: String)
 
-  val logger = play.api.Logger(getClass)
+object ExtensionForm {
+  val form: Form[ExtensionForm] = Form(
+    mapping(
+      "extension" -> text
+    )(ExtensionForm.apply)(ExtensionForm.unapply)
+  )
+}
+
+
+@Singleton
+class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBService)
+  extends MessagesAbstractController(cc)
+    with play.api.i18n.I18nSupport {
+
+  val logger: Logger = play.api.Logger(getClass)
 
   implicit val system: ActorSystem = ActorSystem()
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  /**
-    * listCategoryAndCnt
-    *
-    * @return [[views.html.smr_category]]
-    */
-  def listCategoryAndCnt: Action[AnyContent] = Action.async {
-    database.runAsync(
-      (for {
-        (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
-        })} yield (fcRow, catRow.map(_.categoryType))
-        )
-        .groupBy(p => p._2)
-        .map { case (categoryType, cnt) => (categoryType, cnt.map(_._2).length) }
-        .sortBy(_._2.desc)
-        .to[List].result)
-      .map { rowSeq =>
-        Ok(views.html.smr_category(rowSeq))
-      }
-  }
-
-  /**
-    * listSubCategoryAndCnt
-    *
-    * @param categoryType categoryType
-    * @return [[views.html.smr_sub_category]]
-    */
-  def listSubCategoryAndCnt(categoryType: String): Action[AnyContent] = Action.async {
-    database.runAsync(
-      (for {
-        (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
-        })} yield catRow
-        )
-        .filter(_.categoryType === categoryType)
-        .groupBy(p => p.subCategoryType)
-        .map { case (subcategoryType, cnt) => (subcategoryType, cnt.map(_.subCategoryType).length) }
-        .sortBy(_._2.desc)
-        .to[List].result)
-      .map { rowSeq =>
-        Ok(views.html.smr_sub_category(categoryType, rowSeq))
-      }
-  }
-
-  /**
-    * listDescriptionAndCnt
-    *
-    * @param categoryType    categoryType
-    * @param subCategoryType subCategoryType
-    * @return [[views.html.smr_description]]
-    */
-  def listDescriptionAndCnt(categoryType: String, subCategoryType: String): Action[AnyContent] = Action.async {
-    database.runAsync(
-      (for {
-        (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
-        })} yield catRow
-        )
-        .filter(_.categoryType === categoryType)
-        .filter(_.subCategoryType === subCategoryType)
-        .groupBy(p => p.description)
-        .map { case (description, cnt) => (description, cnt.map(_.description).length) }
-        .sortBy(_._2.desc)
-        .to[List].result)
-      .map { rowSeq =>
-        Ok(views.html.smr_description(categoryType, rowSeq))
-      }
-  }
-
-  /**
-    * get Dirs without category, order by lastdate
-    *
-    * @return [[views.html.cat_list_fc]]
-    */
-  def listDirWithoutCatByLastDate: Action[AnyContent] = Action.async {
-    val config = ConfigFactory.load("scanImport.conf")
-    val maxFilesTake: Long = config.getBytes("Category.maxFilesTake")
-    val qry = (for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-      fc.sha256 === cat.id && fc.fName === cat.fName
-    }) if catRow.isEmpty && fcRow.fSize > 0L
-                    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
-      ).groupBy { p => (p._2, p._3) }
-      .map(fld => (fld._1._1, fld._1._2))
-    database.runAsync(qry.filterNot(_._1 endsWith "_files")
-      .sortBy(_._2.desc)
-      .take(maxFilesTake)
-      .result
-    ).map { rowSeq =>
-      val vPath = new mutable.HashMap[String, DirWithoutCat]()
-      rowSeq.foreach { row =>
-        if (vPath.get(row._1).isEmpty) {
-          vPath += (row._1 -> DirWithoutCat(row._1, row._2.toLocalDate))
-        }
-      }
-      var vView = Vector[DirWithoutCat]()
-      vPath.toList.sortWith((x, y) => x._2.date.isAfter(y._2.date)).foreach(w =>
-        vView = vView :+ w._2
-      )
-      vPath.clear()
-
-      Ok(views.html.cat_list_path(vView))
-    }
-  }
-
-  /**
-    * get SmFileCard without category, order by lastdate
-    *
-    * @return [[views.html.cat_list_fc]]
-    */
-  def listFcWithoutCatByLastDate: Action[AnyContent] = Action.async {
-    val config = ConfigFactory.load("scanImport.conf")
-    val maxFilesTake: Long = config.getBytes("Category.maxFilesTake")
-
-    val qry = (
-      for {
-        (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
-        }) if catRow.isEmpty && fcRow.fSize > 0L
-      } yield (fcRow.sha256, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate)
-      )
-      .groupBy { p => (p._1, p._2, p._3, p._4) }
-      .map(fld => (fld._1._1, fld._1._2, fld._1._3, fld._1._4))
-
-    database.runAsync(
-      qry
-        .filterNot(_._2 endsWith "_files")
-        .sortBy(_._4.desc)
-        .take(maxFilesTake)
-        .result
-    ).map { rowSeq =>
-      Ok(views.html.cat_list_fc(rowSeq))
-    }
-  }
 
   /**
     * Call from [[SmReport.lstDirByDevice]] -> [[views.html.dirs_fc]]
     *
     * @param fParent  name dir for get SmFileCard
     * @param isBegins if true = get by startsWith, else by Equals
-    * @return [[views.html.cat_fc_path]]
+    * @return [[views.html.category.cat_fc_path]]
     */
   def listDirWithoutCatByParent(fParent: String,
                                 isBegins: Boolean = false
                                ): Action[AnyContent] = Action.async {
     debugParam
 
-    // query by startsWith
-    val qry = if (isBegins) {
-      for {
-        (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
-        }) if fcRow.fParent.startsWith(fParent)
-      } yield (fcRow.storeName, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.subCategoryType), catRow.map(_.description))
-
-    }
-    else {
-      for {
-        (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
-        }) if fcRow.fParent === fParent
-      } yield (fcRow.storeName, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.subCategoryType), catRow.map(_.description))
-    }
+    val qry = for {
+      ((fcRow, catRow), rulesRow) <- Tables.SmFileCard.joinLeft(Tables.SmCategoryFc).on((fc, cat) => {
+        fc.sha256 === cat.sha256 && fc.fName === cat.fName
+      }).joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
+    } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, rulesRow.map(_.categoryType), rulesRow.map(_.category), rulesRow.map(_.subCategory), rulesRow.map(_.description))
 
     database.runAsync(
       qry
+        .filter(if (isBegins) _._2.startsWith(fParent) else _._2 === fParent)
         .sortBy(_._3)
         .sortBy(_._2)
         .sortBy(_._1)
@@ -220,48 +90,16 @@ class SmCategory @Inject()(val database: DBService)
       val catForm: Form[FormCategoryUpdate] = Form(
         mapping(
           "categoryType" -> nonEmptyText,
-          "subCategoryType" -> nonEmptyText,
-          "description" -> nonEmptyText
+          "category" -> nonEmptyText,
+          "subCategory" -> nonEmptyText,
+          "description" -> text
         )(FormCategoryUpdate.apply)(FormCategoryUpdate.unapply)
       )
 
-      Ok(views.html.cat_fc_path("path", fParent, rowSeq, catForm, isBegins))
+      Ok(views.html.category.cat_fc_path("path", fParent, rowSeq, catForm, isBegins))
     }
   }
 
-
-  /**
-    * get Dirs without category by extension, order count files
-    *
-    * @return [[views.html.smr_category_dir_by_ext]]
-    */
-  def listDirWithoutCategoryByExtension(extension: String): Action[AnyContent] = Action.async {
-    val config = ConfigFactory.load("scanImport.conf")
-    val maxFilesTake: Long = config.getBytes("Category.maxFilesTake")
-
-    val qry = if (extension == "") {
-      for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-        fc.sha256 === cat.id && fc.fName === cat.fName
-      }) if catRow.isEmpty && fcRow.fSize > 0L
-           } yield (fcRow.sha256, fcRow.fParent)
-    } else {
-      for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-        fc.sha256 === cat.id && fc.fName === cat.fName
-      }) if catRow.isEmpty && fcRow.fSize > 0L && fcRow.fExtension.getOrElse("").toLowerCase === extension
-           } yield (fcRow.sha256, fcRow.fParent)
-    }
-    database.runAsync(
-      qry
-        .groupBy(p => p._2)
-        .map { case (fParent, cnt) => (fParent, cnt.map(_._2).length) }
-        .sortBy(_._2.desc)
-        .filterNot(_._1 endsWith "_files")
-        .take(maxFilesTake)
-        .result
-    ).map { rowSeq =>
-      Ok(views.html.smr_category_dir_by_ext(rowSeq))
-    }
-  }
 
   /**
     * Form for assign Category And Description
@@ -274,13 +112,14 @@ class SmCategory @Inject()(val database: DBService)
                                    isBegins: Boolean = false
                                   ): Action[AnyContent] = Action.async { implicit request =>
     FormCategoryUpdate.form.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.cat_form(formWithErrors, fParent, isBegins))),
+      formWithErrors => Future.successful(BadRequest(views.html.category.cat_form(formWithErrors, fParent, isBegins))),
       success = category => {
-        if (category.categoryType.isEmpty || category.subCategoryType.isEmpty || category.description.isEmpty) {
+        if (category.categoryType.isEmpty || category.category.isEmpty || category.subCategory.isEmpty) {
           val form = FormCategoryUpdate.form.fill(category).withError("category", "categoryType isEmpty")
-          Future.successful(BadRequest(views.html.cat_form(form, fParent, isBegins)))
+          Future.successful(BadRequest(views.html.category.cat_form(form, fParent, isBegins)))
         } else {
-          batchAssignCategoryAndDescription(fParent, isBegins, category.categoryType, category.subCategoryType, category.description)
+          debug(category)
+          writeCategoryToDb(fParent, isBegins, category)
 
           Future.successful(Redirect(routes.SmCategory.listDirWithoutCatByParent(fParent, isBegins)))
         }
@@ -288,23 +127,74 @@ class SmCategory @Inject()(val database: DBService)
     )
   }
 
+  def writeCategoryToDb(fParent: String, isBegins: Boolean = false, catForm: FormCategoryUpdate): Future[Any] = {
+    // TODO fix Future[Any] 2 Int
+    val dbRes = database.runAsync(Tables.SmCategoryRule.filter(q => q.categoryType === catForm.categoryType && q.category === catForm.category && q.subCategory === catForm.subCategory).result)
+      .map { rowSeq =>
+        debug(rowSeq)
+        if (rowSeq.isEmpty) {
+          addCategoryRuleToDb(fParent, isBegins, catForm)
+        } else {
+          if (!rowSeq.head.fPath.toSet.contains(fParent)) {
+            updateCategoryRuleInDb(fParent, isBegins, catForm, rowSeq.head.fPath.toSet + fParent)
+          }
+        }
+      }
+    dbRes.onComplete {
+      case Success(_) => logger.info("writeCategoryToDb done ")
+      case Failure(ex) => logger.error(s"writeCategoryToDb error : ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+    }
+
+    dbRes
+  }
+
+  def addCategoryRuleToDb(fParent: String, isBegins: Boolean = false, catForm: FormCategoryUpdate): Future[Int] = {
+    val cRow = Tables.SmCategoryRuleRow(-1, catForm.categoryType, catForm.category, catForm.subCategory, List(fParent), isBegins, if (catForm.description.nonEmpty) Some(catForm.description) else None)
+    database.runAsync((Tables.SmCategoryRule returning Tables.SmCategoryRule.map(_.id)) += SmCategoryRule.apply(cRow).data.toRow)
+  }
+
+  def updateCategoryRuleInDb(fParent: String, isBegins: Boolean = false, catForm: FormCategoryUpdate, pathes: Set[String]): Future[Int] = {
+    debug((pathes, fParent))
+
+    val dbRes = database.runAsync((for {uRow <- Tables.SmCategoryRule if uRow.categoryType === catForm.categoryType && uRow.category === catForm.category && uRow.subCategory === catForm.subCategory} yield uRow.fPath)
+      .update(pathes.toList))
+
+    dbRes.map(_ => logger.info(s"update SmCategoryRule"))
+
+    dbRes
+  }
+
   def batchAssignCategoryAndDescription(fParent: String,
                                         isBegins: Boolean = false,
-                                        categoryType: String,
-                                        subCategoryType: String,
-                                        description: String
+                                        id: Int
                                        ): Future[Done] = {
     debugParam
 
+    logger.info(s"start rulePath = $fParent")
+    val start = System.currentTimeMillis
+
     val dbFcStream: Source[(Option[String], String), NotUsed] = getStreamFcByParent(fParent, isBegins)
-    dbFcStream
-      .throttle(elements = 50, 10.millisecond, maximumBurst = 1, ThrottleMode.shaping)
-      .mapAsync(2)(writeToCategoryTbl(_, categoryType, subCategoryType, description))
+    val applyRule = dbFcStream
+      .throttle(elements = 500, 10.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+      .mapAsync(1)(writeToCategoryTbl(_, id))
       .runWith(Sink.ignore)
+
+    applyRule.map(ll => logger.info(s"end rulePath = $fParent   ${System.currentTimeMillis - start} ms  $ll"))
+    applyRule
   }
 
-  def applyRulesSetCategory: Action[AnyContent] = Action.async {
+  case class Rule(fParent: String,
+                  isBegins: Boolean,
+                  categoryType: String,
+                  category: String,
+                  subCategory: String,
+                  description: String
+                 )
+
+  @deprecated
+  def getRules: ArrayBuffer[Rule] = {
     val ruleFilePath = "/category.dmn"
+    val lstRules: ArrayBuffer[Rule] = ArrayBuffer[Rule]()
 
     // create a new default DMN engine
     val dmnEngine = DmnEngineConfiguration.createDefaultDmnEngineConfiguration.buildEngine
@@ -312,43 +202,64 @@ class SmCategory @Inject()(val database: DBService)
     try {
       val decision: DmnDecision = dmnEngine.parseDecision("decision", inputStream)
       logger.info(s"decision.getKey = ${decision.getKey}   decision.getName = ${decision.getName}")
-
       val lstPath = getXmlRule(ruleFilePath)
       logger.info(s"lstPath = $lstPath")
-
-      Source.fromIterator(() => lstPath.iterator)
-        .throttle(elements = 1, 100.millisecond, maximumBurst = 2, ThrottleMode.shaping)
-        .map { rulePath =>
-          logger.info(s"rulePath = $rulePath")
-
-          // prepare variables for decision evaluation
-          val variables: VariableMap = Variables.putValue("path", rulePath)
-
-          // evaluate decision
-          val result: DmnDecisionTableResult = dmnEngine.evaluateDecisionTable(decision, variables)
-          val outMap = result.getSingleResult.getEntryMap
-
-          if (outMap.size() == 4) {
-            batchAssignCategoryAndDescription(
-              fParent = rulePath,
-              isBegins = java.lang.Boolean.valueOf(outMap.get("isBegins").toString),
-              categoryType = outMap.get("category").toString,
-              subCategoryType = outMap.get("subcategory").toString,
-              description = outMap.get("description").toString
-            )
-          } else {
-            logger.warn(s"applyRules -> out DMN has < 4 values - $rulePath")
-          }
+      lstPath.foreach { rulePath =>
+        // prepare variables for decision evaluation
+        val variables: VariableMap = Variables.putValue("path", rulePath)
+        // evaluate decision
+        val result: DmnDecisionTableResult = dmnEngine.evaluateDecisionTable(decision, variables)
+        val outMap = result.getSingleResult.getEntryMap
+        if (outMap.size() == 4) {
+          lstRules += Rule(rulePath, java.lang.Boolean.valueOf(outMap.get("isBegins").toString), outMap.get("category").toString, outMap.get("subcategory").toString, outMap.get("description").toString, "")
+        } else {
+          logger.warn(s"applyRules -> out DMN has < 4 values - $rulePath")
         }
-        .runWith(Sink.ignore)
-
-      Future.successful(Ok("startRule"))
-    } finally try
+      }
+      lstRules
+    }
+    finally try
       inputStream.close()
     catch {
       case e: IOException => logger.error(s"Could not close stream: ${e.getMessage}")
     }
   }
+
+  def getStreamRulesFromDb: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = {
+
+    val queryRes = Tables.SmCategoryRule.result
+    val databasePublisher: DatabasePublisher[Tables.SmCategoryRule#TableElementType] = database runStream queryRes
+    val akkaSourceFromSlick: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = Source fromPublisher databasePublisher
+
+    akkaSourceFromSlick
+  }
+
+  def applyRulesSetCategory: Action[AnyContent] = Action.async {
+    val dbFcStream: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = getStreamRulesFromDb
+    dbFcStream.throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+      .mapAsync(1) { rule =>
+        debug(rule)
+        val asd = rule.fPath.map { path =>
+          batchAssignCategoryAndDescription(fParent = path,
+            isBegins = rule.isBegins,
+            id = rule.id
+          )
+        }
+        // TODO check - fix to wait all futures
+        Future.sequence(asd)
+      }
+      .recover { case t: Throwable =>
+        logger.error("Error retrieving output from flowA. Resuming without them.", t)
+        None
+      }
+      .runWith(Sink.ignore)
+      .onComplete {
+        case Success(_) => logger.info("applyRulesSetCategory done ")
+        case Failure(ex) => logger.error(s"applyRulesSetCategory error : ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+      }
+    Future.successful(Redirect(routes.SmCategoryView.listCategoryTypeAndCnt()))
+  }
+
 
   /**
     * read input param from DMN
@@ -357,6 +268,7 @@ class SmCategory @Inject()(val database: DBService)
     * @param ruleFilePath List input DMN params
     * @return
     */
+  @deprecated
   def getXmlRule(ruleFilePath: String): Seq[String] = {
     val isDmn: InputStream = getClass.getResourceAsStream(ruleFilePath)
 
@@ -385,12 +297,24 @@ class SmCategory @Inject()(val database: DBService)
                           isBegins: Boolean = false
                          ): Source[DbRes, NotUsed] = {
     debugParam
+
+    // query by startsWith
     val preQuery = if (isBegins) {
-      Tables.SmFileCard.filter(_.fParent startsWith fParent)
-    } else {
-      Tables.SmFileCard.filter(_.fParent === fParent)
+      for {
+        (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
+          fc.sha256 === cat.sha256 && fc.fName === cat.fName
+        }) if fcRow.fParent.startsWith(fParent) && fcRow.sha256.nonEmpty && catRow.isEmpty
+      } yield (fcRow.sha256, fcRow.fName)
     }
-    val queryRes = preQuery.filter(_.sha256.nonEmpty).groupBy { p => (p.sha256, p.fName) }.map(fld => (fld._1._1, fld._1._2)).result
+    else {
+      for {
+        (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
+          fc.sha256 === cat.sha256 && fc.fName === cat.fName
+        }) if fcRow.fParent.startsWith(fParent) && fcRow.sha256.nonEmpty && catRow.isEmpty
+      } yield (fcRow.sha256, fcRow.fName)
+    }
+
+    val queryRes = preQuery.result
     val databasePublisher: DatabasePublisher[DbRes] = database runStream queryRes
     val akkaSourceFromSlick: Source[DbRes, NotUsed] = Source fromPublisher databasePublisher
 
@@ -400,16 +324,57 @@ class SmCategory @Inject()(val database: DBService)
   /**
     * upsert [[models.SmCategoryFc]]
     *
-    * @param message         sha256 & fileName from SmFileCard
-    * @param categoryType    categoryType
-    * @param subCategoryType subCategoryType
-    * @param description     description
+    * @param message sha256 & fileName from SmFileCard
+    * @param id      ID [[models.SmCategoryFc.id]]
     * @return count upsert records SmCategoryFc
     */
-  def writeToCategoryTbl(message: (Option[String], String), categoryType: String, subCategoryType: String, description: String): Future[Int] = {
-    val cRow = Tables.SmCategoryFcRow(message._1.get, message._2, Some(categoryType), Some(subCategoryType), Some(description))
+  def writeToCategoryTbl(message: (Option[String], String), id: Int): Future[Int] = {
+    val cRow = Tables.SmCategoryFcRow(id, message._1.get, message._2)
     val insRes = database.runAsync(Tables.SmCategoryFc.insertOrUpdate(models.SmCategoryFc.apply(cRow).data.toRow))
 
     insRes
   }
+
+  @deprecated
+  def copyRulesToDb: Action[AnyContent] = Action.async {
+    Source.fromIterator(() => getRules.iterator)
+      .throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+      .mapAsync(1) { rulePath =>
+        debug("-----------------------------------")
+        debug("-----------------------------------")
+        debug(rulePath)
+        //        val dbRes =
+        database.runAsync(Tables.SmCategoryRule.filter(q => q.categoryType === rulePath.categoryType && q.category === rulePath.category && q.subCategory === rulePath.subCategory).result)
+          .map { rowSeq =>
+            debug(rowSeq)
+            if (rowSeq.isEmpty) {
+              //              debug(rulePath.category, rulePath.subCategory, rulePath.description)
+              val cRow = Tables.SmCategoryRuleRow(-1, rulePath.categoryType, rulePath.category, rulePath.subCategory, List(rulePath.fParent), rulePath.isBegins, None)
+              //              debug(cRow)
+              database.runAsync((Tables.SmCategoryRule returning Tables.SmCategoryRule.map(_.id)) += SmCategoryRule.apply(cRow).data.toRow)
+            } else {
+              if (!rowSeq.head.fPath.toSet.contains(rulePath.fParent)) {
+                val pathes = rowSeq.head.fPath.toSet + rulePath.fParent
+                //                pathes.+(rulePath.fParent)
+                debug((pathes, rulePath.fParent))
+
+                database.runAsync((for {uRow <- Tables.SmCategoryRule if uRow.categoryType === rulePath.categoryType && uRow.category === rulePath.category && uRow.subCategory === rulePath.subCategory} yield uRow.fPath)
+                  .update(pathes.toList))
+                  .map(_ => logger.info(s"update SmCategoryRule"))
+              }
+            }
+          }
+      }
+      .recover { case t: Throwable =>
+        logger.error("copyRulesToDb. Error retrieving output from file", t)
+        None
+      }
+      .runWith(Sink.ignore)
+      .onComplete {
+        case Success(_) => logger.info("copyRulesToDb done ")
+        case Failure(ex) => logger.error(s"copyRulesToDb error : ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+      }
+    Future.successful(Ok("Done"))
+  }
+
 }

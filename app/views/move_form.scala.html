@@ -1,11 +1,12 @@
 @(catForm: Form[FormCrMove],
-        description: String,
         categoryType: String,
+        category: String,
+        subCategory: String,
         device: String,
         oldPath: String
 )()
 @_template {
-    <form method="post" action="@routes.SmMove.createJobToMove(categoryType, description, device, oldPath)">
+    <form method="post" action="@routes.SmMove.createJobToMove(categoryType, category,subCategory, device, oldPath)">
         <div class="row column">
             <label>newPath
                 <input type="text" name="newPath" value="" placeholder="newPath" required>

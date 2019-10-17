@@ -1,0 +1,30 @@
+@(files: scala.Vector[(String, String, String, String, org.joda.time.DateTime)])()
+@_template {
+    <div class="row column">
+        <h2>Filecards</h2>
+    </div>
+
+    <div class="row column">
+        <table class="stack">
+            <thead>
+                <tr>
+                    <th>FileName</th>
+                    <th>Parent</th>
+                    <th>Devices</th>
+                    <th>LastDate</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(fc <- files) {
+                <tr>
+                    @* <td><a href="@routes.SmView.viewPathBySha256(fc._1)">@fc._2</a></td>*@
+                    <td><a href="@routes.SmView.viewFile(Some(fc._1))">@fc._2</a></td>
+                    <td>@fc._3</td>
+                    <td>@fc._4</td>
+                    <td>@fc._5.toLocalDateTime.toString("yyy.MM.dd HH:mm:ss")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

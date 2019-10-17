@@ -4,7 +4,7 @@ name := "playSM"
 lazy val commonSettings = Seq(
   organization := "ru.ns",
   version := "0.1.3",
-  scalaVersion := "2.13.0",
+  scalaVersion := "2.13.2",
 
   //  https://tpolecat.github.io/2017/04/25/scalac-flags.html
   // https://nathankleyn.com/2019/05/13/recommended-scalac-flags-for-2-13/
@@ -13,7 +13,7 @@ lazy val commonSettings = Seq(
   // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/ScalaSettings.scala
 
   scalacOptions ++= Seq(
-    "-target:jvm-1.8",
+//    "-target:jvm-1.8",
 
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8", // Specify character encoding used by source files.
@@ -68,29 +68,30 @@ lazy val root = (project in file("."))
 
     libraryDependencies += "com.typesafe.slick" %% "slick" % "3.3.2",
     libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.18.0",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.18.0",
-    libraryDependencies += "com.typesafe.play" %% "play-slick" % "4.0.2",
-    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "4.0.2",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.19.0",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.19.0",
+    libraryDependencies += "com.typesafe.play" %% "play-slick" % "5.0.0",
+    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
 
-    libraryDependencies += "org.webjars" %% "webjars-play" % "2.7.3",
+    libraryDependencies += "org.webjars" %% "webjars-play" % "2.8.0",
     libraryDependencies += "org.webjars" % "foundation" % "6.4.3",
 
     libraryDependencies += guice,
 
-    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % Test,
+    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test,
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.7",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.5",
+    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.2.1",
+    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.9",
 
-    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0",
+    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.9.1",
 
     //    scala-fixture:
     libraryDependencies += "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
-    libraryDependencies += "com.h2database" % "h2" % "1.4.197" % Test,
-    libraryDependencies += "org.flywaydb" % "flyway-core" % "5.2.4" % "test",
+    libraryDependencies += "com.h2database" % "h2" % "1.4.200" % Test,
+    libraryDependencies += "org.flywaydb" % "flyway-core" % "6.5.0" % "test",
 
     libraryDependencies += "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
+
   )
   .enablePlugins(PlayScala)
   .enablePlugins(ScalaUnidocPlugin)
@@ -101,6 +102,8 @@ lazy val root = (project in file("."))
 addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 33.47
+coverageMinimum := 30.92
 coverageFailOnMinimum := true
 coverageHighlighting := true
+
+ThisBuild / turbo := true

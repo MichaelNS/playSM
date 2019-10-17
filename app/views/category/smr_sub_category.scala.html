@@ -1,4 +1,4 @@
-@(categoryType: String, fileCardSeq: List[(Option[String], Int)])()
+@(categoryType: String, category: String, fileCardSeq: Seq[(Option[String], Int)])()
 @_template {
     <div class="row column">
         <h2>smr sub category</h2>
@@ -15,7 +15,7 @@
             <tbody>
             @for(fileCard <- fileCardSeq) {
                 <tr>
-                    <td><a href="@routes.SmCategory.listDescriptionAndCnt(categoryType, fileCard._1.getOrElse("?"))" >@fileCard._1</a></td>
+                    <td><a href="@routes.SmMove.listPathByCategory(categoryType, category, fileCard._1.getOrElse("?"))" >@fileCard._1</a> </td>
                     <td>@fileCard._2</td>
                 </tr>
             }

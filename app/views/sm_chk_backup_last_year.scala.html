@@ -1,4 +1,4 @@
-@(devices: Seq[(String, String, String)],
+@(devices: Seq[(String, String, String, org.joda.time.DateTime)],
         device_Unreliable: String,
         device_NotView: String,
         cntFiles: Int,
@@ -22,12 +22,14 @@
                 <tr>
                     <th width="70%">FileName</th>
                     <th>Device</th>
+                    <th>LastModifiedDate</th>
             </thead>
             <tbody>
             @for(device <- devices) {
                 <tr>
                     <td><a href="@routes.SmView.viewPathBySha256(device._1)">@device._2</a></td>
                     <td>@device._3</td>
+                    <td>@device._4.toLocalDateTime.toString("dd.MM.yyyy HH:mm")</td>
                 </tr>
             }
             </tbody>

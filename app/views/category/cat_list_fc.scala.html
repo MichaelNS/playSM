@@ -7,7 +7,7 @@
 @_template {
     <div class="row column">
         <h2>list FC without category, order by lastDate </h2>
-        <h3><a href="@routes.SmCategory.listDirWithoutCatByLastDate">
+        <h3><a href="@routes.SmCategoryView.listDirWithoutCatByLastDate">
             list dirs without category</a>  </h3>
     </div>
 
@@ -24,7 +24,11 @@
             @for(cRow <- rowSeq) {
                 <tr>
                     <td><a href="@routes.SmCategory.listDirWithoutCatByParent(cRow._2, isBegins = false)" >@cRow._2</a></td>
-                    <td><a href="@routes.SmView.viewFile(cRow._1)" >@cRow._3</a></td>
+                    @if(cRow._1.isDefined) {
+                        <td><a href="@routes.SmView.viewFile(cRow._1)" >@cRow._3</a></td>
+                    } else {
+                        <td>@cRow._3</td>
+                    }
                     <td>@cRow._4.format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH.mm"))</td>
                 </tr>
             }

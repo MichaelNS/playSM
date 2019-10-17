@@ -6,16 +6,16 @@
                         String,
                         java.time.LocalDateTime,
                         Option[String],
-                        Option[Option[String]],
-                        Option[Option[String]],
-                        Option[Option[String]]
-                )],
+                        Option[String],
+                        Option[String],
+                        Option[String],
+                        Option[Option[String]])],
         catForm: Form[FormCategoryUpdate],
         isBegins: Boolean
 )()
 @_template {
     <div class="row column">
-        <h2>Fill category & description by path</h2>
+        <h2>Fill categoryType, category, subCategory & description by path</h2>
     </div>
 
     @if(mode == "path" && rowSeq.nonEmpty) {
@@ -28,6 +28,12 @@
 
         <form method="post" action="@routes.SmCategory.assignCategoryAndDescription(fParent, isBegins)">
             <div class="row column">
+                <label>CategoryType
+                    <input type="text" name="categoryType" value="" placeholder="categoryType" required>
+                    @catForm.error("categoryType").map { formError =>
+                        <span class="form-error is-visible">@formError.message</span>
+                    }
+                </label>
                 <label>Category
                     <input type="text" name="category" value="" placeholder="category" required>
                     @catForm.error("category").map { formError =>
@@ -35,15 +41,15 @@
                     }
                 </label>
                 <label>SubCategory
-                    <input type="text" name="subcategory" value="" placeholder="subcategory" required>
-                    @catForm.error("subcategory").map { formError =>
+                    <input type="text" name="subCategory" value="" placeholder="subCategory" required>
+                    @catForm.error("subCategory").map { formError =>
                         <span class="form-error is-visible">@formError.message</span>
                     }
                 </label>
             </div>
             <div class="row column">
                 <label>Description
-                    <input type="text" name="description" value="" placeholder="description" required>
+                    <input type="text" name="description" value="" placeholder="description" >
                     @catForm.error("description").map { formError =>
                         <span class="form-error is-visible">@formError.message</span>
                     }
@@ -68,6 +74,10 @@
 
     }
 
+    @if(rowSeq.nonEmpty) {
+        <a href="@routes.SmImage.viewImages(rowSeq.head._1, fParent)" >view images</a>
+    }
+
     <div class="row column">
         <table class="stack">
             <thead>
@@ -76,6 +86,7 @@
                     <th>Name</th>
                     <th width="40">LastModifiedDate</th>
                     <th>CategoryType</th>
+                    <th>Category</th>
                     <th>SubCategoryType</th>
                     <th>Description</th>
                 </tr>

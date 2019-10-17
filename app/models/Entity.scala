@@ -6,14 +6,14 @@ case class Entity[T](id: Int, data: T)
 
 case class EntitySmFc[T](id: String, data: T)
 
-case class SmDevice(name: String, label: String, uid: String, syncDate: java.time.LocalDateTime) {
+case class SmDevice(name: String, labelV: String, uid: String, pathScanDate: java.time.LocalDateTime) {
   def toRow: Tables.SmDeviceRow = {
     Tables.SmDeviceRow(
       id = -1,
       name = name,
-      label = label,
+      labelV = labelV,
       uid = uid,
-      syncDate = syncDate
+      pathScanDate = pathScanDate
     )
   }
 }
@@ -24,9 +24,9 @@ object SmDevice {
       id = row.id,
       data = SmDevice(
         name = row.name,
-        row.label,
+        row.labelV,
         uid = row.uid,
-        row.syncDate
+        row.pathScanDate
       )
     )
   }
@@ -35,7 +35,7 @@ object SmDevice {
 
 case class SmFileCard(
                        id: String,
-                       storeName: String,
+                       deviceUid: String,
                        fParent: String,
                        fName: String,
                        fExtension: Option[String] = None,
@@ -49,7 +49,7 @@ case class SmFileCard(
   def toRow: _root_.models.db.Tables.SmFileCardRow = {
     Tables.SmFileCardRow(
       id = id,
-      storeName = storeName,
+      deviceUid = deviceUid,
       fParent = fParent,
       fName = fName,
       fExtension = fExtension,
@@ -69,7 +69,7 @@ object SmFileCard {
       id = row.id,
       data = SmFileCard(
         id = row.id,
-        storeName = row.storeName,
+        deviceUid = row.deviceUid,
         fParent = row.fParent,
         fName = row.fName,
         fExtension = row.fExtension,
@@ -85,48 +85,53 @@ object SmFileCard {
 }
 
 case class SmCategoryFc(
-                         id: String,
-                         fName: String,
-                         categoryType: Option[String] = None,
-                         subCategoryType: Option[String] = None,
-                         description: Option[String] = None
+                         id: Int,
+                         sha256: String,
+                         fName: String
                        ) {
   def toRow: Tables.SmCategoryFcRow = {
     Tables.SmCategoryFcRow(
       id = id,
-      fName = fName,
-      categoryType = categoryType,
-      subCategoryType = subCategoryType,
-      description = description
+      sha256 = sha256,
+      fName = fName
     )
   }
 }
 
 object SmCategoryFc {
-  def apply(row: Tables.SmCategoryFcRow): EntitySmFc[SmCategoryFc] = {
-    EntitySmFc(
+  def apply(row: Tables.SmCategoryFcRow): Entity[SmCategoryFc] = {
+    Entity(
       id = row.id,
       data = SmCategoryFc(
         id = row.id,
-        fName = row.fName,
-        categoryType = row.categoryType,
-        subCategoryType = row.subCategoryType,
-        description = row.description
+        sha256 = row.sha256,
+        fName = row.fName
       )
     )
   }
 }
 
-case class SmExif(
-                   id: String,
-                   dateTime: Option[java.time.LocalDateTime] = None,
-                   dateTimeOriginal: Option[java.time.LocalDateTime] = None,
-                   dateTimeDigitized: Option[java.time.LocalDateTime] = None,
-                   make: Option[String] = None,
-                   model: Option[String] = None,
-                   software: Option[String] = None,
-                   exifImageWidth: Option[String] = None,
-                   exifImageHeight: Option[String] = None
+case class SmExif(id: String,
+                  dateTime: Option[java.time.LocalDateTime] = None,
+                  dateTimeOriginal: Option[java.time.LocalDateTime] = None,
+                  dateTimeDigitized: Option[java.time.LocalDateTime] = None,
+                  make: Option[String] = None,
+                  model: Option[String] = None,
+                  software: Option[String] = None,
+                  exifImageWidth: Option[String] = None,
+                  exifImageHeight: Option[String] = None,
+                  gpsVersionId: Option[String] = None,
+                  gpsLatitudeRef: Option[String] = None,
+                  gpsLatitude: Option[String] = None,
+                  gpsLongitudeRef: Option[String] = None,
+                  gpsLongitude: Option[String] = None,
+                  gpsAltitudeRef: Option[String] = None,
+                  gpsAltitude: Option[String] = None,
+                  gpsTimeStamp: Option[String] = None,
+                  gpsProcessingMethod: Option[String] = None,
+                  gpsDateStamp: Option[String] = None,
+                  gpsLatitudeDec: Option[scala.math.BigDecimal],
+                  gpsLongitudeDec: Option[scala.math.BigDecimal]
                  ) {
   def toRow: Tables.SmExifRow = {
     Tables.SmExifRow(
@@ -138,7 +143,19 @@ case class SmExif(
       model = model,
       software = software,
       exifImageWidth = exifImageWidth,
-      exifImageHeight = exifImageHeight
+      exifImageHeight = exifImageHeight,
+      gpsVersionId = gpsVersionId,
+      gpsLatitudeRef = gpsLatitudeRef,
+      gpsLatitude = gpsLatitude,
+      gpsLongitudeRef = gpsLongitudeRef,
+      gpsLongitude = gpsLongitude,
+      gpsAltitudeRef = gpsAltitudeRef,
+      gpsAltitude = gpsAltitude,
+      gpsTimeStamp = gpsTimeStamp,
+      gpsProcessingMethod = gpsProcessingMethod,
+      gpsDateStamp = gpsDateStamp,
+      gpsLatitudeDec = gpsLatitudeDec,
+      gpsLongitudeDec = gpsLongitudeDec
     )
   }
 }
@@ -156,10 +173,60 @@ object SmExif {
         model = row.model,
         software = row.software,
         exifImageWidth = row.exifImageWidth,
-        exifImageHeight = row.exifImageHeight
+        exifImageHeight = row.exifImageHeight,
+        gpsVersionId = row.gpsVersionId,
+        gpsLatitudeRef = row.gpsLatitudeRef,
+        gpsLatitude = row.gpsLatitude,
+        gpsLongitudeRef = row.gpsLongitudeRef,
+        gpsLongitude = row.gpsLongitude,
+        gpsAltitudeRef = row.gpsAltitudeRef,
+        gpsAltitude = row.gpsAltitude,
+        gpsTimeStamp = row.gpsTimeStamp,
+        gpsProcessingMethod = row.gpsProcessingMethod,
+        gpsDateStamp = row.gpsDateStamp,
+        gpsLatitudeDec = row.gpsLatitudeDec,
+        gpsLongitudeDec = row.gpsLongitudeDec
       )
     )
   }
 }
 
+case class SmCategoryRule(
+                           id: Int,
+                           categoryType: String,
+                           category: String,
+                           subCategory: String,
+                           fPath: List[String],
+                           isBegins: Boolean,
+                           description: Option[String] = None
+                         ) {
+  def toRow: Tables.SmCategoryRuleRow = {
+    Tables.SmCategoryRuleRow(
+      id = id,
+      categoryType = categoryType,
+      category = category,
+      subCategory = subCategory,
+      fPath = fPath,
+      isBegins = isBegins,
+      description = description
+    )
+  }
+}
+
+object SmCategoryRule {
+  def apply(row: Tables.SmCategoryRuleRow): Entity[SmCategoryRule] = {
+    Entity(
+      id = row.id,
+      data = SmCategoryRule(
+        id = row.id,
+        categoryType = row.categoryType,
+        category = row.category,
+        subCategory = row.subCategory,
+        fPath = row.fPath,
+        isBegins = row.isBegins,
+        description = row.description
+      )
+    )
+  }
+}
 

@@ -12,7 +12,6 @@ import ru.ns.model.{Device, FileCardSt, OsConf, SmPath}
 import ru.ns.tools.FileUtils
 
 import scala.collection.mutable.ArrayBuffer
-import scala.jdk.CollectionConverters._
 
 class FileUtilsSpec extends PlaySpec {
 
@@ -137,7 +136,8 @@ class FileUtilsSpec extends PlaySpec {
 
     val fParent = "test" + OsConf.fsSeparator + "tmp"
     val deviceUid = "B6D40831D407F283"
-    var mountPoint = Paths.get(fParent).toFile.getAbsolutePath.replace(fParent, "")
+    var mountPoint = Paths.get(fParent).toFile.getAbsolutePath.replace(fParent.replace(OsConf.fsSeparator, OsConf.getOsSeparator), "")
+
     mountPoint = mountPoint.substring(0, mountPoint.length() - 1)
 
     val path_1 = SmPath("test/tmp/")
@@ -145,7 +145,7 @@ class FileUtilsSpec extends PlaySpec {
     val fName1 = "test1.txt"
     val fc_1 = FileCardSt(
       id = Hashing.sha256().hashString(deviceUid + fParent + OsConf.fsSeparator + fName1, StandardCharsets.UTF_8).toString.toUpperCase,
-      storeName = deviceUid,
+      deviceUid = deviceUid,
       fParent = fParent + "/",
       fName = fName1,
       fExtension = Some("txt"),
@@ -163,7 +163,7 @@ class FileUtilsSpec extends PlaySpec {
 
     val fc_2 = FileCardSt(
       id = Hashing.sha256().hashString(deviceUid + fParent + OsConf.fsSeparator + fName2, StandardCharsets.UTF_8).toString.toUpperCase,
-      storeName = deviceUid,
+      deviceUid = deviceUid,
       fParent = fParent + "/",
       fName = fName2,
       fExtension = Some("txt"),
@@ -180,7 +180,7 @@ class FileUtilsSpec extends PlaySpec {
     val hSmBoSmPath: ArrayBuffer[SmPath] = FileUtils.getPathesRecursive(
       "test" + OsConf.fsSeparator + "tmp",
       mountPoint,
-      sExclusionDir.asJava
+      sExclusionDir
     )
     val hSmPathTest = ArrayBuffer[SmPath](path_1)
     hSmBoSmPath.size mustBe 1
@@ -192,7 +192,7 @@ class FileUtilsSpec extends PlaySpec {
       "test" + OsConf.fsSeparator + "tmp",
       deviceUid,
       mountPoint,
-      sExclusionFile.asJava
+      sExclusionFile
     )
     hSmBoFileCard.size mustBe 2
     hSmBoFileCard.head.toString must equal(hSmBoFileCardTest.head.toString)

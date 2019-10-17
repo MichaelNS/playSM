@@ -1,5 +1,6 @@
 import better.files.File
-import controllers.{SmApplication, SmMove, SmSyncDeviceStream}
+import com.typesafe.config.{Config, ConfigFactory}
+import controllers._
 import org.flywaydb.core.Flyway
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.play.guice.GuiceOneServerPerTest
@@ -22,10 +23,12 @@ class BrowserSpec extends PlaySpec
 
   private val logger = Logger(classOf[BrowserSpec])
 
-  val driver = "org.h2.Driver"
-  val url = "jdbc:h2:mem:play_test;DATABASE_TO_UPPER=false;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
-  val username = "play_sm_user"
-  val password = "123"
+  val config: Config = ConfigFactory.load("application.conf")
+
+  val driver: String = config.getString("slick.dbs.default.db.profile")
+  val url: String = config.getString("slick.dbs.default.db.url")
+  val username: String = config.getString("slick.dbs.default.db.user")
+  val password: String = config.getString("slick.dbs.default.db.password")
 
   val flyway: Flyway = Flyway
     .configure()
@@ -90,10 +93,10 @@ class BrowserSpec extends PlaySpec
       contentType(result) mustBe Some("text/plain")
     }
 
-    "render the listPathByDescription" in {
+    "render the listPathByCategory" in {
       val controller = app.injector.instanceOf[SmMove]
       val request = FakeRequest().withCSRFToken
-      val result = controller.listPathByDescription("Project", "Some play").apply(request)
+      val result = controller.listPathByCategory("Project", "Src", "Some play").apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
@@ -102,7 +105,7 @@ class BrowserSpec extends PlaySpec
     "render the createJobToMove" in {
       val controller = app.injector.instanceOf[SmMove]
       val request = FakeRequest().withCSRFToken
-      val result = controller.createJobToMove(categoryType = "1", description = "2", device = "deviceID", oldPath = "Downloads/html").apply(request)
+      val result = controller.createJobToMove(categoryType = "1", category = "2", subCategory = "3", device = "deviceID", oldPath = "Downloads/html").apply(request)
 
       status(result) mustBe BAD_REQUEST
       contentType(result) mustBe Some("text/html")
@@ -111,7 +114,7 @@ class BrowserSpec extends PlaySpec
     "render the delJobToMove" in {
       val controller = app.injector.instanceOf[SmMove]
       val request = FakeRequest().withCSRFToken
-      val result = controller.delJobToMove(categoryType = "", description = "", device = "", path = "").apply(request)
+      val result = controller.delJobToMove(categoryType = "", category = "", subCategory = "", device = "", path = "").apply(request)
 
       status(result) mustBe SEE_OTHER
       contentType(result) mustBe None
@@ -141,7 +144,7 @@ class BrowserSpec extends PlaySpec
 
       val controller = app.injector.instanceOf[SmMove]
 
-      val res = controller.clearJob(idJob = idJob, storeName = storeName, mountPoint = mountPoint.get, pathFrom = fParent.get)
+      val res = controller.closeJob(idJob = idJob, storeName = storeName, mountPoint = mountPoint.get, pathFrom = fParent.get)
 
       res mustBe "clearJob is DONE"
       Thread.sleep(300) // for DB delete record
@@ -149,15 +152,95 @@ class BrowserSpec extends PlaySpec
     }
   }
 
-  // SmSync ---------------------------------------------------------------------------------------------------------
-  "UserController refresh device" should {
-    "render the refresh device" in {
+  // SmSyncDeviceStream -----------------------------------------------------------------------------------------------
+  "UserController import device" should {
+    "render the import device" in {
       val controller = app.injector.instanceOf[SmSyncDeviceStream]
       val request = FakeRequest().withCSRFToken
-      val result = controller.refreshDevice().apply(request)
+      val result = controller.importDevice().apply(request)
 
       status(result) mustBe SEE_OTHER
       contentType(result) mustBe None
     }
   }
+  "UserController deviceImport" should {
+    "render the deviceImport" in {
+      val controller = app.injector.instanceOf[SmSyncDeviceStream]
+      val request = FakeRequest().withCSRFToken
+      val result = controller.deviceImport().apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+  }
+
+  // SmReport ---------------------------------------------------------------------------------------------------------
+  "UserController checkBackAllFiles" should {
+    "render the checkBackAllFiles" in {
+      val controller = app.injector.instanceOf[SmReport]
+      val request = FakeRequest().withCSRFToken
+      val result = controller.checkBackAllFiles().apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+  }
+
+  "UserController checkBackFilesLastYear" should {
+      "render the checkBackFilesLastYear" in {
+        val controller = app.injector.instanceOf[SmReport]
+        val request = FakeRequest().withCSRFToken
+        val result = controller.checkBackFilesLastYear().apply(request)
+
+        status(result) mustBe OK
+        contentType(result) mustBe Some("text/html")
+      }
+    }
+
+  "UserController explorerDevice" should {
+      "render the explorerDevice" in {
+        val controller = app.injector.instanceOf[SmView]
+        val request = FakeRequest().withCSRFToken
+        val result = controller.explorerDevice("","","",1).apply(request)
+
+        status(result) mustBe OK
+        contentType(result) mustBe Some("text/html")
+      }
+    }
+
+  // SmSearch ---------------------------------------------------------------------------------------------------------
+  "UserController byFileName" should {
+    "render the byFileName" in {
+      val controller = app.injector.instanceOf[SmSearch]
+      val request = FakeRequest().withCSRFToken
+      val result = controller.byFileName("", 1).apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("application/json")
+    }
+  }
+
+  // SmView ---------------------------------------------------------------------------------------------------------
+  "UserController viewStorage" should {
+    "render the viewStorage" in {
+      val controller = app.injector.instanceOf[SmView]
+      val request = FakeRequest().withCSRFToken
+      val result = controller.viewStorage("", 1).apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+  }
+
+  "UserController viewPathBySha256" should {
+    "render the viewPathBySha256" in {
+      val controller = app.injector.instanceOf[SmView]
+      val request = FakeRequest().withCSRFToken
+      val result = controller.viewPathBySha256("").apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+  }
+
 }

@@ -2,15 +2,16 @@ package controllers
 
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
-import models.SmFileCard
 import models.db.Tables
 import org.joda.time.DateTime
-import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.api.Configuration
+import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
 import ru.ns.model.OsConf
 import services.db.DBService
 import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.jdk.CollectionConverters._
 
@@ -18,66 +19,57 @@ import scala.jdk.CollectionConverters._
   * Created by ns on 02.03.2017.
   */
 @Singleton
-class SmReport @Inject()(val database: DBService)
-  extends InjectedController {
-
-  def cntFilesWithoutSha256ByDevice(device: String): Action[AnyContent] = Action.async {
-    database.runAsync(
-      Tables.SmFileCard
-        .filter(_.storeName === device)
-        .filter(_.sha256.isEmpty)
-        .filter(_.fSize > 0L)
-        .length
-        .result)
-      .map { rowSeq =>
-        Ok(rowSeq.toString)
-      }
-  }
+class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration, val database: DBService)
+  extends MessagesAbstractController(cc) {
 
   def listFilesWithoutSha256ByDevice(device: String): Action[AnyContent] = Action.async {
-    database.runAsync(
-      Tables.SmFileCard
-        .filter(_.storeName === device)
-        .filter(_.sha256.isEmpty)
-        .filter(_.fSize > 0L)
-        .sortBy(_.fLastModifiedDate.desc)
-        .take(200)
-        .result)
-      .map { rowSeq =>
-        val smFcs = rowSeq.map(SmFileCard(_))
-        Ok(views.html.filecards(smFcs))
-      }
+    val maxRows = 200
+    val baseQry = Tables.SmFileCard
+      .filter(fc => fc.deviceUid === device && fc.sha256.isEmpty && fc.fSize > 0L)
+      .sortBy(_.fLastModifiedDate.desc)
+      .map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate))
+
+    val composedAction = for {cnt <- baseQry.length.result
+                              qry <- baseQry.take(maxRows).result} yield (cnt, qry)
+
+    database.runAsync(composedAction).map { rowSeq =>
+      Ok(views.html.filecards(Some(rowSeq._1), Some(maxRows), rowSeq._2)
+      )
+    }
   }
 
+  /**
+    * https://stackoverflow.com/questions/32262353/how-to-do-a-correlated-subquery-in-slick
+    * for {
+    * a <- A if !B.filter(b => b.fieldK === a.fieldA).exists
+    * } yield (a.fieldA)
+    *
+    * @param device device
+    * @return
+    */
   def checkBackUp(device: String): Action[AnyContent] = Action.async {
-    val config = ConfigFactory.load("scanImport.conf")
-    val backUpVolumes: String = config.getStringList("BackUp.volumes").asScala.toSet.mkString("'", "', '", "'")
-    val maxRows: Long = config.getLong("BackUp.maxResult")
+    val backUpVolumes = config.get[Seq[String]]("BackUp.volumes")
+    val maxRows: Long = config.get[Long]("BackUp.maxResult")
 
-    implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
+    val baseQry = for {
+      a <- Tables.SmFileCard
+      if a.sha256.nonEmpty && a.deviceUid === device && !Tables.SmFileCard
+        .filter(b => b.sha256.nonEmpty && b.sha256 === a.sha256 && b.deviceUid =!= device && b.deviceUid.inSet(backUpVolumes))
+        .filterNot(b => b.fParent endsWith "_files")
+        .map(p => p.fName)
+        .exists
+    } yield (a.fParent, a.fName, a.fLastModifiedDate)
 
-    val qry = sql"""
-      SELECT "F_PARENT",
-             "F_NAME",
-             "F_LAST_MODIFIED_DATE"
-      FROM "sm_file_card" fc
-      WHERE "STORE_NAME" = '#$device'
-      AND   "SHA256" IS NOT NULL
-      AND   NOT EXISTS (SELECT 1
-                        FROM "sm_file_card"
-                        WHERE "SHA256" IS NOT NULL
-                        AND   fc."SHA256" = "SHA256"
-                        AND   "STORE_NAME" != '#$device'
-                        AND   "STORE_NAME" IN (#$backUpVolumes))
-                        AND   NOT "F_PARENT" LIKE '%^_files' ESCAPE '^'
-      AND   NOT "F_PARENT" LIKE '%^_files' escape '^'
-      ORDER BY "F_PARENT",
-               "F_NAME"
-       LIMIT #$maxRows
-      """
-      .as[(String, String, DateTime)]
-    database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.sm_chk_device_backup(rowSeq))
+    val cnt = baseQry.length
+    val filtQry = baseQry
+      .sortBy(r => (r._1, r._2))
+      .take(maxRows)
+
+    val composedAction = for {cnt <- cnt.result
+                              filtQry <- filtQry.result} yield (cnt, filtQry)
+
+    database.runAsync(composedAction).map { rowSeq =>
+      Ok(views.html.sm_chk_device_backup(rowSeq._1, maxRows, rowSeq._2))
     }
   }
 
@@ -93,32 +85,33 @@ class SmReport @Inject()(val database: DBService)
 
     val qry = sql"""
        SELECT
-         "SHA256",
-         "F_NAME",
-         "CATEGORY_TYPE",
-         "DESCRIPTION",
-         "STORE_NAME"
+         sha256,
+         f_name,
+         category_type,
+         description,
+         device_uid
        FROM (
               SELECT
-                card."SHA256",
-                card."F_NAME",
-                category."CATEGORY_TYPE",
-                category."DESCRIPTION",
-                (SELECT "STORE_NAME"
+                card.sha256,
+                card.f_name,
+                category_rule.category_type,
+                category_rule.description,
+                (SELECT device_uid
                  FROM sm_file_card sq
-                 WHERE sq."SHA256" = card."SHA256"
-                 AND   sq."STORE_NAME" NOT IN (#$device_Unreliable)
-                 LIMIT 1) AS "STORE_NAME"
+                 WHERE sq.sha256 = card.sha256
+                 AND   sq.device_uid NOT IN (#$device_Unreliable)
+                 LIMIT 1) AS device_uid
               FROM "sm_file_card" card
-                JOIN sm_category_fc category ON category."F_NAME" = card."F_NAME" and category."ID" = card."SHA256"
-              WHERE category."CATEGORY_TYPE" IS NOT NULL
-              GROUP BY card."SHA256",
-                       card."F_NAME",
-                       category."CATEGORY_TYPE",
-                       category."DESCRIPTION"
+                JOIN sm_category_fc category ON category.f_name = card.f_name and category.sha256 = card.sha256
+                JOIN sm_category_rule category_rule ON category_rule.id = category.id
+              WHERE category_rule.category_type IS NOT NULL
+              GROUP BY card.sha256,
+                       card.f_name,
+                       category_rule.category_type,
+                       category_rule.description
               HAVING COUNT(1) < #$cntFiles
             ) AS res
-       WHERE "STORE_NAME" NOT IN (#$device_NotView)
+       WHERE device_uid NOT IN (#$device_NotView)
        LIMIT #$maxRows
       """
       .as[(String, String, String, String, String)]
@@ -135,35 +128,39 @@ class SmReport @Inject()(val database: DBService)
     val device_Unreliable: String = config.getStringList("BackUp.allFiles.device_Unreliable").asScala.toSet.mkString("'", "', '", "'")
     val device_NotView: String = config.getStringList("BackUp.allFiles.device_NotView").asScala.toSet.mkString("'", "', '", "'")
 
+    implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
+
     debug(device_Unreliable)
     debug(device_NotView)
 
     val qry = sql"""
        SELECT
-         "SHA256",
-         "F_NAME",
-         "STORE_NAME"
+         sha256,
+         f_name,
+         device_uid,
+         f_last_modified_date
        FROM (
               SELECT
-                card."SHA256",
-                card."F_NAME",
-                (SELECT "STORE_NAME"
+                card.sha256,
+                card.f_name,
+                (SELECT device_uid
                  FROM sm_file_card sq
-                 WHERE sq."SHA256" = card."SHA256"
-                 AND   sq."STORE_NAME" NOT IN (#$device_Unreliable)
-                 LIMIT 1) AS "STORE_NAME"
-              FROM "sm_file_card" card
-              WHERE card."F_LAST_MODIFIED_DATE" >= date_trunc('month', card."F_LAST_MODIFIED_DATE") - INTERVAL '1 year'
-              GROUP BY card."SHA256",
-                       card."F_NAME",
-                       card."F_LAST_MODIFIED_DATE"
+                 WHERE sq.sha256 = card.sha256
+                 AND   sq.device_uid NOT IN (#$device_Unreliable)
+                 LIMIT 1) AS device_uid,
+                 card.f_last_modified_date
+              FROM sm_file_card card
+              WHERE card.f_last_modified_date >= date_trunc('month', card.f_last_modified_date) - INTERVAL '1 year'
+              GROUP BY card.sha256,
+                       card.f_name,
+                       card.f_last_modified_date
               HAVING COUNT(1) < #$cntFiles
-              order by card."F_LAST_MODIFIED_DATE" desc
+              order by card.f_last_modified_date desc
             ) AS res
-       WHERE "STORE_NAME" NOT IN (#$device_NotView)
+       WHERE device_uid NOT IN (#$device_NotView)
        LIMIT #$maxRows
       """
-      .as[(String, String, String)]
+      .as[(String, String, String, DateTime)]
     database.runAsync(qry).map { rowSeq =>
       Ok(views.html.sm_chk_backup_last_year(rowSeq, device_Unreliable, device_NotView, cntFiles, rowSeq.length, maxRows))
     }
@@ -181,7 +178,7 @@ class SmReport @Inject()(val database: DBService)
     val maxFileSize: Long = config.getBytes("checkDuplicates.maxFileSize")
 
     val qry = (for {
-      uRow <- Tables.SmFileCard if uRow.storeName === device && uRow.fSize > 0L && uRow.fSize > maxFileSize && uRow.sha256.nonEmpty
+      uRow <- Tables.SmFileCard if uRow.deviceUid === device && uRow.fSize > 0L && uRow.fSize > maxFileSize && uRow.sha256.nonEmpty
       v_fName <- Tables.SmFileCard if v_fName.id === uRow.id
     } yield (uRow, v_fName))
       .groupBy({
@@ -213,10 +210,12 @@ class SmReport @Inject()(val database: DBService)
   def getFcByDeviceSha256(device: String, sha256: String): Action[AnyContent] = Action.async {
 
     val qry = for {
-      (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-        fc.sha256 === cat.id && fc.fName === cat.fName
-      }) if fcRow.storeName === device && fcRow.sha256 === sha256
-    } yield (fcRow.id, fcRow.fName, fcRow.fParent, fcRow.fLastModifiedDate, catRow.map(_.categoryType), catRow.map(_.description))
+      ((fcRow, catRow), rulesRow) <- Tables.SmFileCard .joinLeft (Tables.SmCategoryFc). on ((fc, cat) => {
+        fc.sha256 === cat.sha256 && fc.fName === cat.fName
+      }).joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
+
+      if fcRow.deviceUid === device && fcRow.sha256 === sha256
+    } yield (fcRow.id, fcRow.fName, fcRow.fParent, fcRow.fLastModifiedDate, rulesRow.map(_.categoryType), rulesRow.map(_.description))
 
     database.runAsync(
       qry
@@ -224,38 +223,6 @@ class SmReport @Inject()(val database: DBService)
         .result
     ).map { rowSeq =>
       Ok(views.html.sm_device_sha256(device, rowSeq))
-    }
-  }
-
-  /**
-    * Explorer device
-    *
-    * @param device device
-    * @param path   path
-    * @param depth  path depth
-    * @return
-    */
-  def explorerDevice(device: String, path: String, depth: Int): Action[AnyContent] = Action.async {
-    debugParam
-
-    val qry = sql"""
-      SELECT
-        split_part(x2."F_PARENT", '/', #$depth),
-        count(1),
-        count(1) filter (where sm_category_fc is null),
-        array_agg(DISTINCT sm_category_fc."CATEGORY_TYPE") filter (where sm_category_fc is not null)
-    FROM "sm_file_card" x2
-           left outer join sm_category_fc on x2."SHA256" = sm_category_fc."ID"
-    WHERE (((x2."STORE_NAME" = '#$device')))
-      AND (NOT (x2."F_PARENT" LIKE '%^_files' ESCAPE '^'))
-      AND (NOT (x2."F_PARENT" LIKE '%^_files/' ESCAPE '^'))
-      AND split_part(x2."F_PARENT", '/', #$depth -1) = '#$path'
-      GROUP BY split_part(x2."F_PARENT", '/', #$depth)
-      ORDER BY split_part(x2."F_PARENT", '/', #$depth)
-      """
-      .as[(String, Int, Int, String)]
-    database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.fc_explorer(device, rowSeq, depth))
     }
   }
 
@@ -270,8 +237,8 @@ class SmReport @Inject()(val database: DBService)
   def lstDirByDevice(device: String, maxFiles: Int): Action[AnyContent] = Action.async {
     val qry = for {
       (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-        fc.sha256 === cat.id && fc.fName === cat.fName
-      }) if fcRow.storeName === device && fcRow.sha256.nonEmpty && catRow.isEmpty
+        fc.sha256 === cat.sha256 && fc.fName === cat.fName
+      }) if fcRow.deviceUid === device && fcRow.sha256.nonEmpty && catRow.isEmpty
     } yield fcRow
     debugParam
 
@@ -293,4 +260,47 @@ class SmReport @Inject()(val database: DBService)
         Ok(views.html.dirs_fc(rowSeq))
       }
   }
+
+  /**
+    * Check backup android
+    * ls -at > /tmp/123.txt
+    *
+    * Android Debug Bridge
+    * adb shell ls /sdcard/DCIM/Camera/ > /tmp/111222
+    *
+    * @param fileName file name
+    * @return
+    */
+  def cmpBackupAndroindDeviceByFile(fileName: String): Action[AnyContent] = Action.async {
+    val copyFrom = "/sdcard/DCIM/Camera/"
+    val copyTo = "/tmp/cp_back/"
+
+    val file = better.files.File(s"/tmp/$fileName")
+    val content: String = file.contentAsString
+    val lines = content.split("\n")
+
+    val fileNamesImp = ArrayBuffer[String]()
+    val fileNamesExp = ArrayBuffer[String]()
+
+    lines.foreach { tt =>
+      val fileName = tt.replace("\n", "").replace("\r", "")
+      //      fileNamesImp.append(fileName + "1")
+      fileNamesImp.append(fileName)
+    }
+
+    database.runAsync(Tables.SmFileCard.filter(_.fName inSet fileNamesImp).map(_.fName).result).map { rowSeq =>
+      val files2copy = fileNamesImp diff rowSeq
+      files2copy.foreach { fileName =>
+        if (fileName.startsWith("IMG_") || fileName.startsWith("VID_")) {
+          val sss = s"adb pull $copyFrom$fileName $copyTo$fileName"
+          fileNamesExp.append(sss)
+        }
+      }
+      val fileWr = better.files.File(s"/tmp/$fileName.sh")
+      fileWr.overwrite(fileNamesExp.mkString("\n"))
+
+      Ok(fileNamesExp.length.toString)
+    }
+  }
+
 }

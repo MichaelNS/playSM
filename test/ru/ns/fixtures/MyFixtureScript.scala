@@ -33,12 +33,12 @@ class MyFixtureScript extends FixtureScript {
 
   override def setUp(connection: Connection): Unit = {
     connection
-      .prepareStatement("INSERT INTO sm_path_move (ID, STORE_NAME, PATH_FROM, PATH_TO) " +
+      .prepareStatement("INSERT INTO sm_job_path_move (ID, device_uid, PATH_FROM, PATH_TO) " +
         "VALUES ('1', '" + devUid + "', '" + dir_from.toString + "', '" + dir_to.toString + "');")
       .execute()
 
     connection.prepareStatement("" +
-      "INSERT INTO sm_file_card (ID, STORE_NAME, F_PARENT, " +
+      "INSERT INTO sm_file_card (ID, device_uid, F_PARENT, " +
       "F_NAME, F_EXTENSION, F_CREATION_DATE, F_LAST_MODIFIED_DATE, F_SIZE, F_MIME_TYPE_JAVA, " +
       "SHA256, F_NAME_LC)" +
 
@@ -54,7 +54,7 @@ class MyFixtureScript extends FixtureScript {
   }
 
   override def tearDown(connection: Connection): Unit = {
-    connection.prepareStatement("DELETE FROM sm_path_move where id > 0").execute()
+    connection.prepareStatement("DELETE FROM sm_job_path_move where id > 0").execute()
 
     connection.prepareStatement("DELETE FROM sm_file_card where id = 'qwe-asd';").execute()
 

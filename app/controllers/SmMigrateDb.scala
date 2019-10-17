@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets
 
 import akka.NotUsed
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
 import com.google.common.hash.Hashing
 import javax.inject.{Inject, Singleton}
@@ -28,7 +27,6 @@ class SmMigrateDb @Inject()(val database: DBService)
   extends InjectedController {
 
   implicit val system: ActorSystem = ActorSystem()
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   /**
     * Update ID in [[models.db.Tables.SmFileCard]]
@@ -55,10 +53,10 @@ class SmMigrateDb @Inject()(val database: DBService)
     val lstToIns = ArrayBuffer[Tables.SmFileCard#TableElementType]()
     val lstToDel = ArrayBuffer[String]()
     msg.foreach { p =>
-      val newId = Hashing.sha256().hashString(p.storeName + p.fParent + p.fName, StandardCharsets.UTF_8).toString.toUpperCase
+      val newId = Hashing.sha256().hashString(p.deviceUid + p.fParent + p.fName, StandardCharsets.UTF_8).toString.toUpperCase
 
       if (p.id != newId) {
-        lstToIns += Tables.SmFileCardRow(newId, p.storeName, p.fParent, p.fName, p.fExtension,
+        lstToIns += Tables.SmFileCardRow(newId, p.deviceUid, p.fParent, p.fName, p.fExtension,
           p.fCreationDate, p.fLastModifiedDate, p.fSize, p.fMimeTypeJava, p.sha256, p.fNameLc
         )
         lstToDel += p.id
@@ -84,7 +82,7 @@ class SmMigrateDb @Inject()(val database: DBService)
 
   def getStreamFcByStore(device: String): Source[Tables.SmFileCard#TableElementType, NotUsed] = {
 
-    val queryRes = Tables.SmFileCard.filter(_.storeName === device).to[List].result
+    val queryRes = Tables.SmFileCard.filter(_.deviceUid === device).result
     val databasePublisher: DatabasePublisher[Tables.SmFileCard#TableElementType] = database runStream queryRes
     val akkaSourceFromSlick: Source[Tables.SmFileCard#TableElementType, NotUsed] = Source fromPublisher databasePublisher
 

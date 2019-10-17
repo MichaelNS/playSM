@@ -1,0 +1,11 @@
+@(cnt: Int, maxResult: Int, imagesPath: Seq[(String, Option[String], String, Option[String])])()
+@_template {
+    <div class="row column">
+        <h2>view image</h2>
+        <h3>all rows - @cnt, max config rows - @maxResult</h3>
+    </div>
+
+    @for(cImg <- imagesPath) {
+        <a href="@routes.SmView.viewFile(cImg._2)"><img src=@routes.SmImage.viewImage(cImg._1, cImg._4) alt="@cImg._3">
+    }
+}
