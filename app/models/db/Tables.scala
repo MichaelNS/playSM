@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2019-09-09T17:23:24.857+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2019-10-18T23:55:53.926+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -129,30 +129,42 @@ trait Tables {
 
   /** Entity class storing rows of table SmExif
     *
-    * @param id                Database column ID SqlType(varchar), PrimaryKey
-    * @param dateTime          Database column DATE_TIME SqlType(timestamp), Default(None)
-    * @param dateTimeOriginal  Database column DATE_TIME_ORIGINAL SqlType(timestamp), Default(None)
-    * @param dateTimeDigitized Database column DATE_TIME_DIGITIZED SqlType(timestamp), Default(None)
-    * @param make              Database column MAKE SqlType(varchar), Default(None)
-    * @param model             Database column MODEL SqlType(varchar), Default(None)
-    * @param software          Database column SOFTWARE SqlType(varchar), Default(None)
-    * @param exifImageWidth    Database column EXIF_IMAGE_WIDTH SqlType(varchar), Default(None)
-    * @param exifImageHeight   Database column EXIF_IMAGE_HEIGHT SqlType(varchar), Default(None) */
-  case class SmExifRow(id: String, dateTime: Option[java.time.LocalDateTime] = None, dateTimeOriginal: Option[java.time.LocalDateTime] = None, dateTimeDigitized: Option[java.time.LocalDateTime] = None, make: Option[String] = None, model: Option[String] = None, software: Option[String] = None, exifImageWidth: Option[String] = None, exifImageHeight: Option[String] = None)
+    * @param id                  Database column ID SqlType(varchar), PrimaryKey
+    * @param dateTime            Database column DATE_TIME SqlType(timestamp), Default(None)
+    * @param dateTimeOriginal    Database column DATE_TIME_ORIGINAL SqlType(timestamp), Default(None)
+    * @param dateTimeDigitized   Database column DATE_TIME_DIGITIZED SqlType(timestamp), Default(None)
+    * @param make                Database column MAKE SqlType(varchar), Default(None)
+    * @param model               Database column MODEL SqlType(varchar), Default(None)
+    * @param software            Database column SOFTWARE SqlType(varchar), Default(None)
+    * @param exifImageWidth      Database column EXIF_IMAGE_WIDTH SqlType(varchar), Default(None)
+    * @param exifImageHeight     Database column EXIF_IMAGE_HEIGHT SqlType(varchar), Default(None)
+    * @param gpsVersionId        Database column GPS_VERSION_ID SqlType(varchar), Default(None)
+    * @param gpsLatitudeRef      Database column GPS_LATITUDE_REF SqlType(varchar), Default(None)
+    * @param gpsLatitude         Database column GPS_LATITUDE SqlType(varchar), Default(None)
+    * @param gpsLongitudeRef     Database column GPS_LONGITUDE_REF SqlType(varchar), Default(None)
+    * @param gpsLongitude        Database column GPS_LONGITUDE SqlType(varchar), Default(None)
+    * @param gpsAltitudeRef      Database column GPS_ALTITUDE_REF SqlType(varchar), Default(None)
+    * @param gpsAltitude         Database column GPS_ALTITUDE SqlType(varchar), Default(None)
+    * @param gpsTimeStamp        Database column GPS_TIME_STAMP SqlType(varchar), Default(None)
+    * @param gpsProcessingMethod Database column GPS_PROCESSING_METHOD SqlType(varchar), Default(None)
+    * @param gpsDateStamp        Database column GPS_DATE_STAMP SqlType(varchar), Default(None)
+    * @param gpsLatitudeDec      Database column GPS_LATITUDE_DEC SqlType(numeric), Default(None)
+    * @param gpsLongitudeDec     Database column GPS_LONGITUDE_DEC SqlType(numeric), Default(None) */
+  case class SmExifRow(id: String, dateTime: Option[java.time.LocalDateTime] = None, dateTimeOriginal: Option[java.time.LocalDateTime] = None, dateTimeDigitized: Option[java.time.LocalDateTime] = None, make: Option[String] = None, model: Option[String] = None, software: Option[String] = None, exifImageWidth: Option[String] = None, exifImageHeight: Option[String] = None, gpsVersionId: Option[String] = None, gpsLatitudeRef: Option[String] = None, gpsLatitude: Option[String] = None, gpsLongitudeRef: Option[String] = None, gpsLongitude: Option[String] = None, gpsAltitudeRef: Option[String] = None, gpsAltitude: Option[String] = None, gpsTimeStamp: Option[String] = None, gpsProcessingMethod: Option[String] = None, gpsDateStamp: Option[String] = None, gpsLatitudeDec: Option[scala.math.BigDecimal] = None, gpsLongitudeDec: Option[scala.math.BigDecimal] = None)
 
   /** GetResult implicit for fetching SmExifRow objects using plain SQL queries */
-  implicit def GetResultSmExifRow(implicit e0: GR[String], e1: GR[Option[java.time.LocalDateTime]], e2: GR[Option[String]]): GR[SmExifRow] = GR {
+  implicit def GetResultSmExifRow(implicit e0: GR[String], e1: GR[Option[java.time.LocalDateTime]], e2: GR[Option[String]], e3: GR[Option[scala.math.BigDecimal]]): GR[SmExifRow] = GR {
     prs =>
       import prs._
-      SmExifRow.tupled((<<[String], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String]))
+      SmExifRow.tupled((<<[String], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[scala.math.BigDecimal], <<?[scala.math.BigDecimal]))
   }
 
   /** Table description of table sm_exif. Objects of this class serve as prototypes for rows in queries. */
   class SmExif(_tableTag: Tag) extends profile.api.Table[SmExifRow](_tableTag, "sm_exif") {
-    def * = (id, dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight) <> (SmExifRow.tupled, SmExifRow.unapply)
+    def * = (id, dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight, gpsVersionId, gpsLatitudeRef, gpsLatitude, gpsLongitudeRef, gpsLongitude, gpsAltitudeRef, gpsAltitude, gpsTimeStamp, gpsProcessingMethod, gpsDateStamp, gpsLatitudeDec, gpsLongitudeDec) <> (SmExifRow.tupled, SmExifRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight)).shaped.<>({ r => import r._; _1.map(_ => SmExifRow.tupled((_1.get, _2, _3, _4, _5, _6, _7, _8, _9))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight, gpsVersionId, gpsLatitudeRef, gpsLatitude, gpsLongitudeRef, gpsLongitude, gpsAltitudeRef, gpsAltitude, gpsTimeStamp, gpsProcessingMethod, gpsDateStamp, gpsLatitudeDec, gpsLongitudeDec)).shaped.<>({ r => import r._; _1.map(_ => SmExifRow.tupled((_1.get, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column ID SqlType(varchar), PrimaryKey */
     val id: Rep[String] = column[String]("ID", O.PrimaryKey)
@@ -172,6 +184,30 @@ trait Tables {
     val exifImageWidth: Rep[Option[String]] = column[Option[String]]("EXIF_IMAGE_WIDTH", O.Default(None))
     /** Database column EXIF_IMAGE_HEIGHT SqlType(varchar), Default(None) */
     val exifImageHeight: Rep[Option[String]] = column[Option[String]]("EXIF_IMAGE_HEIGHT", O.Default(None))
+    /** Database column GPS_VERSION_ID SqlType(varchar), Default(None) */
+    val gpsVersionId: Rep[Option[String]] = column[Option[String]]("GPS_VERSION_ID", O.Default(None))
+    /** Database column GPS_LATITUDE_REF SqlType(varchar), Default(None) */
+    val gpsLatitudeRef: Rep[Option[String]] = column[Option[String]]("GPS_LATITUDE_REF", O.Default(None))
+    /** Database column GPS_LATITUDE SqlType(varchar), Default(None) */
+    val gpsLatitude: Rep[Option[String]] = column[Option[String]]("GPS_LATITUDE", O.Default(None))
+    /** Database column GPS_LONGITUDE_REF SqlType(varchar), Default(None) */
+    val gpsLongitudeRef: Rep[Option[String]] = column[Option[String]]("GPS_LONGITUDE_REF", O.Default(None))
+    /** Database column GPS_LONGITUDE SqlType(varchar), Default(None) */
+    val gpsLongitude: Rep[Option[String]] = column[Option[String]]("GPS_LONGITUDE", O.Default(None))
+    /** Database column GPS_ALTITUDE_REF SqlType(varchar), Default(None) */
+    val gpsAltitudeRef: Rep[Option[String]] = column[Option[String]]("GPS_ALTITUDE_REF", O.Default(None))
+    /** Database column GPS_ALTITUDE SqlType(varchar), Default(None) */
+    val gpsAltitude: Rep[Option[String]] = column[Option[String]]("GPS_ALTITUDE", O.Default(None))
+    /** Database column GPS_TIME_STAMP SqlType(varchar), Default(None) */
+    val gpsTimeStamp: Rep[Option[String]] = column[Option[String]]("GPS_TIME_STAMP", O.Default(None))
+    /** Database column GPS_PROCESSING_METHOD SqlType(varchar), Default(None) */
+    val gpsProcessingMethod: Rep[Option[String]] = column[Option[String]]("GPS_PROCESSING_METHOD", O.Default(None))
+    /** Database column GPS_DATE_STAMP SqlType(varchar), Default(None) */
+    val gpsDateStamp: Rep[Option[String]] = column[Option[String]]("GPS_DATE_STAMP", O.Default(None))
+    /** Database column GPS_LATITUDE_DEC SqlType(numeric), Default(None) */
+    val gpsLatitudeDec: Rep[Option[scala.math.BigDecimal]] = column[Option[scala.math.BigDecimal]]("GPS_LATITUDE_DEC", O.Default(None))
+    /** Database column GPS_LONGITUDE_DEC SqlType(numeric), Default(None) */
+    val gpsLongitudeDec: Rep[Option[scala.math.BigDecimal]] = column[Option[scala.math.BigDecimal]]("GPS_LONGITUDE_DEC", O.Default(None))
   }
 
   /** Collection-like TableQuery object for table SmExif */

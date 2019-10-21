@@ -3,11 +3,12 @@ package controllers
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
 import play.api.mvc.{Action, AnyContent, InjectedController}
-import ru.ns.model.{OsConf, SmExif}
+import ru.ns.model.{OsConf, SmExif, SmExifGoo}
 import ru.ns.tools.{FileUtils, SmExifUtil}
 import services.db.DBService
 import utils.db.SmPostgresDriver.api._
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -51,7 +52,28 @@ class SmSyncExif @Inject()(val database: DBService)
 
     val smExif: Option[SmExif] = SmExifUtil.getExifByFileName(fileName)
     if (smExif.isDefined) {
-      val cRow = Tables.SmExifRow(id, smExif.get.dateTime, smExif.get.dateTimeOriginal, smExif.get.dateTimeDigitized, smExif.get.make, smExif.get.model, smExif.get.software, smExif.get.exifImageWidth, smExif.get.exifImageHeight)
+      val cRow = Tables.SmExifRow(id,
+        smExif.get.dateTime,
+        smExif.get.dateTimeOriginal,
+        smExif.get.dateTimeDigitized,
+        smExif.get.make,
+        smExif.get.model,
+        smExif.get.software,
+        smExif.get.exifImageWidth,
+        smExif.get.exifImageHeight,
+        smExif.get.gpsVersionID,
+        smExif.get.gpsLatitudeRef,
+        smExif.get.gpsLatitude,
+        smExif.get.gpsLongitudeRef,
+        smExif.get.gpsLongitude,
+        smExif.get.gpsAltitudeRef,
+        smExif.get.gpsAltitude,
+        smExif.get.gpsTimeStamp,
+        smExif.get.gpsProcessingMethod,
+        smExif.get.gpsDateStamp,
+        smExif.get.gpsLatitudeD,
+        smExif.get.gpsLongitudeD
+      )
       val insRes = database.runAsync(Tables.SmExif.insertOrUpdate(models.SmExif.apply(cRow).data.toRow))
       insRes
     }
@@ -67,5 +89,23 @@ class SmSyncExif @Inject()(val database: DBService)
     SmExifUtil.printAllExifByFileName("c:/tmp/images/" + fileName)
 
     Ok("Job run")
+  }
+
+  def viewAllGps: Action[AnyContent] = Action.async {
+    val lstSmExifGoo = ArrayBuffer[SmExifGoo]()
+
+    database.runAsync(
+      (for {
+        (fcRow, exifRow) <- Tables.SmFileCard join Tables.SmExif on ((fc, exif) => {
+          fc.id === exif.id && exif.gpsLatitude.nonEmpty
+        })}
+        yield (fcRow.id, fcRow.fParent, fcRow.fName, exifRow.gpsLatitudeDec, exifRow.gpsLongitudeDec)
+        ).to[List].result)
+      .map { rowSeq =>
+        rowSeq.foreach { cExif =>
+          lstSmExifGoo += SmExifGoo(cExif._2 + cExif._3, new com.drew.lang.GeoLocation(cExif._4.get.toDouble, cExif._5.get.toDouble))
+        }
+        Ok(views.html.gps(lstSmExifGoo))
+      }
   }
 }

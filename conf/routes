@@ -31,6 +31,7 @@ GET         /sync-compare-directory/children/:device                  controller
 + nocsrf
 POST        /calcExif/:device                                         controllers.SmSyncExif.calcExif(device:String)
 GET         /exif/:fileName                                           controllers.SmSyncExif.getExif(fileName:String)
+GET         /gps-all                                                  controllers.SmSyncExif.viewAllGps
 
 
 

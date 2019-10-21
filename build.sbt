@@ -101,7 +101,7 @@ lazy val root = (project in file("."))
 addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 30.81
+coverageMinimum := 29.02
 coverageFailOnMinimum := true
 coverageHighlighting := true
 

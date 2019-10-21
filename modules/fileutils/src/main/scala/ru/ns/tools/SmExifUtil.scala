@@ -7,7 +7,8 @@ import java.time.format.DateTimeFormatter
 
 import com.drew.imaging.jpeg.{JpegMetadataReader, JpegProcessingException}
 import com.drew.imaging.{ImageMetadataReader, ImageProcessingException}
-import com.drew.metadata.exif.ExifReader
+import com.drew.lang.GeoLocation
+import com.drew.metadata.exif.{ExifReader, GpsDirectory}
 import com.drew.metadata.iptc.IptcReader
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
@@ -16,6 +17,7 @@ import ru.ns.model.SmExif
 object SmExifUtil {
   private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))
   private val formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
+  private val tags = List[String]("Make", "Model", "Software", "Date/Time", "Date/Time Original", "Date/Time Digitized", "Exif Image Width", "Exif Image Height")
 
   def debugParam(implicit line: sourcecode.Line, enclosing: sourcecode.Enclosing, args: sourcecode.Args): Unit = {
     logger.debug(s"debugParam ${enclosing.value} : ${line.value}  - "
@@ -45,13 +47,19 @@ object SmExifUtil {
         val metadata = JpegMetadataReader.readMetadata(file, readers)
         metadata.getDirectories.forEach { dir =>
           dir.getTags.iterator().forEachRemaining { tag =>
-            tag.getTagName match {
-              case "Make" | "Model" | "Software"
-                   | "Date/Time" | "Date/Time Original" | "Date/Time Digitized"
-                   | "Exif Image Width" | "Exif Image Height"
-              => hTags = hTags + (tag.getTagName -> tag.getDescription)
-              case _ =>
+            if (tags.contains(tag.getTagName)) {
+              hTags = hTags + (tag.getTagName -> tag.getDescription)
             }
+            else if (tag.getDirectoryName == "GPS") {
+              hTags = hTags + (tag.getTagName -> tag.getDescription)
+            }
+          }
+        }
+        metadata.getDirectoriesOfType(classOf[GpsDirectory]).forEach { dir =>
+          val lGeoLocation: GeoLocation = dir.getGeoLocation
+          if (lGeoLocation != null && !lGeoLocation.isZero) {
+            hTags = hTags + ("gpsLatitudeD" -> lGeoLocation.getLatitude.toString)
+            hTags = hTags + ("gpsLongitudeD" -> lGeoLocation.getLongitude.toString)
           }
         }
         //        hTags foreach { case (key, value) => logger.info(key + "-->" + value) }
@@ -60,7 +68,6 @@ object SmExifUtil {
         case e: IOException => logger.error("IOException", e)
       }
     }
-
     try {
       extractSmExif(hTags)
     } catch {
@@ -82,6 +89,18 @@ object SmExifUtil {
       if (hTags.get("Software").isDefined) Some(hTags.getOrElse("Software", "")) else None,
       if (hTags.get("Exif Image Width").isDefined) Some(hTags.getOrElse("Exif Image Width", "")) else None,
       if (hTags.get("Exif Image Height").isDefined) Some(hTags.getOrElse("Exif Image Height", "")) else None,
+      if (hTags.get("GPS Version ID").isDefined) Some(hTags.getOrElse("GPS Version ID", "")) else None,
+      if (hTags.get("GPS Latitude Ref").isDefined) Some(hTags.getOrElse("GPS Latitude Ref", "")) else None,
+      if (hTags.get("GPS Latitude").isDefined) Some(hTags.getOrElse("GPS Latitude", "")) else None,
+      if (hTags.get("GPS Longitude Ref").isDefined) Some(hTags.getOrElse("GPS Longitude Ref", "")) else None,
+      if (hTags.get("GPS Longitude").isDefined) Some(hTags.getOrElse("GPS Longitude", "")) else None,
+      if (hTags.get("GPS Altitude Ref").isDefined) Some(hTags.getOrElse("GPS Altitude Ref", "")) else None,
+      if (hTags.get("GPS Altitude").isDefined) Some(hTags.getOrElse("GPS Altitude", "")) else None,
+      if (hTags.get("GPS Time-Stamp").isDefined) Some(hTags.getOrElse("GPS Time-Stamp", "")) else None,
+      if (hTags.get("GPS Processing Method").isDefined) Some(hTags.getOrElse("GPS Processing Method", "")) else None,
+      if (hTags.get("GPS Date Stamp").isDefined) Some(hTags.getOrElse("GPS Date Stamp", "")) else None,
+      if (hTags.get("gpsLatitudeD").isDefined) Some(hTags.get("gpsLatitudeD").head.toDouble) else None,
+      if (hTags.get("gpsLongitudeD").isDefined) Some(hTags.get("gpsLongitudeD").head.toDouble) else None
     )
     )
   }

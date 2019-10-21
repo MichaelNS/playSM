@@ -117,16 +117,27 @@ object SmCategoryFc {
   }
 }
 
-case class SmExif(
-                   id: String,
-                   dateTime: Option[java.time.LocalDateTime] = None,
-                   dateTimeOriginal: Option[java.time.LocalDateTime] = None,
-                   dateTimeDigitized: Option[java.time.LocalDateTime] = None,
-                   make: Option[String] = None,
-                   model: Option[String] = None,
-                   software: Option[String] = None,
-                   exifImageWidth: Option[String] = None,
-                   exifImageHeight: Option[String] = None
+case class SmExif(id: String,
+                  dateTime: Option[java.time.LocalDateTime] = None,
+                  dateTimeOriginal: Option[java.time.LocalDateTime] = None,
+                  dateTimeDigitized: Option[java.time.LocalDateTime] = None,
+                  make: Option[String] = None,
+                  model: Option[String] = None,
+                  software: Option[String] = None,
+                  exifImageWidth: Option[String] = None,
+                  exifImageHeight: Option[String] = None,
+                  gpsVersionId: Option[String] = None,
+                  gpsLatitudeRef: Option[String] = None,
+                  gpsLatitude: Option[String] = None,
+                  gpsLongitudeRef: Option[String] = None,
+                  gpsLongitude: Option[String] = None,
+                  gpsAltitudeRef: Option[String] = None,
+                  gpsAltitude: Option[String] = None,
+                  gpsTimeStamp: Option[String] = None,
+                  gpsProcessingMethod: Option[String] = None,
+                  gpsDateStamp: Option[String] = None,
+                  gpsLatitudeDec: Option[scala.math.BigDecimal],
+                  gpsLongitudeDec: Option[scala.math.BigDecimal]
                  ) {
   def toRow: Tables.SmExifRow = {
     Tables.SmExifRow(
@@ -138,7 +149,19 @@ case class SmExif(
       model = model,
       software = software,
       exifImageWidth = exifImageWidth,
-      exifImageHeight = exifImageHeight
+      exifImageHeight = exifImageHeight,
+      gpsVersionId = gpsVersionId,
+      gpsLatitudeRef = gpsLatitudeRef,
+      gpsLatitude = gpsLatitude,
+      gpsLongitudeRef = gpsLongitudeRef,
+      gpsLongitude = gpsLongitude,
+      gpsAltitudeRef = gpsAltitudeRef,
+      gpsAltitude = gpsAltitude,
+      gpsTimeStamp = gpsTimeStamp,
+      gpsProcessingMethod = gpsProcessingMethod,
+      gpsDateStamp = gpsDateStamp,
+      gpsLatitudeDec = gpsLatitudeDec,
+      gpsLongitudeDec = gpsLongitudeDec
     )
   }
 }
@@ -156,7 +179,19 @@ object SmExif {
         model = row.model,
         software = row.software,
         exifImageWidth = row.exifImageWidth,
-        exifImageHeight = row.exifImageHeight
+        exifImageHeight = row.exifImageHeight,
+        gpsVersionId = row.gpsVersionId,
+        gpsLatitudeRef = row.gpsLatitudeRef,
+        gpsLatitude = row.gpsLatitude,
+        gpsLongitudeRef = row.gpsLongitudeRef,
+        gpsLongitude = row.gpsLongitude,
+        gpsAltitudeRef = row.gpsAltitudeRef,
+        gpsAltitude = row.gpsAltitude,
+        gpsTimeStamp = row.gpsTimeStamp,
+        gpsProcessingMethod = row.gpsProcessingMethod,
+        gpsDateStamp = row.gpsDateStamp,
+        gpsLatitudeDec = row.gpsLatitudeDec,
+        gpsLongitudeDec = row.gpsLongitudeDec
       )
     )
   }
