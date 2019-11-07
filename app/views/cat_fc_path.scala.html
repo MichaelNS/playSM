@@ -68,6 +68,11 @@
 
     }
 
+
+    @if(rowSeq.nonEmpty) {
+        <a href="@routes.SmImage.viewImages(rowSeq.head._1, fParent)" >view images</a>
+    }
+
     <div class="row column">
         <table class="stack">
             <thead>

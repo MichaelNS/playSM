@@ -62,7 +62,7 @@ class SmCategory @Inject()(val database: DBService)
         .groupBy(p => p._2)
         .map { case (categoryType, cnt) => (categoryType, cnt.map(_._2).length) }
         .sortBy(_._2.desc)
-        .to[List].result)
+        .result)
       .map { rowSeq =>
         Ok(views.html.smr_category(rowSeq))
       }
@@ -85,7 +85,7 @@ class SmCategory @Inject()(val database: DBService)
         .groupBy(p => p.subCategoryType)
         .map { case (subcategoryType, cnt) => (subcategoryType, cnt.map(_.subCategoryType).length) }
         .sortBy(_._2.desc)
-        .to[List].result)
+        .result)
       .map { rowSeq =>
         Ok(views.html.smr_sub_category(categoryType, rowSeq))
       }
@@ -110,7 +110,7 @@ class SmCategory @Inject()(val database: DBService)
         .groupBy(p => p.description)
         .map { case (description, cnt) => (description, cnt.map(_.description).length) }
         .sortBy(_._2.desc)
-        .to[List].result)
+        .result)
       .map { rowSeq =>
         Ok(views.html.smr_description(categoryType, rowSeq))
       }

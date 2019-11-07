@@ -84,7 +84,7 @@ class SmMigrateDb @Inject()(val database: DBService)
 
   def getStreamFcByStore(device: String): Source[Tables.SmFileCard#TableElementType, NotUsed] = {
 
-    val queryRes = Tables.SmFileCard.filter(_.storeName === device).to[List].result
+    val queryRes = Tables.SmFileCard.filter(_.storeName === device).result
     val databasePublisher: DatabasePublisher[Tables.SmFileCard#TableElementType] = database runStream queryRes
     val akkaSourceFromSlick: Source[Tables.SmFileCard#TableElementType, NotUsed] = Source fromPublisher databasePublisher
 

@@ -128,7 +128,7 @@ object FileUtils {
 
   def getPathesRecursive(path2scan: String,
                          mountPoint: String,
-                         sExclusionDir: util.List[String]
+                         sExclusionDir: Seq[String]
                         ): ArrayBuffer[SmPath] = {
     debug(path2scan)
 
@@ -191,7 +191,7 @@ object FileUtils {
   def getFilesFromStore(impPath: String,
                         deviceUid: String,
                         mountPoint: String,
-                        sExclusionFile: util.List[String]): ArrayBuffer[FileCardSt] = {
+                        sExclusionFile: Seq[String]): ArrayBuffer[FileCardSt] = {
 
     val visitor = new SmFileVisitor("", deviceUid, mountPoint, sExclusionFile)
 

@@ -64,9 +64,11 @@ lazy val fileutils = (project in file("."))
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7",
 
-    libraryDependencies += "com.drewnoakes" % "metadata-extractor" % "2.12.0"
+    libraryDependencies += "com.drewnoakes" % "metadata-extractor" % "2.12.0",
+
+    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0"
   )
 
 // sbt-scoverage
-coverageMinimum := 35.02
+coverageMinimum := 38.90
 coverageFailOnMinimum := true

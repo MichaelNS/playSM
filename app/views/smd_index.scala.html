@@ -10,8 +10,10 @@
 
             <li><a href="@routes.SmReport.lstDirByDevice(device, maxFilesInDir)">lstDirByDevice</a></li>
 
-            <li><a href="@routes.SmReport.cntFilesWithoutSha256ByDevice(device)">cnt Files Without Sha256 By Device</a></li>
-            <li><a href="@routes.SmReport.listFilesWithoutSha256ByDevice(device)">list Files Without Sha256 By Device</a></li>
+            <li><a href="@routes.SmReport.cntFilesWithoutSha256ByDevice(device)">
+                cnt Files Without Sha256 By Device</a></li>
+            <li><a href="@routes.SmReport.listFilesWithoutSha256ByDevice(device)">
+                list Files Without Sha256 By Device</a></li>
 
             <li><a href="@routes.SmReport.checkBackUp(device)">check BackUp</a></li>
 
@@ -45,7 +47,11 @@
             </form>
         </div>
 
-
+        <div class="input-group-button">
+            <form action="@routes.SmImage.resizeImage(device)" method="post">
+                <button class="button success">resizeImage</button>
+            </form>
+        </div>
         <div class="input-group-button">
             <form action="@routes.SmApplication.deviceTree(device)" method="post">
                 <button class="button success">deviceTree</button>

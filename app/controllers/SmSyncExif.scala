@@ -32,7 +32,7 @@ class SmSyncExif @Inject()(val database: DBService)
           fc.id === exif.id
         }) if fcRow.storeName === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && exifRow.isEmpty}
         yield (fcRow.id, fcRow.fParent, fcRow.fName)
-        ).to[List].result)
+        ).result)
       .map { rowSeq =>
         FileUtils.getDeviceInfo(deviceUid) onComplete {
           case Success(device) =>
@@ -100,7 +100,7 @@ class SmSyncExif @Inject()(val database: DBService)
           fc.id === exif.id && exif.gpsLatitude.nonEmpty
         })}
         yield (fcRow.id, fcRow.fParent, fcRow.fName, exifRow.gpsLatitudeDec, exifRow.gpsLongitudeDec)
-        ).to[List].result)
+        ).result)
       .map { rowSeq =>
         rowSeq.foreach { cExif =>
           lstSmExifGoo += SmExifGoo(cExif._2 + cExif._3, new com.drew.lang.GeoLocation(cExif._4.get.toDouble, cExif._5.get.toDouble))

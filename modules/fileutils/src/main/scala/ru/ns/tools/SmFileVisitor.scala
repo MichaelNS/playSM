@@ -18,7 +18,7 @@ import scala.collection.mutable.ArrayBuffer
   * @param mountPoint     mount point
   * @param sExclusionFile list of ExclusionFile
   */
-class SmFileVisitor(glob: String, deviceUid: String, mountPoint: String, sExclusionFile: util.List[String])
+class SmFileVisitor(glob: String, deviceUid: String, mountPoint: String, sExclusionFile: Seq[String])
   extends SimpleFileVisitor[Path] {
 
   //  private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))

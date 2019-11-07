@@ -181,7 +181,7 @@ class FileUtilsSpec extends PlaySpec {
     val hSmBoSmPath: ArrayBuffer[SmPath] = FileUtils.getPathesRecursive(
       "test" + OsConf.fsSeparator + "tmp",
       mountPoint,
-      sExclusionDir.asJava
+      sExclusionDir
     )
     val hSmPathTest = ArrayBuffer[SmPath](path_1)
     hSmBoSmPath.size mustBe 1
@@ -193,7 +193,7 @@ class FileUtilsSpec extends PlaySpec {
       "test" + OsConf.fsSeparator + "tmp",
       deviceUid,
       mountPoint,
-      sExclusionFile.asJava
+      sExclusionFile
     )
     hSmBoFileCard.size mustBe 2
     hSmBoFileCard.head.toString must equal(hSmBoFileCardTest.head.toString)

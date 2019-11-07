@@ -1,72 +1,72 @@
 # --- !Ups
 
-CREATE TABLE IF NOT EXISTS SM_DEVICE
+CREATE TABLE IF NOT EXISTS sm_device
 (
-  "ID"        serial PRIMARY KEY,
-  "NAME"      VARCHAR              NOT NULL,
-  "LABEL"     VARCHAR              NOT NULL,
-  "UID"       VARCHAR              NOT NULL,
-  "SYNC_DATE" TIMESTAMP            NOT NULL,
-  "DESCRIBE"  VARCHAR              NULL,
-  "VISIBLE"   BOOLEAN DEFAULT TRUE NOT NULL,
-  "RELIABLE"  BOOLEAN DEFAULT TRUE NOT NULL
+  id        serial PRIMARY KEY,
+  name      VARCHAR              NOT NULL,
+  label     VARCHAR              NOT NULL,
+  uid       VARCHAR              NOT NULL,
+  sync_date TIMESTAMP            NOT NULL,
+  describe  VARCHAR              NULL,
+  visible   BOOLEAN DEFAULT TRUE NOT NULL,
+  reliable  BOOLEAN DEFAULT TRUE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS SM_FILE_CARD
+CREATE TABLE IF NOT EXISTS sm_file_card
 (
-  "ID"                   VARCHAR PRIMARY KEY NOT NULL,
-  "STORE_NAME"           VARCHAR             NOT NULL,
-  "F_PARENT"             VARCHAR             NOT NULL,
-  "F_NAME"               VARCHAR             NOT NULL,
-  "F_EXTENSION"          VARCHAR,
-  "F_CREATION_DATE"      TIMESTAMP           NOT NULL,
-  "F_LAST_MODIFIED_DATE" TIMESTAMP           NOT NULL,
-  "F_SIZE"               BIGINT,
-  "F_MIME_TYPE_JAVA"     VARCHAR,
-  "SHA256"               VARCHAR,
-  "F_NAME_LC"            VARCHAR             NOT NULL
+  id                   VARCHAR PRIMARY KEY NOT NULL,
+  store_name           VARCHAR             NOT NULL,
+  f_parent             VARCHAR             NOT NULL,
+  f_name               VARCHAR             NOT NULL,
+  f_extension          VARCHAR,
+  f_creation_date      TIMESTAMP           NOT NULL,
+  f_last_modified_date TIMESTAMP           NOT NULL,
+  f_size               BIGINT,
+  f_mime_type_java     VARCHAR,
+  sha256               VARCHAR,
+  f_name_lc            VARCHAR             NOT NULL
 );
 
--- CREATE INDEX sha256_idx ON sm_file_card ("SHA256" ASC NULLS LAST);
+-- CREATE INDEX sha256_idx ON sm_file_card (sha256 ASC NULLS LAST);
 
 CREATE INDEX sha256_idx
   ON sm_file_card
-    ("SHA256" ASC NULLS LAST);
+    (sha256 ASC NULLS LAST);
 
 CREATE INDEX f_parent_idx
   ON sm_file_card
-    ("F_PARENT" ASC NULLS LAST);
+    (f_parent ASC NULLS LAST);
 
 CREATE INDEX last_modified_idx
   ON sm_file_card
-    ("F_LAST_MODIFIED_DATE" DESC NULLS LAST);
+    (f_last_modified_date DESC NULLS LAST);
 
 
-CREATE TABLE IF NOT EXISTS SM_PATH_MOVE
+CREATE TABLE IF NOT EXISTS sm_path_move
 (
-  "ID"         serial PRIMARY KEY,
-  "STORE_NAME" VARCHAR NOT NULL,
-  "PATH_FROM"  VARCHAR NOT NULL,
-  "PATH_TO"    VARCHAR NOT NULL
+  id         serial PRIMARY KEY,
+  store_name VARCHAR NOT NULL,
+  path_from  VARCHAR NOT NULL,
+  path_to    VARCHAR NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS SM_CATEGORY_FC
+CREATE TABLE IF NOT EXISTS sm_category_fc
 (
-  "ID"                VARCHAR,
-  "F_NAME"            VARCHAR,
-  "CATEGORY_TYPE"     VARCHAR,
-  "SUB_CATEGORY_TYPE" VARCHAR,
-  "DESCRIPTION"       VARCHAR,
-  PRIMARY KEY ("ID", "F_NAME")
+  id                VARCHAR,
+  f_name            VARCHAR,
+  category_type     VARCHAR,
+  sub_category_type VARCHAR,
+  description       VARCHAR,
+  PRIMARY KEY (id, f_name)
 );
 
 
 # --- !Downs
 
-DROP TABLE IF EXISTS SM_DEVICE CASCADE;
+DROP TABLE IF EXISTS sm_device CASCADE;
 
-DROP TABLE IF EXISTS SM_FILE_CARD CASCADE;
+DROP TABLE IF EXISTS sm_file_card CASCADE;
 
-DROP TABLE IF EXISTS SM_PATH_MOVE CASCADE;
+DROP TABLE IF EXISTS sm_path_move CASCADE;
 
-DROP TABLE IF EXISTS SM_CATEGORY_FC CASCADE;
+DROP TABLE IF EXISTS sm_category_fc CASCADE;
