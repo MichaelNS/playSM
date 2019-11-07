@@ -18,7 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Created by ns on 23.01.2017.
   */
 @Singleton
-class SmApplication @Inject()(implicit assetsFinder: AssetsFinder,val database: DBService)
+class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database: DBService)
   extends InjectedController {
 
   val logger = play.api.Logger(getClass)
@@ -28,16 +28,16 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder,val database: 
 
     val qry = sql"""
       SELECT
-        x2."NAME",
-        x2."LABEL",
-        x2."UID",
-        x2."DESCRIBE",
-        x2."SYNC_DATE",
-        x2."RELIABLE",
-      (SELECT count(1) FROM "sm_file_card" x3 WHERE x3."STORE_NAME" = x2."UID" AND (x3."SHA256" IS NULL)  AND (x3."F_SIZE" > 0))
-      FROM "sm_device" x2
-      where x2."VISIBLE" is true
-      ORDER BY x2."LABEL"
+        x2.name,
+        x2.label,
+        x2.uid,
+        x2.describe,
+        x2.sync_date,
+        x2.reliable,
+      (SELECT count(1) FROM sm_file_card x3 WHERE x3.store_name = x2.uid AND (x3.sha256 IS NULL)  AND (x3.f_size > 0))
+      FROM sm_device x2
+      where x2.visible is true
+      ORDER BY x2.label
       """
       .as[(String, String, String, String, DateTime, Boolean, Int)]
     database.runAsync(qry).map { rowSeq =>
@@ -63,7 +63,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder,val database: 
 
     logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
 
-    database.runAsync(Tables.SmFileCard.filter(_.storeName === device).take(maxRes).to[List].result).map { rowSeq =>
+    database.runAsync(Tables.SmFileCard.filter(_.storeName === device).take(maxRes).result).map { rowSeq =>
       val fcSeq = rowSeq.map(SmFileCard(_))
       Ok(views.html.filecards(fcSeq))
     }
@@ -80,7 +80,6 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder,val database: 
         .filterNot(_.fParent endsWith "_files")
         .sortBy(_.fLastModifiedDate.desc)
         .take(maxRes)
-        .to[List]
         .result
     ).map { rowSeq =>
       val fcSeq = rowSeq.map(SmFileCard(_))
@@ -92,10 +91,10 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder,val database: 
     database.runAsync(Tables.SmFileCard.groupBy(p => p.storeName)
       .map { case (storeName, cnt) => (storeName, cnt.map(_.storeName).length) }
       .sortBy(_._1)
-      .to[List].result)
-      .map { rowSeq =>
-        Ok(views.html.storename(rowSeq))
-      }
+      .result
+    ).map { rowSeq =>
+      Ok(views.html.storename(rowSeq))
+    }
   }
 
   def debugQry(device: String): Action[AnyContent] = Action.async {
@@ -127,7 +126,6 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder,val database: 
         .filter(_.storeName === device).filter(_.fParent startsWith path + OsConf.fsSeparator)
       )
       .take(ctnRec)
-      .to[List]
       .result
     ).map { rowSeq =>
       val fcSeq = rowSeq.map(SmFileCard(_))

@@ -52,22 +52,22 @@ class SmMove @Inject()(val database: DBService)
   def listPathByDescription(categoryType: String, description: String): Action[AnyContent] = Action.async {
     val qry = sql"""
        SELECT
-         x2."F_PARENT",
-         (SELECT string_agg(DISTINCT x3."STORE_NAME", ', ')
+         x2.f_parent,
+         (SELECT string_agg(DISTINCT x3.store_name, ', ')
           FROM sm_file_card x3
-          WHERE x3."F_PARENT" = x2."F_PARENT"),
+          WHERE x3.f_parent = x2.f_parent),
          (SELECT count(1)
           FROM sm_file_card x3
-          WHERE x3."F_PARENT" = x2."F_PARENT"),
-         (SELECT pm."PATH_TO"
+          WHERE x3.f_parent = x2.f_parent),
+         (SELECT pm.path_to
           FROM sm_path_move pm
-          WHERE pm."PATH_FROM" = x2."F_PARENT")
-      FROM "sm_file_card" x2
-        JOIN sm_category_fc category ON category."F_NAME" = x2."F_NAME" and category."ID" = x2."SHA256"
+          WHERE pm.path_from = x2.f_parent)
+      FROM sm_file_card x2
+        JOIN sm_category_fc category ON category.f_name = x2.f_name and category.id = x2.sha256
        WHERE
-             category."CATEGORY_TYPE" = '#$categoryType'
-         AND category."DESCRIPTION" = '#$description'
-       GROUP BY x2."F_PARENT"
+             category.category_type = '#$categoryType'
+         AND category.description = '#$description'
+       GROUP BY x2.f_parent
        ORDER BY 3 DESC
       """
       .as[(String, String, Int, String)]
@@ -187,7 +187,7 @@ class SmMove @Inject()(val database: DBService)
   def moveByDevice(device: Device, maxJob: Int, maxMoveFiles: Int): String = {
     debugParam
 
-    database.runAsync(Tables.SmPathMove.filter(_.storeName === device.uuid).take(maxJob).to[List].result).map { moveJobRow =>
+    database.runAsync(Tables.SmPathMove.filter(_.storeName === device.uuid).take(maxJob).result).map { moveJobRow =>
       debug(moveJobRow)
       moveJobRow.foreach { rowMove =>
         val pathFrom = rowMove.pathFrom
@@ -200,7 +200,7 @@ class SmMove @Inject()(val database: DBService)
           .filter(_.storeName === rowMove.storeName)
           .filter(_.fParent === pathFrom)
           .take(maxMoveFiles)
-          .to[List].result).map { rowFcSeq =>
+          .result).map { rowFcSeq =>
           rowFcSeq.foreach { rowFc =>
             debug(rowFc)
             try {

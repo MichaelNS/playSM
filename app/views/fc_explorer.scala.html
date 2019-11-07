@@ -1,7 +1,8 @@
-@(device: String, lstPath: Vector[(String, Int, Int, String)], depth: Int)()
+@import ru.ns.model.OsConf
+@(device: String, treePath:String, cPath:String, lstPath: Vector[(String, Int, Int, String)], depth: Int)()
 @_template {
     <div class="row column">
-        <h2>Explorer</h2>
+        <h3>Explorer - @treePath</h3>
     </div>
     <div class="row column">
         <table class="stack">
@@ -12,15 +13,23 @@
                     <th>Count <br>
                         Category is null</th>
                     <th>Category</th>
+                    <th>Sync path</th>
                 </tr>
             </thead>
             <tbody>
             @for(path <- lstPath) {
                 <tr>
-                    <td><a href="@routes.SmReport.explorerDevice(device, path._1, depth + 1)" >@path._1</a></td>
+                    <td><a href="@routes.SmReport.explorerDevice(device, treePath + OsConf.fsSeparator + path._1, path._1, depth + 1)" >@path._1</a></td>
                     <td>@path._2</td>
                     <td>@path._3</td>
                     <td>@path._4</td>
+                    <td>
+                        <div class="input-group-button">
+                            <form action="@routes.SmSyncDeviceStream.syncSingleNamePath(treePath + OsConf.fsSeparator + path._1, device)" method="post">
+                                <button class="button primary">Sync path</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
             }
             </tbody>

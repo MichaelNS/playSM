@@ -40,6 +40,7 @@ object SmExifUtil {
 
     val file = new File(fileName)
     var hTags = Map.empty[String, String]
+    var hGpsTags = Map.empty[String, BigDecimal]
 
     if (file.exists() && Files.probeContentType(file.toPath) == "image/jpeg") {
       try {
@@ -58,8 +59,8 @@ object SmExifUtil {
         metadata.getDirectoriesOfType(classOf[GpsDirectory]).forEach { dir =>
           val lGeoLocation: GeoLocation = dir.getGeoLocation
           if (lGeoLocation != null && !lGeoLocation.isZero) {
-            hTags = hTags + ("gpsLatitudeD" -> lGeoLocation.getLatitude.toString)
-            hTags = hTags + ("gpsLongitudeD" -> lGeoLocation.getLongitude.toString)
+            hGpsTags = hGpsTags + ("gpsLatitudeD" -> lGeoLocation.getLatitude)
+            hGpsTags = hGpsTags + ("gpsLongitudeD" -> lGeoLocation.getLongitude)
           }
         }
         //        hTags foreach { case (key, value) => logger.info(key + "-->" + value) }
@@ -69,7 +70,7 @@ object SmExifUtil {
       }
     }
     try {
-      extractSmExif(hTags)
+      extractSmExif(hTags, hGpsTags)
     } catch {
       case e: java.time.format.DateTimeParseException =>
         logger.error("DateTimeParseException {}", fileName, e)
@@ -79,36 +80,38 @@ object SmExifUtil {
     }
   }
 
-  def extractSmExif(hTags: Map[String, String]): Option[SmExif] = {
+  def extractSmExif(hTags: Map[String, String], hGpsTags: Map[String, BigDecimal]): Option[SmExif] = {
     Some(SmExif(
       extractDateTimeKeyFromExifMap(hTags, "Date/Time"),
       extractDateTimeKeyFromExifMap(hTags, "Date/Time Original"),
       extractDateTimeKeyFromExifMap(hTags, "Date/Time Digitized"),
-      if (hTags.get("Make").isDefined) Some(hTags.getOrElse("Make", "")) else None,
-      if (hTags.get("Model").isDefined) Some(hTags.getOrElse("Model", "")) else None,
-      if (hTags.get("Software").isDefined) Some(hTags.getOrElse("Software", "")) else None,
-      if (hTags.get("Exif Image Width").isDefined) Some(hTags.getOrElse("Exif Image Width", "")) else None,
-      if (hTags.get("Exif Image Height").isDefined) Some(hTags.getOrElse("Exif Image Height", "")) else None,
-      if (hTags.get("GPS Version ID").isDefined) Some(hTags.getOrElse("GPS Version ID", "")) else None,
-      if (hTags.get("GPS Latitude Ref").isDefined) Some(hTags.getOrElse("GPS Latitude Ref", "")) else None,
-      if (hTags.get("GPS Latitude").isDefined) Some(hTags.getOrElse("GPS Latitude", "")) else None,
-      if (hTags.get("GPS Longitude Ref").isDefined) Some(hTags.getOrElse("GPS Longitude Ref", "")) else None,
-      if (hTags.get("GPS Longitude").isDefined) Some(hTags.getOrElse("GPS Longitude", "")) else None,
-      if (hTags.get("GPS Altitude Ref").isDefined) Some(hTags.getOrElse("GPS Altitude Ref", "")) else None,
-      if (hTags.get("GPS Altitude").isDefined) Some(hTags.getOrElse("GPS Altitude", "")) else None,
-      if (hTags.get("GPS Time-Stamp").isDefined) Some(hTags.getOrElse("GPS Time-Stamp", "")) else None,
-      if (hTags.get("GPS Processing Method").isDefined) Some(hTags.getOrElse("GPS Processing Method", "")) else None,
-      if (hTags.get("GPS Date Stamp").isDefined) Some(hTags.getOrElse("GPS Date Stamp", "")) else None,
-      if (hTags.get("gpsLatitudeD").isDefined) Some(hTags.get("gpsLatitudeD").head.toDouble) else None,
-      if (hTags.get("gpsLongitudeD").isDefined) Some(hTags.get("gpsLongitudeD").head.toDouble) else None
+      hTags.get("Make"),
+      hTags.get("Model"),
+      hTags.get("Software"),
+      hTags.get("Exif Image Width"),
+      hTags.get("Exif Image Height"),
+      hTags.get("GPS Version ID"),
+      hTags.get("GPS Latitude Ref"),
+      hTags.get("GPS Latitude"),
+      hTags.get("GPS Longitude Ref"),
+      hTags.get("GPS Longitude"),
+      hTags.get("GPS Altitude Ref"),
+      hTags.get("GPS Altitude"),
+      hTags.get("GPS Time-Stamp"),
+      hTags.get("GPS Processing Method"),
+      hTags.get("GPS Date Stamp"),
+      hGpsTags.get("gpsLatitudeD"),
+      hGpsTags.get("gpsLongitudeD"),
     )
     )
   }
 
   def extractDateTimeKeyFromExifMap(hTags: Map[String, String], key: String): Option[java.time.LocalDateTime] = {
-    if (hTags.get(key).isDefined && !hTags.getOrElse(key, "").startsWith("0000:00:00"))
+    if (hTags.get(key).isDefined && !hTags.getOrElse(key, "").startsWith("0000:00:00")) {
       Some(LocalDateTime.parse(hTags.getOrElse(key, ""), formatter))
-    else None
+    } else {
+      None
+    }
   }
 
   def printAllExifByFileName(fileName: String): Unit = {

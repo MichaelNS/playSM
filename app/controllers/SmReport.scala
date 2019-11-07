@@ -57,27 +57,36 @@ class SmReport @Inject()(val database: DBService)
     implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
 
     val qry = sql"""
-      SELECT "F_PARENT",
-             "F_NAME",
-             "F_LAST_MODIFIED_DATE"
-      FROM "sm_file_card" fc
-      WHERE "STORE_NAME" = '#$device'
-      AND   "SHA256" IS NOT NULL
+      SELECT f_parent, f_name, f_last_modified_date FROM sm_file_card fc WHERE store_name = '#$device'
+      AND   sha256 IS NOT NULL
       AND   NOT EXISTS (SELECT 1
-                        FROM "sm_file_card"
-                        WHERE "SHA256" IS NOT NULL
-                        AND   fc."SHA256" = "SHA256"
-                        AND   "STORE_NAME" != '#$device'
-                        AND   "STORE_NAME" IN (#$backUpVolumes))
-                        AND   NOT "F_PARENT" LIKE '%^_files' ESCAPE '^'
-      AND   NOT "F_PARENT" LIKE '%^_files' escape '^'
-      ORDER BY "F_PARENT",
-               "F_NAME"
-       LIMIT #$maxRows
-      """
-      .as[(String, String, DateTime)]
-    database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.sm_chk_device_backup(rowSeq))
+                        FROM sm_file_card
+                        WHERE sha256 IS NOT NULL
+                        AND   fc.sha256 = sha256
+                        AND   store_name != '#$device'
+                        AND   store_name IN (#$backUpVolumes))
+                        AND   NOT f_parent LIKE '%^_files' ESCAPE '^'
+      AND   NOT f_parent LIKE '%^_files' escape '^'
+      ORDER BY f_parent, f_name LIMIT #$maxRows""".as[(String, String, DateTime)]
+
+    val cnt = sql"""
+      SELECT count(1) FROM sm_file_card fc WHERE store_name = '#$device'
+      AND   sha256 IS NOT NULL
+      AND   NOT EXISTS (SELECT 1
+                        FROM sm_file_card
+                        WHERE sha256 IS NOT NULL
+                        AND   fc.sha256 = sha256
+                        AND   store_name != '#$device'
+                        AND   store_name IN (#$backUpVolumes))
+                        AND   NOT f_parent LIKE '%^_files' ESCAPE '^'
+      AND   NOT f_parent LIKE '%^_files' escape '^'
+      """.as[Int]
+
+    val composedAction = for {cnt <- cnt
+                              qry <- qry} yield (cnt, qry)
+
+    database.runAsync(composedAction).map { rowSeq =>
+      Ok(views.html.sm_chk_device_backup(rowSeq._1, maxRows, rowSeq._2))
     }
   }
 
@@ -93,32 +102,32 @@ class SmReport @Inject()(val database: DBService)
 
     val qry = sql"""
        SELECT
-         "SHA256",
-         "F_NAME",
-         "CATEGORY_TYPE",
-         "DESCRIPTION",
-         "STORE_NAME"
+         sha256,
+         f_name,
+         category_type,
+         description,
+         store_name
        FROM (
               SELECT
-                card."SHA256",
-                card."F_NAME",
-                category."CATEGORY_TYPE",
-                category."DESCRIPTION",
-                (SELECT "STORE_NAME"
+                card.sha256,
+                card.f_name,
+                category.category_type,
+                category.description,
+                (SELECT store_name
                  FROM sm_file_card sq
-                 WHERE sq."SHA256" = card."SHA256"
-                 AND   sq."STORE_NAME" NOT IN (#$device_Unreliable)
-                 LIMIT 1) AS "STORE_NAME"
+                 WHERE sq.sha256 = card.sha256
+                 AND   sq.store_name NOT IN (#$device_Unreliable)
+                 LIMIT 1) AS store_name
               FROM "sm_file_card" card
-                JOIN sm_category_fc category ON category."F_NAME" = card."F_NAME" and category."ID" = card."SHA256"
-              WHERE category."CATEGORY_TYPE" IS NOT NULL
-              GROUP BY card."SHA256",
-                       card."F_NAME",
-                       category."CATEGORY_TYPE",
-                       category."DESCRIPTION"
+                JOIN sm_category_fc category ON category.f_name = card.f_name and category.id = card.sha256
+              WHERE category.category_type IS NOT NULL
+              GROUP BY card.sha256,
+                       card.f_name,
+                       category.category_type,
+                       category.description
               HAVING COUNT(1) < #$cntFiles
             ) AS res
-       WHERE "STORE_NAME" NOT IN (#$device_NotView)
+       WHERE store_name NOT IN (#$device_NotView)
        LIMIT #$maxRows
       """
       .as[(String, String, String, String, String)]
@@ -135,35 +144,39 @@ class SmReport @Inject()(val database: DBService)
     val device_Unreliable: String = config.getStringList("BackUp.allFiles.device_Unreliable").asScala.toSet.mkString("'", "', '", "'")
     val device_NotView: String = config.getStringList("BackUp.allFiles.device_NotView").asScala.toSet.mkString("'", "', '", "'")
 
+    implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
+
     debug(device_Unreliable)
     debug(device_NotView)
 
     val qry = sql"""
        SELECT
-         "SHA256",
-         "F_NAME",
-         "STORE_NAME"
+         sha256,
+         f_name,
+         store_name,
+         f_last_modified_date
        FROM (
               SELECT
-                card."SHA256",
-                card."F_NAME",
-                (SELECT "STORE_NAME"
+                card.sha256,
+                card.f_name,
+                (SELECT store_name
                  FROM sm_file_card sq
-                 WHERE sq."SHA256" = card."SHA256"
-                 AND   sq."STORE_NAME" NOT IN (#$device_Unreliable)
-                 LIMIT 1) AS "STORE_NAME"
-              FROM "sm_file_card" card
-              WHERE card."F_LAST_MODIFIED_DATE" >= date_trunc('month', card."F_LAST_MODIFIED_DATE") - INTERVAL '1 year'
-              GROUP BY card."SHA256",
-                       card."F_NAME",
-                       card."F_LAST_MODIFIED_DATE"
+                 WHERE sq.sha256 = card.sha256
+                 AND   sq.store_name NOT IN (#$device_Unreliable)
+                 LIMIT 1) AS store_name,
+                 card.f_last_modified_date
+              FROM sm_file_card card
+              WHERE card.f_last_modified_date >= date_trunc('month', card.f_last_modified_date) - INTERVAL '1 year'
+              GROUP BY card.sha256,
+                       card.f_name,
+                       card.f_last_modified_date
               HAVING COUNT(1) < #$cntFiles
-              order by card."F_LAST_MODIFIED_DATE" desc
+              order by card.f_last_modified_date desc
             ) AS res
-       WHERE "STORE_NAME" NOT IN (#$device_NotView)
+       WHERE store_name NOT IN (#$device_NotView)
        LIMIT #$maxRows
       """
-      .as[(String, String, String)]
+      .as[(String, String, String, DateTime)]
     database.runAsync(qry).map { rowSeq =>
       Ok(views.html.sm_chk_backup_last_year(rowSeq, device_Unreliable, device_NotView, cntFiles, rowSeq.length, maxRows))
     }
@@ -230,32 +243,33 @@ class SmReport @Inject()(val database: DBService)
   /**
     * Explorer device
     *
-    * @param device device
-    * @param path   path
-    * @param depth  path depth
+    * @param device   device
+    * @param treePath treePath
+    * @param cPath    path
+    * @param depth    path depth
     * @return
     */
-  def explorerDevice(device: String, path: String, depth: Int): Action[AnyContent] = Action.async {
+  def explorerDevice(device: String, treePath: String, cPath: String, depth: Int): Action[AnyContent] = Action.async {
     debugParam
 
     val qry = sql"""
       SELECT
-        split_part(x2."F_PARENT", '/', #$depth),
+        split_part(x2.f_parent, '/', #$depth),
         count(1),
         count(1) filter (where sm_category_fc is null),
-        array_agg(DISTINCT sm_category_fc."CATEGORY_TYPE") filter (where sm_category_fc is not null)
-    FROM "sm_file_card" x2
-           left outer join sm_category_fc on x2."SHA256" = sm_category_fc."ID"
-    WHERE (((x2."STORE_NAME" = '#$device')))
-      AND (NOT (x2."F_PARENT" LIKE '%^_files' ESCAPE '^'))
-      AND (NOT (x2."F_PARENT" LIKE '%^_files/' ESCAPE '^'))
-      AND split_part(x2."F_PARENT", '/', #$depth -1) = '#$path'
-      GROUP BY split_part(x2."F_PARENT", '/', #$depth)
-      ORDER BY split_part(x2."F_PARENT", '/', #$depth)
+        array_agg(DISTINCT sm_category_fc.category_type) filter (where sm_category_fc is not null)
+    FROM sm_file_card x2
+           left outer join sm_category_fc on x2.sha256 = sm_category_fc.id
+    WHERE (((x2.store_name = '#$device')))
+      AND (NOT (x2.f_parent LIKE '%^_files' ESCAPE '^'))
+      AND (NOT (x2.f_parent LIKE '%^_files/' ESCAPE '^'))
+      AND split_part(x2.f_parent, '/', #$depth -1) = '#$cPath'
+      GROUP BY split_part(x2.f_parent, '/', #$depth)
+      ORDER BY split_part(x2.f_parent, '/', #$depth)
       """
       .as[(String, Int, Int, String)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.fc_explorer(device, rowSeq, depth))
+      Ok(views.html.fc_explorer(device, treePath, cPath, rowSeq, depth))
     }
   }
 

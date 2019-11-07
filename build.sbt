@@ -87,8 +87,8 @@ lazy val root = (project in file("."))
 
     //    scala-fixture:
     libraryDependencies += "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
-    libraryDependencies += "com.h2database" % "h2" % "1.4.197" % Test,
-    libraryDependencies += "org.flywaydb" % "flyway-core" % "5.2.4" % "test",
+    libraryDependencies += "com.h2database" % "h2" % "1.4.200" % Test,
+    libraryDependencies += "org.flywaydb" % "flyway-core" % "6.0.8" % "test",
 
     libraryDependencies += "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
   )
@@ -101,7 +101,7 @@ lazy val root = (project in file("."))
 addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 29.02
+coverageMinimum := 27.73
 coverageFailOnMinimum := true
 coverageHighlighting := true
 

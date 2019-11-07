@@ -1,33 +1,33 @@
 # --- !Ups
 
-CREATE TABLE IF NOT EXISTS SM_EXIF
+CREATE TABLE IF NOT EXISTS sm_exif
 (
-    "ID"                    VARCHAR PRIMARY KEY NOT NULL,
-    "DATE_TIME"             TIMESTAMP,
-    "DATE_TIME_ORIGINAL"    TIMESTAMP,
-    "DATE_TIME_DIGITIZED"   TIMESTAMP,
-    "MAKE"                  VARCHAR,
-    "MODEL"                 VARCHAR,
-    "SOFTWARE"              VARCHAR,
-    "EXIF_IMAGE_WIDTH"      VARCHAR,
-    "EXIF_IMAGE_HEIGHT"     VARCHAR,
-    "GPS_VERSION_ID"        VARCHAR,
-    "GPS_LATITUDE_REF"      VARCHAR,
-    "GPS_LATITUDE"          VARCHAR,
-    "GPS_LONGITUDE_REF"     VARCHAR,
-    "GPS_LONGITUDE"         VARCHAR,
-    "GPS_ALTITUDE_REF"      VARCHAR,
-    "GPS_ALTITUDE"          VARCHAR,
-    "GPS_TIME_STAMP"        VARCHAR,
-    "GPS_PROCESSING_METHOD" VARCHAR,
-    "GPS_DATE_STAMP"        VARCHAR,
-    "GPS_LATITUDE_DEC"      DECIMAL,
-    "GPS_LONGITUDE_DEC"     DECIMAL
+    id                    VARCHAR PRIMARY KEY NOT NULL,
+    date_time             TIMESTAMP,
+    date_time_original    TIMESTAMP,
+    date_time_digitized   TIMESTAMP,
+    make                  VARCHAR,
+    model                 VARCHAR,
+    software              VARCHAR,
+    exif_image_width      VARCHAR,
+    exif_image_height     VARCHAR,
+    gps_version_id        VARCHAR,
+    gps_latitude_ref      VARCHAR,
+    gps_latitude          VARCHAR,
+    gps_longitude_ref     VARCHAR,
+    gps_longitude         VARCHAR,
+    gps_altitude_ref      VARCHAR,
+    gps_altitude          VARCHAR,
+    gps_time_stamp        VARCHAR,
+    gps_processing_method VARCHAR,
+    gps_date_stamp        VARCHAR,
+    gps_latitude_dec      DECIMAL,
+    gps_longitude_dec     DECIMAL
 );
 
 
 
 # --- !Downs
 
-DROP TABLE IF EXISTS SM_EXIF CASCADE;
+DROP TABLE IF EXISTS sm_exif CASCADE;
 

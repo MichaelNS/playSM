@@ -21,6 +21,10 @@ GET         /deviceImport                                             controller
 POST        /syncDeviceStream/:device                                 controllers.SmSyncDeviceStream.syncDevice(device: String)
 
 + nocsrf
+POST        /syncs-single-name-path-stream                            controllers.SmSyncDeviceStream.syncSingleNamePath(path2scan: String, deviceUid: String)
+
+
++ nocsrf
 POST        /syncDeviceStream/deleteNonExistsFpathInDb/:device        controllers.SmSyncDeviceStream.deleteNonExistsFpathInDb(device: String)
 
 
@@ -33,7 +37,11 @@ POST        /calcExif/:device                                         controller
 GET         /exif/:fileName                                           controllers.SmSyncExif.getExif(fileName:String)
 GET         /gps-all                                                  controllers.SmSyncExif.viewAllGps
 
++ nocsrf
+POST        /resize-image/:device                                     controllers.SmImage.resizeImage(device:String)
 
+GET         /view-images                                              controllers.SmImage.viewImages(deviceUid: String, fParent: String)
+GET         /view-image                                               controllers.SmImage.viewImage(fullPath: String, mimeType: Option[String])
 
 GET         /fc/byDevice/:device                                      controllers.SmApplication.getByDevice(device: String)
 GET         /fc/getByDeviceByLastModifDate/:device                    controllers.SmApplication.getByDeviceByLastModifDate(device: String)
@@ -46,7 +54,7 @@ GET         /checkBackAllFiles                                        controller
 GET         /checkBackFilesLastYear                                   controllers.SmReport.checkBackFilesLastYear
 GET         /checkDuplicates/:device                                  controllers.SmReport.checkDuplicates(device: String)
 GET         /getFcByDeviceSha256/:device/:sha256                      controllers.SmReport.getFcByDeviceSha256(device: String, sha256: String)
-GET         /explorerDevice                                           controllers.SmReport.explorerDevice(device: String, path: String, depth: Int)
+GET         /explorerDevice                                           controllers.SmReport.explorerDevice(device: String, treePath:String, path: String, depth: Int)
 GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
 
 GET         /listCategoryAndCnt                                       controllers.SmCategory.listCategoryAndCnt

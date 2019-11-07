@@ -16,7 +16,7 @@ import scala.collection.mutable.ArrayBuffer
   * @param sExclusionDir list of ExclusionDir
   */
 class SmPathVisitor(glob: String,
-                    mountPoint: String, sExclusionDir: util.List[String])
+                    mountPoint: String, sExclusionDir: Seq[String])
   extends SimpleFileVisitor[Path] {
 
   val fileCardSt_lst: ArrayBuffer[SmPath] = ArrayBuffer[SmPath]()
