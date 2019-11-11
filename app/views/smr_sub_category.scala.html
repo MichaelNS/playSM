@@ -15,7 +15,7 @@
             <tbody>
             @for(fileCard <- fileCardSeq) {
                 <tr>
-                    <td><a href="@routes.SmCategory.listDescriptionAndCnt(categoryType, fileCard._1.getOrElse("?"))" >@fileCard._1</a></td>
+                    <td><a href="@routes.SmCategoryView.listDescriptionAndCnt(categoryType, fileCard._1.getOrElse("?"))" >@fileCard._1</a></td>
                     <td>@fileCard._2</td>
                 </tr>
             }

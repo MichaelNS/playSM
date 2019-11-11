@@ -56,9 +56,9 @@ GET         /getFcByDeviceSha256/:device/:sha256                      controller
 GET         /explorerDevice                                           controllers.SmReport.explorerDevice(device: String, treePath:String, path: String, depth: Int)
 GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
 
-GET         /listCategoryAndCnt                                       controllers.SmCategory.listCategoryAndCnt
-GET         /listSubCategoryAndCnt                                    controllers.SmCategory.listSubCategoryAndCnt(categoryType: String)
-GET         /listDescriptionAndCnt                                    controllers.SmCategory.listDescriptionAndCnt(categoryType: String, subCategoryType: String)
+GET         /listCategoryAndCnt                                       controllers.SmCategoryView.listCategoryAndCnt
+GET         /listSubCategoryAndCnt                                    controllers.SmCategoryView.listSubCategoryAndCnt(categoryType: String)
+GET         /listDescriptionAndCnt                                    controllers.SmCategoryView.listDescriptionAndCnt(categoryType: String, subCategoryType: String)
 
 
 GET         /listPathByDescription                                    controllers.SmMove.listPathByDescription(categoryType: String, description: String)
@@ -73,9 +73,9 @@ POST        /delJobToMove                                             controller
 POST        /moveAllDevices                                           controllers.SmMove.moveAllDevices
 
 
-GET         /listDirWithoutCatByLastDate                              controllers.SmCategory.listDirWithoutCatByLastDate
-GET         /listFcWithoutCatByLastDate                               controllers.SmCategory.listFcWithoutCatByLastDate
-POST        /listDirWithoutCategoryByExtension                        controllers.SmCategory.listDirWithoutCategoryByExtension
+GET         /listDirWithoutCatByLastDate                              controllers.SmCategoryView.listDirWithoutCatByLastDate
+GET         /listFcWithoutCatByLastDate                               controllers.SmCategoryView.listFcWithoutCatByLastDate
+POST        /listDirWithoutCategoryByExtension                        controllers.SmCategoryView.listDirWithoutCategoryByExtension
 GET         /listDirWithoutCatByParent/:isBegins/:device              controllers.SmCategory.listDirWithoutCatByParent(device: String, isBegins: Boolean)
 + nocsrf
 POST        /setCategoryAndDescription/:isBegins/:fParent             controllers.SmCategory.assignCategoryAndDescription(fParent: String, isBegins: Boolean)

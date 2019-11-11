@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import models.SmFileCard
 import models.db.Tables
 import org.joda.time.DateTime
-import play.api.mvc.{Action, AnyContent, InjectedController}
+import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
 import ru.ns.model.OsConf
 import services.db.DBService
 import slick.jdbc.GetResult
@@ -18,8 +18,8 @@ import scala.jdk.CollectionConverters._
   * Created by ns on 02.03.2017.
   */
 @Singleton
-class SmReport @Inject()(val database: DBService)
-  extends InjectedController {
+class SmReport @Inject()(cc: MessagesControllerComponents,val database: DBService)
+  extends MessagesAbstractController(cc) {
 
   def cntFilesWithoutSha256ByDevice(device: String): Action[AnyContent] = Action.async {
     database.runAsync(
@@ -269,7 +269,7 @@ class SmReport @Inject()(val database: DBService)
       """
       .as[(String, Int, Int, String)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.fc_explorer(device, treePath, cPath, rowSeq, depth))
+      Ok(views.html.fc_explorer(device, treePath,  rowSeq, depth))
     }
   }
 

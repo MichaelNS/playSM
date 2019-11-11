@@ -59,8 +59,8 @@ lazy val fileutils = (project in file("."))
 
     libraryDependencies += "com.google.guava" % "guava" % "23.0",
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.7",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.5",
+    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.8",
+    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.6",
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7",
 

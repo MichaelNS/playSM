@@ -5,10 +5,10 @@
         <h2>smr category</h2>
     </div>
 
-    <li><a href="@routes.SmCategory.listDirWithoutCatByLastDate">listDirWithoutCatByLastDate</a></li>
-    <li><a href="@routes.SmCategory.listFcWithoutCatByLastDate">listFcWithoutCatByLastDate</a></li>
+    <li><a href="@routes.SmCategoryView.listDirWithoutCatByLastDate">listDirWithoutCatByLastDate</a></li>
+    <li><a href="@routes.SmCategoryView.listFcWithoutCatByLastDate">listFcWithoutCatByLastDate</a></li>
 
-    @form(routes.SmCategory.listDirWithoutCategoryByExtension()) {
+    @form(routes.SmCategoryView.listDirWithoutCategoryByExtension()) {
         @CSRF.formField
         @inputText(extFcForm("extension"))
 
@@ -43,7 +43,7 @@
                         @*<td><a href="@routes.SmCategory.listDescriptionAndCnt("?")" >!Emtpy!</a></td>*@
                     } else {
 
-                        <td><a href="@routes.SmCategory.listSubCategoryAndCnt(fileCard._1.flatten.get)" >@fileCard._1</a></td>
+                        <td><a href="@routes.SmCategoryView.listSubCategoryAndCnt(fileCard._1.flatten.get)" >@fileCard._1</a></td>
                     }
                 <td>@fileCard._2</td>
                 </tr>

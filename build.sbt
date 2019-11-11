@@ -80,8 +80,8 @@ lazy val root = (project in file("."))
 
     libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % Test,
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.7",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.5",
+    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.8",
+    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.6",
 
     libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0",
 
@@ -101,7 +101,7 @@ lazy val root = (project in file("."))
 addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 27.73
+coverageMinimum := 28.11
 coverageFailOnMinimum := true
 coverageHighlighting := true
 

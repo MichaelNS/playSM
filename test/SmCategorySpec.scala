@@ -6,6 +6,7 @@ import org.scalatestplus.play.{HtmlUnitFactory, OneBrowserPerTest, PlaySpec, Ser
 import play.api.Logger
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import play.api.test.CSRFTokenHelper._
 
 //import scala.concurrent.ExecutionContext.Implicits.global
 //import scala.util.{Failure, Success}
@@ -58,7 +59,7 @@ class SmCategorySpec extends PlaySpec
 
     "run listCategoryAndCnt" in {
       val controller = app.injector.instanceOf[SmCategory]
-      val request = FakeRequest()
+      val request = FakeRequest().withCSRFToken
       val result = controller.listCategoryAndCnt.apply(request)
 
       status(result) mustBe OK
@@ -125,7 +126,9 @@ class SmCategorySpec extends PlaySpec
     "run listDirWithoutCategoryByExtension" in {
       val controller = app.injector.instanceOf[SmCategory]
       val request = FakeRequest()
-      val result = controller.listDirWithoutCategoryByExtension("").apply(request)
+        .withFormUrlEncodedBody("extension" -> "")
+        .withCSRFToken
+      val result = controller.listDirWithoutCategoryByExtension().apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
@@ -133,7 +136,9 @@ class SmCategorySpec extends PlaySpec
     "run listDirWithoutCategoryByExtension NON empty" in {
       val controller = app.injector.instanceOf[SmCategory]
       val request = FakeRequest()
-      val result = controller.listDirWithoutCategoryByExtension("jpg").apply(request)
+        .withFormUrlEncodedBody("extension" -> "jpg")
+        .withCSRFToken
+      val result = controller.listDirWithoutCategoryByExtension().apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")

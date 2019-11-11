@@ -36,7 +36,7 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
         if fcRow.storeName === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && fcRow.sha256.nonEmpty
       }
         yield (fcRow.id, fcRow.fParent, fcRow.fName, fcRow.fExtension, fcRow.sha256)
-        ).to[List].result)
+        ).result)
       .map { rowSeq =>
         FileUtils.getDeviceInfo(deviceUid) map { device =>
           if (device.isDefined) {
@@ -66,9 +66,9 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
       .filter(_.sha256.nonEmpty)
       .filter(_.fMimeTypeJava === "image/jpeg")
       .sortBy(_.fLastModifiedDate.desc)
-      .map(fld => (fld.sha256, fld.fName, fld.fExtension, fld.fMimeTypeJava)).to[List].result)
+      .map(fld => (fld.sha256, fld.fName, fld.fExtension, fld.fMimeTypeJava)).result)
       .map { dbGet =>
-        val images: List[(String, Option[String], String, Option[String])] =
+        val images: Seq[(String, Option[String], String, Option[String])] =
           dbGet.take(maxResult).map { row =>
             (pathCache + OsConf.fsSeparator + SmImageUtil.getImageKey(row._1.get, row._2, row._3.getOrElse("")),
               row._1, row._2, row._4

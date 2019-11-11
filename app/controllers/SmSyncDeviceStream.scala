@@ -106,7 +106,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
           debug(s"${impPath.length} : $impPath")
           logger.debug(pprint.apply(impPath.map(c => device.get.mountpoint + OsConf.fsSeparator + c)).toString())
           Source.fromIterator(() => impPath.iterator)
-            .throttle(elements = 1, 10.millisecond, maximumBurst = 2, ThrottleMode.shaping)
+            .throttle(elements = 1, 10.millisecond, maximumBurst = 2, mode = ThrottleMode.Shaping)
             .mapAsync(1)(syncPath(_, deviceUid, device.get.mountpoint)
             ).runWith(Sink.ignore).onComplete {
             case Success(res) =>
@@ -155,7 +155,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
 
     val resPath = Source.fromIterator(() => FileUtils.getPathesRecursive
     (path2scan.toString, mountPoint, config.get[Seq[String]]("paths2Scan.exclusionPath")).iterator)
-      .throttle(elements = 1, per = 10.millisecond, maximumBurst = 10, mode = ThrottleMode.shaping)
+      .throttle(elements = 1, 10.millisecond, maximumBurst = 10, mode = ThrottleMode.Shaping)
       .map { path =>
         mergePath2Db(deviceUid = deviceUid, mountPoint = mountPoint,
           path.fParent,
