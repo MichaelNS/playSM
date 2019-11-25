@@ -46,64 +46,26 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     * @param device device
     * @return
     */
-  def checkBackUp2(device: String): Action[AnyContent] = Action.async {
+  def checkBackUp(device: String): Action[AnyContent] = Action.async {
     val backUpVolumes = config.get[Seq[String]]("BackUp.volumes")
     val maxRows: Long = config.get[Long]("BackUp.maxResult")
 
-    val qry2 = (for {
+    val baseQry = (for {
       a <- Tables.SmFileCard
       if a.sha256.nonEmpty && a.storeName === device && !Tables.SmFileCard
-        .filter(b => b.sha256.nonEmpty && b.sha256 === a.sha256 && b.storeName === device && b.storeName.inSet(backUpVolumes))
+        .filter(b => b.sha256.nonEmpty && b.sha256 === a.sha256 && b.storeName =!= device && b.storeName.inSet(backUpVolumes))
         .filterNot(b => b.fParent endsWith "_files")
         .map(p => p.fName)
         .exists
     } yield (a.fParent, a.fName, a.fLastModifiedDate))
+
+    val cnt = baseQry.length
+    val filtQry = baseQry
       .sortBy(r => (r._1, r._2))
       .take(maxRows)
 
-    database.runAsync(qry2.result).map { rowSeq =>
-      //      rowSeq.foreach { p => println(p) }
-
-      Ok("")
-    }
-  }
-
-
-  def checkBackUp(device: String): Action[AnyContent] = Action.async {
-    val config = ConfigFactory.load("scanImport.conf")
-    val backUpVolumes: String = config.getStringList("BackUp.volumes").asScala.toSet.mkString("'", "', '", "'")
-    val maxRows: Long = config.getLong("BackUp.maxResult")
-
-    implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
-
-    val qry = sql"""
-      SELECT f_parent, f_name, f_last_modified_date FROM sm_file_card fc WHERE store_name = '#$device'
-      AND   sha256 IS NOT NULL
-      AND   NOT EXISTS (SELECT 1
-                        FROM sm_file_card
-                        WHERE sha256 IS NOT NULL
-                        AND   fc.sha256 = sha256
-                        AND   store_name != '#$device'
-                        AND   store_name IN (#$backUpVolumes))
-                        AND   NOT f_parent LIKE '%^_files' ESCAPE '^'
-      AND   NOT f_parent LIKE '%^_files' escape '^'
-      ORDER BY f_parent, f_name LIMIT #$maxRows""".as[(String, String, DateTime)]
-
-    val cnt = sql"""
-      SELECT count(1) FROM sm_file_card fc WHERE store_name = '#$device'
-      AND   sha256 IS NOT NULL
-      AND   NOT EXISTS (SELECT 1
-                        FROM sm_file_card
-                        WHERE sha256 IS NOT NULL
-                        AND   fc.sha256 = sha256
-                        AND   store_name != '#$device'
-                        AND   store_name IN (#$backUpVolumes))
-                        AND   NOT f_parent LIKE '%^_files' ESCAPE '^'
-      AND   NOT f_parent LIKE '%^_files' escape '^'
-      """.as[Int]
-
-    val composedAction = for {cnt <- cnt
-                              qry <- qry} yield (cnt, qry)
+    val composedAction = for {cnt <- cnt.result
+                              filtQry <- filtQry.result} yield (cnt, filtQry)
 
     database.runAsync(composedAction).map { rowSeq =>
       Ok(views.html.sm_chk_device_backup(rowSeq._1, maxRows, rowSeq._2))
