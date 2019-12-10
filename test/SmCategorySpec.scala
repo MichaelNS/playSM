@@ -1,3 +1,4 @@
+import com.typesafe.config.{Config, ConfigFactory}
 import controllers.{SmCategory, SmCategoryView}
 import org.flywaydb.core.Flyway
 import org.scalatest.BeforeAndAfter
@@ -24,10 +25,12 @@ class SmCategorySpec extends PlaySpec
 
   private val logger = Logger(classOf[SmCategorySpec])
 
+  val config: Config = ConfigFactory.load("application.conf")
+
   val driver = "org.h2.Driver"
   val url = "jdbc:h2:mem:play_test;DATABASE_TO_UPPER=false;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
-  val username = "play_sm_user"
-  val password = "123"
+  val username: String = config.getString("slick.dbs.default.db.user")
+  val password: String = config.getString("slick.dbs.default.db.password")
 
   val flyway: Flyway = Flyway
     .configure()
