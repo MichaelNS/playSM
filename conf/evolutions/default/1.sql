@@ -91,8 +91,11 @@ ON sm_file_card (sha256, f_name);
 
 CREATE TABLE sm_image_resize
 (
-  image_name   VARCHAR(100) NOT NULL,
-  image_path   VARCHAR NOT NULL
+  id           VARCHAR NOT NULL,
+  image_name   VARCHAR NOT NULL,
+  image_path   VARCHAR NOT NULL,
+  CONSTRAINT pk_sm_image_resize_id PRIMARY KEY (id),
+  CONSTRAINT fk_sm_image_resize_sm_file_card FOREIGN KEY (id) REFERENCES sm_file_card (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE sm_job_path_move
