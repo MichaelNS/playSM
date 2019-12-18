@@ -31,6 +31,7 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
   def resizeImage(deviceUid: String): Action[AnyContent] = Action.async {
     debugParam
     database.runAsync(
+      // TODO add resize table
       (for {
         fcRow <- Tables.SmFileCard
         if fcRow.deviceUid === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && fcRow.sha256.nonEmpty
@@ -52,6 +53,7 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
                 cFc._4.getOrElse(""),
                 cFc._5.get)
             }
+            // TODO add resize table
           }
         }
         Ok("run resizeImage")

@@ -80,4 +80,11 @@
             </tbody>
         </table>
     </div>
+
+    @form(routes.SmSyncDeviceStream.calcAllCRC()) {
+        @CSRF.formField
+
+        <button class="button success">calcAllCRC</button>
+    }
+
 }

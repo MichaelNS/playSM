@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2019-12-26T13:58:56.009+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2019-12-30T18:20:58.584+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -24,28 +24,24 @@ trait Tables {
 
   /** Entity class storing rows of table SmCategoryFc
     *
-    * @param id           Database column id SqlType(int4)
-    * @param sha256       Database column sha256 SqlType(varchar)
-    * @param fName        Database column f_name SqlType(varchar)
-    * @param categoryType Database column category_type SqlType(varchar), Default(None)
-    * @param category     Database column category SqlType(varchar), Default(None)
-    * @param subCategory  Database column sub_category SqlType(varchar), Default(None)
-    * @param description  Database column description SqlType(varchar), Default(None) */
-  case class SmCategoryFcRow(id: Int, sha256: String, fName: String, categoryType: Option[String] = None, category: Option[String] = None, subCategory: Option[String] = None, description: Option[String] = None)
+    * @param id     Database column id SqlType(int4)
+    * @param sha256 Database column sha256 SqlType(varchar)
+    * @param fName  Database column f_name SqlType(varchar) */
+  case class SmCategoryFcRow(id: Int, sha256: String, fName: String)
 
   /** GetResult implicit for fetching SmCategoryFcRow objects using plain SQL queries */
-  implicit def GetResultSmCategoryFcRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]]): GR[SmCategoryFcRow] = GR {
+  implicit def GetResultSmCategoryFcRow(implicit e0: GR[Int], e1: GR[String]): GR[SmCategoryFcRow] = GR {
     prs =>
       import prs._
-      SmCategoryFcRow.tupled((<<[Int], <<[String], <<[String], <<?[String], <<?[String], <<?[String], <<?[String]))
+      SmCategoryFcRow.tupled((<<[Int], <<[String], <<[String]))
   }
 
   /** Table description of table sm_category_fc. Objects of this class serve as prototypes for rows in queries. */
   class SmCategoryFc(_tableTag: Tag) extends profile.api.Table[SmCategoryFcRow](_tableTag, "sm_category_fc") {
-    def * = (id, sha256, fName, categoryType, category, subCategory, description) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
+    def * = (id, sha256, fName) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(sha256), Rep.Some(fName), categoryType, category, subCategory, description)).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3.get, _4, _5, _6, _7))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(sha256), Rep.Some(fName))).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(int4) */
     val id: Rep[Int] = column[Int]("id")
@@ -53,23 +49,12 @@ trait Tables {
     val sha256: Rep[String] = column[String]("sha256")
     /** Database column f_name SqlType(varchar) */
     val fName: Rep[String] = column[String]("f_name")
-    /** Database column category_type SqlType(varchar), Default(None) */
-    val categoryType: Rep[Option[String]] = column[Option[String]]("category_type", O.Default(None))
-    /** Database column category SqlType(varchar), Default(None) */
-    val category: Rep[Option[String]] = column[Option[String]]("category", O.Default(None))
-    /** Database column sub_category SqlType(varchar), Default(None) */
-    val subCategory: Rep[Option[String]] = column[Option[String]]("sub_category", O.Default(None))
-    /** Database column description SqlType(varchar), Default(None) */
-    val description: Rep[Option[String]] = column[Option[String]]("description", O.Default(None))
 
     /** Primary key of SmCategoryFc (database name sm_category_fc_pkey) */
     val pk = primaryKey("sm_category_fc_pkey", (sha256, fName))
 
     /** Foreign key referencing SmCategoryRule (database name fk_sm_category_fc_sm_category_rule) */
     lazy val smCategoryRuleFk = foreignKey("fk_sm_category_fc_sm_category_rule", id, SmCategoryRule)(r => r.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
-
-    /** Index over (categoryType,category,subCategory) (database name idx_sm_category_fc_category_type) */
-    val index1 = index("idx_sm_category_fc_category_type", (categoryType, category, subCategory))
   }
 
   /** Collection-like TableQuery object for table SmCategoryFc */
@@ -137,17 +122,17 @@ trait Tables {
     * @param pathScanDate Database column path_scan_date SqlType(timestamp)
     * @param crcDate      Database column crc_date SqlType(timestamp), Default(None)
     * @param exifDate     Database column exif_date SqlType(timestamp), Default(None)
-    * @param jobPathScan  Database column job_path_scan SqlType(bool), Default(Some(false))
-    * @param jobCalcCrc   Database column job_calc_crc SqlType(bool), Default(Some(false))
-    * @param jobCalcExif  Database column job_calc_exif SqlType(bool), Default(Some(false))
-    * @param jobResize    Database column job_resize SqlType(bool), Default(Some(false)) */
-  case class SmDeviceRow(id: Int, uid: String, name: String, labelV: String, nameV: Option[String] = None, description: Option[String] = None, visible: Boolean = true, reliable: Boolean = true, pathScanDate: java.time.LocalDateTime, crcDate: Option[java.time.LocalDateTime] = None, exifDate: Option[java.time.LocalDateTime] = None, jobPathScan: Option[Boolean] = Some(false), jobCalcCrc: Option[Boolean] = Some(false), jobCalcExif: Option[Boolean] = Some(false), jobResize: Option[Boolean] = Some(false))
+    * @param jobPathScan  Database column job_path_scan SqlType(bool), Default(false)
+    * @param jobCalcCrc   Database column job_calc_crc SqlType(bool), Default(false)
+    * @param jobCalcExif  Database column job_calc_exif SqlType(bool), Default(false)
+    * @param jobResize    Database column job_resize SqlType(bool), Default(false) */
+  case class SmDeviceRow(id: Int, uid: String, name: String, labelV: String, nameV: Option[String] = None, description: Option[String] = None, visible: Boolean = true, reliable: Boolean = true, pathScanDate: java.time.LocalDateTime, crcDate: Option[java.time.LocalDateTime] = None, exifDate: Option[java.time.LocalDateTime] = None, jobPathScan: Boolean = false, jobCalcCrc: Boolean = false, jobCalcExif: Boolean = false, jobResize: Boolean = false)
 
   /** GetResult implicit for fetching SmDeviceRow objects using plain SQL queries */
-  implicit def GetResultSmDeviceRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]], e3: GR[Boolean], e4: GR[java.time.LocalDateTime], e5: GR[Option[java.time.LocalDateTime]], e6: GR[Option[Boolean]]): GR[SmDeviceRow] = GR {
+  implicit def GetResultSmDeviceRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]], e3: GR[Boolean], e4: GR[java.time.LocalDateTime], e5: GR[Option[java.time.LocalDateTime]]): GR[SmDeviceRow] = GR {
     prs =>
       import prs._
-      SmDeviceRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<[Boolean], <<[Boolean], <<[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[Boolean], <<?[Boolean], <<?[Boolean], <<?[Boolean]))
+      SmDeviceRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<[Boolean], <<[Boolean], <<[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<[Boolean], <<[Boolean], <<[Boolean], <<[Boolean]))
   }
 
   /** Table description of table sm_device. Objects of this class serve as prototypes for rows in queries. */
@@ -155,7 +140,7 @@ trait Tables {
     def * = (id, uid, name, labelV, nameV, description, visible, reliable, pathScanDate, crcDate, exifDate, jobPathScan, jobCalcCrc, jobCalcExif, jobResize) <> (SmDeviceRow.tupled, SmDeviceRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(uid), Rep.Some(name), Rep.Some(labelV), nameV, description, Rep.Some(visible), Rep.Some(reliable), Rep.Some(pathScanDate), crcDate, exifDate, jobPathScan, jobCalcCrc, jobCalcExif, jobResize)).shaped.<>({ r => import r._; _1.map(_ => SmDeviceRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7.get, _8.get, _9.get, _10, _11, _12, _13, _14, _15))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(uid), Rep.Some(name), Rep.Some(labelV), nameV, description, Rep.Some(visible), Rep.Some(reliable), Rep.Some(pathScanDate), crcDate, exifDate, Rep.Some(jobPathScan), Rep.Some(jobCalcCrc), Rep.Some(jobCalcExif), Rep.Some(jobResize))).shaped.<>({ r => import r._; _1.map(_ => SmDeviceRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7.get, _8.get, _9.get, _10, _11, _12.get, _13.get, _14.get, _15.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(serial), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
@@ -179,14 +164,14 @@ trait Tables {
     val crcDate: Rep[Option[java.time.LocalDateTime]] = column[Option[java.time.LocalDateTime]]("crc_date", O.Default(None))
     /** Database column exif_date SqlType(timestamp), Default(None) */
     val exifDate: Rep[Option[java.time.LocalDateTime]] = column[Option[java.time.LocalDateTime]]("exif_date", O.Default(None))
-    /** Database column job_path_scan SqlType(bool), Default(Some(false)) */
-    val jobPathScan: Rep[Option[Boolean]] = column[Option[Boolean]]("job_path_scan", O.Default(Some(false)))
-    /** Database column job_calc_crc SqlType(bool), Default(Some(false)) */
-    val jobCalcCrc: Rep[Option[Boolean]] = column[Option[Boolean]]("job_calc_crc", O.Default(Some(false)))
-    /** Database column job_calc_exif SqlType(bool), Default(Some(false)) */
-    val jobCalcExif: Rep[Option[Boolean]] = column[Option[Boolean]]("job_calc_exif", O.Default(Some(false)))
-    /** Database column job_resize SqlType(bool), Default(Some(false)) */
-    val jobResize: Rep[Option[Boolean]] = column[Option[Boolean]]("job_resize", O.Default(Some(false)))
+    /** Database column job_path_scan SqlType(bool), Default(false) */
+    val jobPathScan: Rep[Boolean] = column[Boolean]("job_path_scan", O.Default(false))
+    /** Database column job_calc_crc SqlType(bool), Default(false) */
+    val jobCalcCrc: Rep[Boolean] = column[Boolean]("job_calc_crc", O.Default(false))
+    /** Database column job_calc_exif SqlType(bool), Default(false) */
+    val jobCalcExif: Rep[Boolean] = column[Boolean]("job_calc_exif", O.Default(false))
+    /** Database column job_resize SqlType(bool), Default(false) */
+    val jobResize: Rep[Boolean] = column[Boolean]("job_resize", O.Default(false))
 
     /** Uniqueness Index over (uid) (database name idx_sm_device_device_uid) */
     val index1 = index("idx_sm_device_device_uid", uid, unique = true)
@@ -393,34 +378,31 @@ trait Tables {
 
   /** Entity class storing rows of table SmImageResize
     *
-    * @param id        Database column id SqlType(varchar), PrimaryKey
-    * @param imageName Database column image_name SqlType(varchar)
-    * @param imagePath Database column image_path SqlType(varchar) */
-  case class SmImageResizeRow(id: String, imageName: String, imagePath: String)
+    * @param sha256 Database column sha256 SqlType(varchar)
+    * @param fName  Database column f_name SqlType(varchar) */
+  case class SmImageResizeRow(sha256: String, fName: String)
 
   /** GetResult implicit for fetching SmImageResizeRow objects using plain SQL queries */
   implicit def GetResultSmImageResizeRow(implicit e0: GR[String]): GR[SmImageResizeRow] = GR {
     prs =>
       import prs._
-      SmImageResizeRow.tupled((<<[String], <<[String], <<[String]))
+      SmImageResizeRow.tupled((<<[String], <<[String]))
   }
 
   /** Table description of table sm_image_resize. Objects of this class serve as prototypes for rows in queries. */
   class SmImageResize(_tableTag: Tag) extends profile.api.Table[SmImageResizeRow](_tableTag, "sm_image_resize") {
-    def * = (id, imageName, imagePath) <> (SmImageResizeRow.tupled, SmImageResizeRow.unapply)
+    def * = (sha256, fName) <> (SmImageResizeRow.tupled, SmImageResizeRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(imageName), Rep.Some(imagePath))).shaped.<>({ r => import r._; _1.map(_ => SmImageResizeRow.tupled((_1.get, _2.get, _3.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(sha256), Rep.Some(fName))).shaped.<>({ r => import r._; _1.map(_ => SmImageResizeRow.tupled((_1.get, _2.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
-    /** Database column id SqlType(varchar), PrimaryKey */
-    val id: Rep[String] = column[String]("id", O.PrimaryKey)
-    /** Database column image_name SqlType(varchar) */
-    val imageName: Rep[String] = column[String]("image_name")
-    /** Database column image_path SqlType(varchar) */
-    val imagePath: Rep[String] = column[String]("image_path")
+    /** Database column sha256 SqlType(varchar) */
+    val sha256: Rep[String] = column[String]("sha256")
+    /** Database column f_name SqlType(varchar) */
+    val fName: Rep[String] = column[String]("f_name")
 
-    /** Foreign key referencing SmFileCard (database name fk_sm_image_resize_sm_file_card) */
-    lazy val smFileCardFk = foreignKey("fk_sm_image_resize_sm_file_card", id, SmFileCard)(r => r.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+    /** Uniqueness Index over (sha256,fName) (database name sm_image_resize_uniq) */
+    val index1 = index("sm_image_resize_uniq", (sha256, fName), unique = true)
   }
 
   /** Collection-like TableQuery object for table SmImageResize */

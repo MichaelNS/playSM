@@ -294,26 +294,179 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
     Ok("Job run")
   }
 
-  def runCalcCRC(device: String): Action[AnyContent] = Action.async {
+  def setJobCalcCrc(device: String, status: Boolean): Future[Int] = {
+    val update = {
+      val q = for (uRow <- Tables.SmDevice if uRow.uid === device) yield (uRow.jobCalcCrc, uRow.crcDate)
+      q.update(status, Some(LocalDateTime.now()))
+    }
+    //    database.runAsync(update).map(_ => logger.info(s"runCalcCRC set jobPathScan"))
+
+    logger.info(s"runCalcCRC setJobPathScan $status")
+    database.runAsync(update)
+  }
+
+  def calcCRC(device: String): Action[AnyContent] = Action.async {
+    //    calcCrcByDeviceNew(device)
+    calcCrcByDeviceNew2(device)
+    Future.successful(Ok(""))
+  }
+
+
+  def calcAllCRCActor(): Future[Seq[Future[Seq[Any]]]] = {
+    val funcName = "calcAllCRCActor"
+    logger.warn(s"!!! RUN $funcName")
+
+    database.runAsync(Tables.SmDevice
+      //      .filter(job => job.jobCalcCrc === false && job.jobPathScan === false && job.jobCalcExif === false && job.jobResize === false)
+      .filter(job => job.jobPathScan === false && job.jobCalcExif === false && job.jobResize === false)
+      .map(fld => (fld.uid, fld.jobCalcCrc))
+      .result).map { rowSeq =>
+
+      val cnt = rowSeq.count(_._2)
+      logger.warn(s"$funcName cnt = $cnt")
+
+      //      val maxCalc = 2
+      // TODO check maxCalc
+      //      if (cnt <= maxCalc)
+      rowSeq.map(row => calcCrcByDeviceNew2(row._1))
+
+      //      rowSeq.map(row => calcCrcByDeviceNew2(row._1))
+    }
+  }
+
+
+  def calcAllCRC(): Action[AnyContent] = Action.async {
+    logger.warn(s"!!! RUN calcAllCRC")
+
+    calcAllCRCActor()
+    Future.successful(Ok("run calcAllCRC"))
+  }
+
+  def calcCRCOld(device: String): Future[String] = {
     database.runAsync(Tables.SmDevice
       .filter(_.uid === device)
       .map(fld => fld.jobPathScan)
       .result).map { rowSeq =>
 
-      if (!rowSeq.head.getOrElse(false)) {
-        calcCRC(device)
-        Ok("Job run")
+      logger.warn(s"calcCRC rowSeq: $rowSeq")
+
+      if (!rowSeq.head) {
+        setJobCalcCrc(device, status = true)
+
+        //          .andThen {
+        //        calcCrcByDevice(device)
+        calcCrcByDeviceNew(device)
+          .onComplete {
+            case Success(res) =>
+              //              logger.info(res.toString)
+              //              println(res.toString)
+              logger.info(res.length.toString)
+
+              setJobCalcCrc(device, status = false)
+            case Failure(ex) =>
+              setJobCalcCrc(device, status = false)
+              logger.error(s"runCalcCRC error: ${ex.toString}")
+          }
+        //        }
+
+        //        Ok("Job run")
+        "Job run"
       } else {
-        Ok("Job already run")
+        logger.warn("Job already run")
+        //        Ok("Job already run")
+        "Job already run"
       }
     }
   }
 
-  def calcCRC(device: String): Action[AnyContent] = Action.async {
+  def calcCrcByDeviceNew2(device: String): Future[Seq[Any]] = {
+    logger.info("calcCrcByDeviceNew2")
+    val maxCalcFiles: Long = config.get[Long]("CRC.maxCalcFiles")
+    val maxSizeFiles: Long = config.underlying.getBytes("CRC.maxSizeFiles")
+    val qwe = FileUtils.getDevicesInfo() flatMap { sucLabel2Drive =>
+
+      database.runAsync(
+        (for {
+          (devRow, fcRow) <- Tables.SmDevice.join(Tables.SmFileCard).on((device, fc) => {
+            device.uid === fc.deviceUid &&
+              fc.sha256.isEmpty &&
+              fc.fSize > 0L && fc.fSize <= maxSizeFiles
+          }) if devRow.jobPathScan === false
+
+        } yield (fcRow.id, fcRow.fParent, fcRow.fName)
+          )
+          .sortBy(_._2.asc)
+          .take(maxCalcFiles)
+          .result)
+        .map { rowSeq =>
+
+          val mountPoint = sucLabel2Drive.filter(_.uuid == device).head.mountpoint
+
+          val sss = rowSeq.map { row =>
+            try {
+              val sha = FileUtils.getGuavaSha256(mountPoint + OsConf.fsSeparator + row._2 + row._3)
+              if (sha != "") {
+                val update = {
+                  val q = for (uRow <- Tables.SmFileCard if uRow.id === row._1) yield uRow.sha256
+                  q.update(Some(sha))
+                }
+                database.runAsync(update).map(_ => logger.debug(s"calcCRC Set sha256 for key ${row._1}   path ${row._3} ${row._2}"))
+              }
+            } catch {
+              case _: java.io.FileNotFoundException | _: java.io.IOException => None
+            }
+          }
+          sss
+        }
+    }
+    qwe
+  }
+
+  def calcCrcByDeviceNew(device: String): Future[Seq[Any]] = {
+    logger.info("calcCrcByDeviceNew")
+    val maxCalcFiles: Long = config.get[Long]("CRC.maxCalcFiles")
+    val maxSizeFiles: Long = config.underlying.getBytes("CRC.maxSizeFiles")
+    val qwe = FileUtils.getDevicesInfo() flatMap { sucLabel2Drive =>
+
+      database.runAsync(Tables.SmFileCard
+        .filter(_.deviceUid === device)
+        .filter(_.sha256.isEmpty)
+        .filter(size => size.fSize > 0L && size.fSize <= maxSizeFiles)
+        .sortBy(_.fParent.asc)
+        .take(maxCalcFiles)
+        .map(fld => (fld.id, fld.fParent, fld.fName))
+        .result).map { rowSeq =>
+
+        val mountPoint = sucLabel2Drive.filter(_.uuid == device).head.mountpoint
+
+        val sss = rowSeq.map { row =>
+          try {
+            val sha = FileUtils.getGuavaSha256(mountPoint + OsConf.fsSeparator + row._2 + row._3)
+            if (sha != "") {
+              val update = {
+                val q = for (uRow <- Tables.SmFileCard if uRow.id === row._1) yield uRow.sha256
+                q.update(Some(sha))
+              }
+              database.runAsync(update).map(_ => logger.debug(s"calcCRC Set sha256 for key ${row._1}   path ${row._3} ${row._2}"))
+            }
+          } catch {
+            case _: java.io.FileNotFoundException | _: java.io.IOException => None
+          }
+        }
+        sss
+      }
+    }
+
+    qwe
+  }
+
+  def calcCrcByDevice(device: String): Future[Unit] = {
     val maxCalcFiles: Long = config.get[Long]("CRC.maxCalcFiles")
     val maxSizeFiles: Long = config.underlying.getBytes("CRC.maxSizeFiles")
 
     logger.info(s"calcCRC maxSizeFiles = $maxSizeFiles   maxCalcFiles = $maxCalcFiles")
+
+    val start = System.currentTimeMillis
 
     database.runAsync(Tables.SmFileCard
       .filter(_.deviceUid === device)
@@ -328,6 +481,10 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
         case Success(sucLabel2Drive) =>
           debug(sucLabel2Drive)
           val mountPoint = sucLabel2Drive.filter(_.uuid == device).head.mountpoint
+
+          for (w <- 0 to 10500000) yield w
+          //          Thread.sleep(5000)
+          logger.warn(s"calcCrcByDevice - ${System.currentTimeMillis - start} ms")
 
           rowSeq.foreach { row =>
             try {
@@ -347,7 +504,6 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
 
         case Failure(ex) => logger.error(s"calcCRC error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
       }
-      Ok("Job run")
     }
   }
 }
