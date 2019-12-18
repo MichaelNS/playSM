@@ -47,7 +47,7 @@ object SourceCodeGenerator extends App {
   )
 
   //the table spatial_ref_sys is an internal table of the postgis extension
-  val filteredTables = SmPostgresDriver.defaultTables.map(_.filter(t => t.name.name.toLowerCase().startsWith("sm_")))
+  val filteredTables = SmPostgresDriver.defaultTables.map(_.filter(t => t.name.name.toLowerCase().startsWith("sm_") && !t.name.name.toLowerCase.endsWith("_back")))
   val modelAction = SmPostgresDriver.createModel(Some(filteredTables))
 
   val codegen = db.run(modelAction).map { model =>

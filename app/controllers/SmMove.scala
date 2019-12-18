@@ -213,7 +213,7 @@ class SmMove @Inject()(val database: DBService)
             }
           }
         }
-        clearJob(idJob = rowMove.id, storeName = rowMove.deviceUid, mountPoint = device.mountpoint, pathFrom = pathFrom)
+        closeJob(idJob = rowMove.id, storeName = rowMove.deviceUid, mountPoint = device.mountpoint, pathFrom = pathFrom)
       }
     }
     logger.info("moveByDevice is DONE")
@@ -276,7 +276,7 @@ class SmMove @Inject()(val database: DBService)
   }
 
   /**
-    * Remove row [[models.db.Tables.SmJobPathMove]]
+    * Update row [[models.db.Tables.SmJobPathMove]]
     * Check 0 row count from query [[models.db.Tables.SmFileCard]]
     *
     * @param idJob      - id row
@@ -285,7 +285,7 @@ class SmMove @Inject()(val database: DBService)
     * @param pathFrom   - for get row [[models.db.Tables.SmFileCard]]
     * @return String "clearJob is DONE"
     */
-  def clearJob(idJob: Int, storeName: String, mountPoint: String, pathFrom: String): String = {
+  def closeJob(idJob: Int, storeName: String, mountPoint: String, pathFrom: String): String = {
     debugParam
 
     database.runAsync(Tables.SmFileCard

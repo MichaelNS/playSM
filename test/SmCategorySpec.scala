@@ -170,7 +170,7 @@ class SmCategorySpec extends PlaySpec
       val controller = app.injector.instanceOf[SmCategory]
       val message: (Option[String], String) = (Some("sha_id"), "fileName")
 
-      controller.writeToCategoryTbl(message, "categoryType", "subCategoryType", "description")
+      controller.writeToCategoryTbl(message, "categoryType", "category", "subCategory", "description")
       //      val result = controller.writeToCategoryTbl(message, "categoryType", "description")
       //      result.onComplete {
       //        case Success(insSuc) => logger.warn(s"Upsert cat = $insSuc")

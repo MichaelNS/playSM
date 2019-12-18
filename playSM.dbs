@@ -11,9 +11,6 @@
 				<column name="id" />
 				<column name="f_name" />
 			</index>
-			<index name="unq_sm_category_fc_id" unique="UNIQUE" >
-				<column name="id" />
-			</index>
 		</table>
 		<table name="sm_device" >
 			<column name="id" type="serial" length="10" decimal="0" jt="4" mandatory="y" autoincrement="y" />
@@ -101,10 +98,6 @@
 			</index>
 			<fk name="fk_sm_file_card_sm_device" to_schema="public" to_table="sm_device" >
 				<fk_column name="device_uid" pk="uid" />
-			</fk>
-			<fk name="fk_sm_file_card_sm_category_fc" to_schema="public" to_table="sm_category_fc" >
-				<fk_column name="sha256" pk="id" />
-				<fk_column name="f_name" pk="f_name" />
 			</fk>
 		</table>
 		<table name="sm_job_path_move" >
@@ -418,10 +411,255 @@ AS '$libdir/pg_trgm', $function$word_similarity_op$function$
 	<connector name="PostgreSQL" database="PostgreSQL" driver_class="org.postgresql.Driver" driver_jar="postgresql-42.2.2.jar" driver_desc="Standard" url="jdbc:postgresql://localhost:5432/sm_db?user=sm_user&amp;password=123" host="msk-tempg-db01t" port="5433" instance="postgres" user="oa_camunda" passwd="Y2FtdW5kYQ==" />
 	<layout name="Default Layout" id="Layout_2ff5c29" joined_routing="y" show_relation="columns" >
 		<entity schema="public" name="sm_device" color="BED3F4" x="304" y="48" />
-		<entity schema="public" name="sm_category_fc" color="BED3F4" x="48" y="352" />
 		<entity schema="public" name="sm_exif" color="BED3F4" x="624" y="48" />
 		<entity schema="public" name="sm_file_card" color="BED3F4" x="384" y="320" />
 		<entity schema="public" name="sm_job_path_move" color="BED3F4" x="64" y="64" />
+		<entity schema="public" name="sm_category_fc" color="BED3F4" x="48" y="352" />
+		<script name="Sql_Editor" id="Editor_dc628f" language="SQL" >
+			<string><![CDATA[CREATE SCHEMA public;
+
+CREATE SEQUENCE sm_device_id_seq START WITH 1;
+
+CREATE SEQUENCE sm_job_path_move_id_seq START WITH 1;
+
+CREATE TABLE sm_category_fc ( 
+	id                   varchar  NOT NULL ,
+	f_name               varchar  NOT NULL ,
+	category_type        varchar   ,
+	sub_category_type    varchar   ,
+	description          varchar   ,
+	CONSTRAINT sm_category_fc_pkey PRIMARY KEY ( id, f_name )
+ );
+
+CREATE TABLE sm_device ( 
+	id                   serial  NOT NULL ,
+	name                 varchar  NOT NULL ,
+	"label"              varchar  NOT NULL ,
+	uid                  varchar  NOT NULL ,
+	sync_date            timestamp  NOT NULL ,
+	description          varchar   ,
+	visible              bool DEFAULT true NOT NULL ,
+	reliable             bool DEFAULT true NOT NULL ,
+	CONSTRAINT sm_device_pkey PRIMARY KEY ( id ),
+	CONSTRAINT idx_sm_device_device_uid UNIQUE ( uid ) 
+ );
+
+CREATE TABLE sm_file_card ( 
+	id                   varchar  NOT NULL ,
+	device_uid           varchar  NOT NULL ,
+	f_parent             varchar  NOT NULL ,
+	f_name               varchar  NOT NULL ,
+	f_extension          varchar   ,
+	f_creation_date      timestamp  NOT NULL ,
+	f_last_modified_date timestamp  NOT NULL ,
+	f_size               bigint   ,
+	f_mime_type_java     varchar   ,
+	sha256               varchar   ,
+	f_name_lc            varchar  NOT NULL ,
+	CONSTRAINT sm_file_card_pkey PRIMARY KEY ( id ),
+	CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY ( device_uid ) REFERENCES sm_device( uid )  ,
+	CONSTRAINT fk_sm_file_card_sm_category_fc FOREIGN KEY ( sha256, f_name ) REFERENCES sm_category_fc( id, f_name )  
+ );
+
+CREATE INDEX idx_f_parent ON sm_file_card ( f_parent );
+
+CREATE INDEX idx_fc_f_name_lc ON sm_file_card ( f_name_lc );
+
+CREATE INDEX idx_last_modified ON sm_file_card ( f_last_modified_date );
+
+CREATE INDEX idx_sha256 ON sm_file_card ( sha256 );
+
+CREATE INDEX idx_sm_file_card_device_uid ON sm_file_card ( device_uid, f_parent );
+
+CREATE INDEX idx_sm_file_card_sha256 ON sm_file_card ( sha256, f_name );
+
+CREATE TABLE sm_job_path_move ( 
+	id                   serial  NOT NULL ,
+	device_uid           varchar  NOT NULL ,
+	path_from            varchar  NOT NULL ,
+	path_to              varchar  NOT NULL ,
+	done                 timestamp   ,
+	CONSTRAINT idx_sm_job_path_move_device_uid PRIMARY KEY ( device_uid, path_from ),
+	CONSTRAINT unq_sm_job_path_move UNIQUE ( id ) 
+ );
+
+CREATE TABLE sm_exif ( 
+	id                   varchar  NOT NULL ,
+	date_time            timestamp   ,
+	date_time_original   timestamp   ,
+	date_time_digitized  timestamp   ,
+	make                 varchar   ,
+	model                varchar   ,
+	software             varchar   ,
+	exif_image_width     varchar   ,
+	exif_image_height    varchar   ,
+	gps_version_id       varchar   ,
+	gps_latitude_ref     varchar   ,
+	gps_latitude         varchar   ,
+	gps_longitude_ref    varchar   ,
+	gps_longitude        varchar   ,
+	gps_altitude_ref     varchar   ,
+	gps_altitude         varchar   ,
+	gps_time_stamp       varchar   ,
+	gps_processing_method varchar   ,
+	gps_date_stamp       varchar   ,
+	gps_latitude_dec     numeric(-9999999,0)   ,
+	gps_longitude_dec    numeric(-9999999,0)   ,
+	CONSTRAINT sm_exif_pkey PRIMARY KEY ( id ),
+	CONSTRAINT fk_sm_exif_sm_file_card FOREIGN KEY ( id ) REFERENCES sm_file_card( id )  
+ );
+
+CREATE OR REPLACE FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal)
+ RETURNS internal
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gin_extract_query_trgm$function$
+
+CREATE OR REPLACE FUNCTION public.gin_extract_value_trgm(text, internal)
+ RETURNS internal
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gin_extract_value_trgm$function$
+
+CREATE OR REPLACE FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal)
+ RETURNS boolean
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gin_trgm_consistent$function$
+
+CREATE OR REPLACE FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal)
+ RETURNS "char"
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gin_trgm_triconsistent$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_compress(internal)
+ RETURNS internal
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_compress$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal)
+ RETURNS boolean
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_consistent$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_decompress(internal)
+ RETURNS internal
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_decompress$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal)
+ RETURNS double precision
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_distance$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_in(cstring)
+ RETURNS gtrgm
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_in$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_out(gtrgm)
+ RETURNS cstring
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_out$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_penalty(internal, internal, internal)
+ RETURNS internal
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_penalty$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_picksplit(internal, internal)
+ RETURNS internal
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_picksplit$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_same(gtrgm, gtrgm, internal)
+ RETURNS internal
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_same$function$
+
+CREATE OR REPLACE FUNCTION public.gtrgm_union(internal, internal)
+ RETURNS gtrgm
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$gtrgm_union$function$
+
+CREATE OR REPLACE FUNCTION public.set_limit(real)
+ RETURNS real
+ LANGUAGE c
+ STRICT
+AS '$libdir/pg_trgm', $function$set_limit$function$
+
+CREATE OR REPLACE FUNCTION public.show_limit()
+ RETURNS real
+ LANGUAGE c
+ STABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$show_limit$function$
+
+CREATE OR REPLACE FUNCTION public.show_trgm(text)
+ RETURNS text[]
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$show_trgm$function$
+
+CREATE OR REPLACE FUNCTION public.similarity(text, text)
+ RETURNS real
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$similarity$function$
+
+CREATE OR REPLACE FUNCTION public.similarity_dist(text, text)
+ RETURNS real
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$similarity_dist$function$
+
+CREATE OR REPLACE FUNCTION public.similarity_op(text, text)
+ RETURNS boolean
+ LANGUAGE c
+ STABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$similarity_op$function$
+
+CREATE OR REPLACE FUNCTION public.word_similarity(text, text)
+ RETURNS real
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$word_similarity$function$
+
+CREATE OR REPLACE FUNCTION public.word_similarity_commutator_op(text, text)
+ RETURNS boolean
+ LANGUAGE c
+ STABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$word_similarity_commutator_op$function$
+
+CREATE OR REPLACE FUNCTION public.word_similarity_dist_commutator_op(text, text)
+ RETURNS real
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$word_similarity_dist_commutator_op$function$
+
+CREATE OR REPLACE FUNCTION public.word_similarity_dist_op(text, text)
+ RETURNS real
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$word_similarity_dist_op$function$
+
+CREATE OR REPLACE FUNCTION public.word_similarity_op(text, text)
+ RETURNS boolean
+ LANGUAGE c
+ STABLE PARALLEL SAFE STRICT
+AS '$libdir/pg_trgm', $function$word_similarity_op$function$
+]]></string>
+		</script>
 	</layout>
 	<layout name="Sample Layout with Tools" id="Layout_13ab4a1" show_column_type="y" show_relation="columns" >
 		<callout x="48" y="48" pointer="NO" >

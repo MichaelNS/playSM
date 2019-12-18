@@ -68,27 +68,27 @@ lazy val root = (project in file("."))
 
     libraryDependencies += "com.typesafe.slick" %% "slick" % "3.3.2",
     libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.18.0",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.18.0",
-    libraryDependencies += "com.typesafe.play" %% "play-slick" % "4.0.2",
-    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "4.0.2",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.18.1",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.18.1",
+    libraryDependencies += "com.typesafe.play" %% "play-slick" % "5.0.0",
+    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
 
-    libraryDependencies += "org.webjars" %% "webjars-play" % "2.7.3",
+    libraryDependencies += "org.webjars" %% "webjars-play" % "2.8.0",
     libraryDependencies += "org.webjars" % "foundation" % "6.4.3",
 
     libraryDependencies += guice,
 
-    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % Test,
+    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0" % Test,
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.8",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.6",
+    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.9",
+    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.7",
 
     libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0",
 
     //    scala-fixture:
     libraryDependencies += "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
     libraryDependencies += "com.h2database" % "h2" % "1.4.200" % Test,
-    libraryDependencies += "org.flywaydb" % "flyway-core" % "6.0.8" % "test",
+    libraryDependencies += "org.flywaydb" % "flyway-core" % "6.1.3" % "test",
 
     libraryDependencies += "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
   )

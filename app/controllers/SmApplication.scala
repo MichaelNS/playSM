@@ -2,8 +2,8 @@ package controllers
 
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
+import models.DeviceView
 import models.db.Tables
-import models.{DeviceView, SmFileCard}
 import org.joda.time.DateTime
 import play.api.mvc._
 import ru.ns.model.OsConf
@@ -29,15 +29,15 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
     val qry = sql"""
       SELECT
         x2.name,
-        x2.label,
+        x2.label_v,
         x2.uid,
         x2.description,
-        x2.sync_date,
+        x2.path_scan_date,
         x2.reliable,
       (SELECT count(1) FROM sm_file_card x3 WHERE x3.device_uid = x2.uid AND (x3.sha256 IS NULL)  AND (x3.f_size > 0))
       FROM sm_device x2
       where x2.visible is true
-      ORDER BY x2.label
+      ORDER BY x2.label_v
       """
       .as[(String, String, String, String, DateTime, Boolean, Int)]
     database.runAsync(qry).map { rowSeq =>
@@ -101,14 +101,14 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
     val ctnRec = 100
 
     val qry = (for {
-      uRow <- Tables.SmDevice if uRow.label === device
-      v_fName <- Tables.SmFileCard if v_fName.deviceUid === uRow.label && v_fName.sha256.isEmpty && v_fName.fSize > 0L
+      uRow <- Tables.SmDevice if uRow.labelV === device
+      v_fName <- Tables.SmFileCard if v_fName.deviceUid === uRow.labelV && v_fName.sha256.isEmpty && v_fName.fSize > 0L
     } yield (uRow, v_fName))
       .groupBy(uRow =>
-        (uRow._1.label, uRow._1.syncDate))
+        (uRow._1.labelV, uRow._1.pathScanDate))
       .map({
         case (uRow, cnt) =>
-          (uRow, cnt.map(_._1.label).length)
+          (uRow, cnt.map(_._1.labelV).length)
       })
       .sortBy(_._1)
 

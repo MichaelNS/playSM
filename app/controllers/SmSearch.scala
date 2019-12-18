@@ -99,11 +99,11 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
       })
     } yield (fcRow, device)
 
-    val cntAll = baseQry.groupBy(uRow => (uRow._1.fNameLc, uRow._1.fName, uRow._1.fParent, uRow._1.sha256, uRow._2.map(_.label)))
+    val cntAll = baseQry.groupBy(uRow => (uRow._1.fNameLc, uRow._1.fName, uRow._1.fParent, uRow._1.sha256, uRow._2.map(_.labelV)))
       .map({ case (uRow, cnt) => (uRow, cnt.map(_._1).length) })
       .length.result
     val filtered = baseQry.filter(_._1.fNameLc.like("%" + search + "%"))
-      .groupBy(uRow => (uRow._1.fNameLc, uRow._1.fName, uRow._1.fParent, uRow._1.sha256, uRow._2.map(_.label)))
+      .groupBy(uRow => (uRow._1.fNameLc, uRow._1.fName, uRow._1.fParent, uRow._1.sha256, uRow._2.map(_.labelV)))
       .map({ case (uRow, cnt) => (uRow, cnt.map(_._1).length) })
     val cntFiltered = filtered.length.result
     val qryBySearch = filtered.drop(start).take(length)

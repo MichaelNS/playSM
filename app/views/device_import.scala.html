@@ -5,10 +5,10 @@
         <h2>Device import</h2>
     </div>
 
-    @form(routes.SmSyncDeviceStream.refreshDevice()) {
+    @form(routes.SmSyncDeviceStream.importDevice()) {
         @CSRF.formField
 
-        <button class="button success">refresh devices</button>
+        <button class="button success">import devices</button>
     }
 
     <div class="row column">

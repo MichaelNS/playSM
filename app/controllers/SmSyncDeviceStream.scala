@@ -9,7 +9,7 @@ import akka.stream._
 import akka.stream.scaladsl.{Sink, Source}
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
-import models.{DeviceView, SmDevice}
+import models.{DeviceView, SmCategoryFc, SmDevice}
 import org.joda.time.DateTime
 import play.api.Configuration
 import play.api.mvc._
@@ -37,7 +37,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  def refreshDevice: Action[AnyContent] = Action.async {
+  def importDevice: Action[AnyContent] = Action.async {
     database.runAsync(Tables.SmDevice.sortBy(_.uid).map(_.uid).result).map { rowSeq =>
       logger.debug(pprint.apply(rowSeq).toString())
 
@@ -49,16 +49,16 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
             if (rowSeq.contains(device.uuid)) {
               logger.info(s"Device [${device.toString}] already exists")
             } else {
-              val cRow = Tables.SmDeviceRow(-1, device.name, device.label, device.uuid, LocalDateTime.MIN)
+              val cRow = Tables.SmDeviceRow(-1, device.uuid, device.name, device.label, None, pathScanDate = LocalDateTime.MIN)
 
               val insRes = database.runAsync((Tables.SmDevice returning Tables.SmDevice.map(_.id)) += SmDevice.apply(cRow).data.toRow)
               insRes onComplete {
                 case Success(suc) => logger.debug(s"add device = $suc")
-                case Failure(ex) => logger.error(s"refreshDevice 1 error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+                case Failure(ex) => logger.error(s"importDevice 1 error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
               }
             }
           }
-        case Failure(ex) => logger.error(s"refreshDevice 2 error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+        case Failure(ex) => logger.error(s"importDevice 2 error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
       }
 
       Redirect(routes.SmApplication.smIndex())
@@ -71,14 +71,14 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
     val qry = sql"""
       SELECT
         x2.name,
-        x2.label,
+        x2.label_v,
         x2.uid,
         x2.description,
-        x2.sync_date,
+        x2.path_scan_date,
         x2.visible,
         x2.reliable
       FROM sm_device x2
-      ORDER BY x2.label
+      ORDER BY x2.label_v
       """
       .as[(String, String, String, String, DateTime, Boolean, Boolean)]
     database.runAsync(qry).map { rowSeq =>
@@ -112,14 +112,14 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
             case Success(res) =>
               logger.info("done syncDevice, pathConfig " + res.toString + " " + impPath)
 
-              database.runAsync((for {uRow <- Tables.SmDevice if uRow.uid === deviceUid} yield uRow.syncDate)
+              database.runAsync((for {uRow <- Tables.SmDevice if uRow.uid === deviceUid} yield uRow.pathScanDate)
                 .update(LocalDateTime.now()))
                 .map(_ => logger.info(s"Sync complete for device $deviceUid"))
 
             case Failure(ex) =>
               logger.error(s"syncDevice error: ${ex.toString}")
 
-              database.runAsync((for {uRow <- Tables.SmDevice if uRow.uid === deviceUid} yield uRow.syncDate)
+              database.runAsync((for {uRow <- Tables.SmDevice if uRow.uid === deviceUid} yield uRow.pathScanDate)
                 .update(LocalDateTime.now()))
                 .map(_ => logger.info(s"Sync complete for device $deviceUid"))
 
@@ -156,7 +156,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
     val resPath = Source.fromIterator(() => FileUtils.getPathesRecursive
     (path2scan.toString, mountPoint, config.get[Seq[String]]("paths2Scan.exclusionPath")).iterator)
       .throttle(elements = 1, 10.millisecond, maximumBurst = 10, mode = ThrottleMode.Shaping)
-      .map { path =>
+      .mapAsync(1) { path =>
         mergePath2Db(deviceUid = deviceUid, mountPoint = mountPoint,
           path.fParent,
           config.get[Seq[String]]("paths2Scan.exclusionFile")
@@ -295,6 +295,21 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
     Ok("Job run")
   }
 
+  def runCalcCRC(device: String): Action[AnyContent] = Action.async {
+    database.runAsync(Tables.SmDevice
+      .filter(_.uid === device)
+      .map(fld => fld.jobPathScan)
+      .result).map { rowSeq =>
+
+      if (!rowSeq.head.getOrElse(false)) {
+        calcCRC(device)
+        Ok("Job run")
+      } else {
+        Ok("Job already run")
+      }
+    }
+  }
+
   def calcCRC(device: String): Action[AnyContent] = Action.async {
     val maxCalcFiles: Long = config.get[Long]("CRC.maxCalcFiles")
     val maxSizeFiles: Long = config.underlying.getBytes("CRC.maxSizeFiles")
@@ -307,6 +322,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
       .filter(size => size.fSize > 0L && size.fSize <= maxSizeFiles)
       .sortBy(_.fParent.asc)
       .take(maxCalcFiles)
+      .map(fld => (fld.id, fld.fParent, fld.fName))
       .result).map { rowSeq =>
 
       FileUtils.getDevicesInfo() onComplete {
@@ -316,13 +332,13 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
 
           rowSeq.foreach { row =>
             try {
-              val sha = FileUtils.getGuavaSha256(mountPoint + OsConf.fsSeparator + row.fParent + row.fName)
+              val sha = FileUtils.getGuavaSha256(mountPoint + OsConf.fsSeparator + row._2 + row._3)
               if (sha != "") {
                 val update = {
-                  val q = for (uRow <- Tables.SmFileCard if uRow.id === row.id) yield uRow.sha256
+                  val q = for (uRow <- Tables.SmFileCard if uRow.id === row._1) yield uRow.sha256
                   q.update(Some(sha))
                 }
-                database.runAsync(update).map(_ => logger.debug(s"calcCRC Set sha256 for key ${row.id}   path ${row.fParent} ${row.fName}"))
+                database.runAsync(update).map(_ => logger.info(s"calcCRC Set sha256 for key ${row._1}   path ${row._3} ${row._2}"))
               }
             } catch {
               case _: java.io.FileNotFoundException | _: java.io.IOException => None

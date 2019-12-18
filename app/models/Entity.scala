@@ -6,14 +6,14 @@ case class Entity[T](id: Int, data: T)
 
 case class EntitySmFc[T](id: String, data: T)
 
-case class SmDevice(name: String, label: String, uid: String, syncDate: java.time.LocalDateTime) {
+case class SmDevice(name: String, labelV: String, uid: String, pathScanDate: java.time.LocalDateTime) {
   def toRow: Tables.SmDeviceRow = {
     Tables.SmDeviceRow(
       id = -1,
       name = name,
-      label = label,
+      labelV = labelV,
       uid = uid,
-      syncDate = syncDate
+      pathScanDate = pathScanDate
     )
   }
 }
@@ -24,9 +24,9 @@ object SmDevice {
       id = row.id,
       data = SmDevice(
         name = row.name,
-        row.label,
+        row.labelV,
         uid = row.uid,
-        row.syncDate
+        row.pathScanDate
       )
     )
   }
@@ -88,7 +88,8 @@ case class SmCategoryFc(
                          id: String,
                          fName: String,
                          categoryType: Option[String] = None,
-                         subCategoryType: Option[String] = None,
+                         category: Option[String] = None,
+                         subCategory: Option[String] = None,
                          description: Option[String] = None
                        ) {
   def toRow: Tables.SmCategoryFcRow = {
@@ -96,7 +97,8 @@ case class SmCategoryFc(
       id = id,
       fName = fName,
       categoryType = categoryType,
-      subCategoryType = subCategoryType,
+      category = category,
+      subCategory = subCategory,
       description = description
     )
   }
@@ -110,7 +112,8 @@ object SmCategoryFc {
         id = row.id,
         fName = row.fName,
         categoryType = row.categoryType,
-        subCategoryType = row.subCategoryType,
+        category = row.category,
+        subCategory = row.subCategory,
         description = row.description
       )
     )

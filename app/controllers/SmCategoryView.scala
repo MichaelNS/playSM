@@ -34,6 +34,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
           fc.sha256 === cat.id && fc.fName === cat.fName
         })} yield (fcRow, catRow.map(_.categoryType))
         )
+        .filter(_._1.fSize > 0L)
         .groupBy(p => p._2)
         .map { case (categoryType, cnt) => (categoryType, cnt.map(_._2).length) }
         .sortBy(_._2.desc)
@@ -57,8 +58,8 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         })} yield catRow
         )
         .filter(_.categoryType === categoryType)
-        .groupBy(p => p.subCategoryType)
-        .map { case (subcategoryType, cnt) => (subcategoryType, cnt.map(_.subCategoryType).length) }
+        .groupBy(p => p.subCategory)
+        .map { case (subcategory, cnt) => (subcategory, cnt.map(_.subCategory).length) }
         .sortBy(_._2.desc)
         .result)
       .map { rowSeq =>
@@ -69,11 +70,11 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
   /**
     * listDescriptionAndCnt
     *
-    * @param categoryType    categoryType
-    * @param subCategoryType subCategoryType
+    * @param categoryType categoryType
+    * @param subCategory  subCategory
     * @return [[views.html.smr_description]]
     */
-  def listDescriptionAndCnt(categoryType: String, subCategoryType: String): Action[AnyContent] = Action.async {
+  def listDescriptionAndCnt(categoryType: String, subCategory: String): Action[AnyContent] = Action.async {
     database.runAsync(
       (for {
         (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
@@ -81,7 +82,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         })} yield catRow
         )
         .filter(_.categoryType === categoryType)
-        .filter(_.subCategoryType === subCategoryType)
+        .filter(_.subCategory === subCategory)
         .groupBy(p => p.description)
         .map { case (description, cnt) => (description, cnt.map(_.description).length) }
         .sortBy(_._2.desc)
@@ -102,7 +103,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
     val qry = (for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
       fc.sha256 === cat.id && fc.fName === cat.fName
     }) if catRow.isEmpty && fcRow.fSize > 0L
-                    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
+    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
       ).groupBy { p => (p._2, p._3) }
       .map(fld => (fld._1._1, fld._1._2))
     database.runAsync(qry.filterNot(_._1 endsWith "_files")
@@ -157,7 +158,6 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
   }
 
 
-
   /**
     * get Dirs without category by extension, order count files
     *
@@ -173,12 +173,12 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
       }) if catRow.isEmpty && fcRow.fSize > 0L
-           } yield (fcRow.sha256, fcRow.fParent)
+      } yield (fcRow.sha256, fcRow.fParent)
     } else {
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
       }) if catRow.isEmpty && fcRow.fSize > 0L && fcRow.fExtension.getOrElse("").toLowerCase === formData.extension.toLowerCase
-           } yield (fcRow.sha256, fcRow.fParent)
+      } yield (fcRow.sha256, fcRow.fParent)
     }
     database.runAsync(
       qry

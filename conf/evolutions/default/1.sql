@@ -2,38 +2,56 @@
 
 CREATE TABLE sm_category_fc
 (
-  id                  VARCHAR NOT NULL,
-  f_name              VARCHAR NOT NULL,
-  category_type       VARCHAR,
-  sub_category_type   VARCHAR,
-  description         VARCHAR,
-  CONSTRAINT sm_category_fc_pkey PRIMARY KEY (id,f_name),
-  CONSTRAINT unq_sm_category_fc_id UNIQUE (id)
+  id              VARCHAR NOT NULL,
+  f_name          VARCHAR NOT NULL,
+  category_type   VARCHAR,
+  category        VARCHAR,
+  sub_category    VARCHAR,
+  description     VARCHAR,
+  CONSTRAINT sm_category_fc_pkey PRIMARY KEY (id,f_name)
+);
+
+CREATE INDEX idx_sm_category_fc_category_type
+ON sm_category_fc (category_type, category, sub_category);
+
+CREATE TABLE sm_category_rule
+(
+  category_type   VARCHAR NOT NULL,
+  category        VARCHAR NOT NULL,
+  sub_category    VARCHAR NOT NULL,
+  f_path          VARCHAR NOT NULL,
+  is_begins       BOOL NOT NULL,
+  description     VARCHAR NOT NULL,
+  CONSTRAINT sm_category_rule_pkey PRIMARY KEY (category_type,category,sub_category)
 );
 
 CREATE TABLE sm_device
 (
-  id            SERIAL NOT NULL,
-  name          VARCHAR NOT NULL,
-  "label"       VARCHAR NOT NULL,
-  uid           VARCHAR NOT NULL,
-  sync_date     TIMESTAMP NOT NULL,
-  description   VARCHAR,
-  visible       BOOL DEFAULT TRUE NOT NULL,
-  reliable      BOOL DEFAULT TRUE NOT NULL,
+  id               SERIAL NOT NULL,
+  uid              VARCHAR NOT NULL,
+  name             VARCHAR NOT NULL,
+  label_v          VARCHAR NOT NULL,
+  name_v           VARCHAR,
+  description      VARCHAR,
+  visible          BOOL DEFAULT TRUE NOT NULL,
+  reliable         BOOL DEFAULT TRUE NOT NULL,
+  path_scan_date   TIMESTAMP NOT NULL,
+  crc_date         TIMESTAMP,
+  exif_date        TIMESTAMP,
+  job_path_scan    BOOL DEFAULT FALSE,
+  job_calc_crc     BOOL DEFAULT FALSE,
+  job_calc_exif    BOOL DEFAULT FALSE,
+  job_resize       BOOL DEFAULT FALSE,
   CONSTRAINT sm_device_pkey PRIMARY KEY (id),
   CONSTRAINT idx_sm_device_device_uid UNIQUE (uid)
 );
 
-CREATE TABLE sm_job_path_move
+CREATE TABLE sm_device_scan
 (
-  id           SERIAL NOT NULL,
   device_uid   VARCHAR NOT NULL,
-  path_from    VARCHAR NOT NULL,
-  path_to      VARCHAR NOT NULL,
-  done         TIMESTAMP,
-  CONSTRAINT idx_sm_job_path_move_device_uid PRIMARY KEY ( device_uid, path_from ),
-  CONSTRAINT unq_sm_job_path_move UNIQUE ( id )
+  f_path       VARCHAR NOT NULL,
+  CONSTRAINT idx_sm_device_scan_device_uid UNIQUE (device_uid,f_path),
+  CONSTRAINT fk_sm_device_scan_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid)
 );
 
 CREATE TABLE sm_file_card
@@ -50,8 +68,7 @@ CREATE TABLE sm_file_card
   sha256                 VARCHAR,
   f_name_lc              VARCHAR NOT NULL,
   CONSTRAINT sm_file_card_pkey PRIMARY KEY (id),
-  CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid),
-  CONSTRAINT fk_sm_file_card_sm_category_fc FOREIGN KEY (sha256,f_name) REFERENCES sm_category_fc (id,f_name)
+  CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_f_parent
@@ -63,14 +80,49 @@ ON sm_file_card (f_name_lc);
 CREATE INDEX idx_last_modified
 ON sm_file_card (f_last_modified_date);
 
-CREATE INDEX idx_sha256
-ON sm_file_card (sha256);
-
 CREATE INDEX idx_sm_file_card_device_uid
 ON sm_file_card (device_uid, f_parent);
 
-CREATE INDEX idx_sm_file_card_sha256
+CREATE INDEX idx_sha256
+ON sm_file_card (sha256);
+
+CREATE INDEX idx_fc_sha_name
 ON sm_file_card (sha256, f_name);
+
+CREATE TABLE sm_image_resize
+(
+  image_name   VARCHAR(100) NOT NULL,
+  image_path   VARCHAR NOT NULL
+);
+
+CREATE TABLE sm_job_path_move
+(
+  id           SERIAL NOT NULL,
+  device_uid   VARCHAR NOT NULL,
+  path_from    VARCHAR NOT NULL,
+  path_to      VARCHAR NOT NULL,
+  done         TIMESTAMP,
+  CONSTRAINT idx_sm_job_path_move_device_uid PRIMARY KEY (device_uid,path_from),
+  CONSTRAINT unq_sm_job_path_move UNIQUE (id),
+  CONSTRAINT fk_sm_job_path_move_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid)
+);
+
+CREATE INDEX idx_sm_job_path_move_device_uid_0
+ON sm_job_path_move (device_uid);
+
+CREATE TABLE sm_log
+(
+  create_date   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  device_uid    VARCHAR NOT NULL,
+  level         VARCHAR NOT NULL,
+  step          VARCHAR NOT NULL,
+  error         VARCHAR NOT NULL,
+  stack_trace   VARCHAR,
+  CONSTRAINT fk_sm_log_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid)
+);
+
+CREATE INDEX idx_sm_log_device_uid
+ON sm_log (device_uid);
 
 CREATE TABLE sm_exif
 (
@@ -96,12 +148,20 @@ CREATE TABLE sm_exif
   gps_latitude_dec        DECIMAL,
   gps_longitude_dec       DECIMAL,
   CONSTRAINT sm_exif_pkey PRIMARY KEY (id),
-  CONSTRAINT fk_sm_exif_sm_file_card FOREIGN KEY (id) REFERENCES sm_file_card (id)
+  CONSTRAINT fk_sm_exif_sm_file_card FOREIGN KEY (id) REFERENCES sm_file_card (id) ON DELETE CASCADE
 );
 
 # --- !Downs
 
+DROP TABLE IF EXISTS sm_device_scan CASCADE;
+
+DROP TABLE IF EXISTS sm_log CASCADE;
+
+DROP TABLE IF EXISTS sm_image_resize CASCADE;
+
 DROP TABLE IF EXISTS sm_file_card CASCADE;
+
+DROP TABLE IF EXISTS sm_category_rule CASCADE;
 
 DROP TABLE IF EXISTS sm_job_path_move CASCADE;
 

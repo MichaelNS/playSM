@@ -144,7 +144,7 @@ class BrowserSpec extends PlaySpec
 
       val controller = app.injector.instanceOf[SmMove]
 
-      val res = controller.clearJob(idJob = idJob, storeName = storeName, mountPoint = mountPoint.get, pathFrom = fParent.get)
+      val res = controller.closeJob(idJob = idJob, storeName = storeName, mountPoint = mountPoint.get, pathFrom = fParent.get)
 
       res mustBe "clearJob is DONE"
       Thread.sleep(300) // for DB delete record
@@ -157,7 +157,7 @@ class BrowserSpec extends PlaySpec
     "render the refresh device" in {
       val controller = app.injector.instanceOf[SmSyncDeviceStream]
       val request = FakeRequest().withCSRFToken
-      val result = controller.refreshDevice().apply(request)
+      val result = controller.importDevice().apply(request)
 
       status(result) mustBe SEE_OTHER
       contentType(result) mustBe None
