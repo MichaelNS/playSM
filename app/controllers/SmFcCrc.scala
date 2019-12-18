@@ -151,7 +151,7 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
   }
 
   def setJobCalcCrc(device: String, status: Boolean, length: Int = -1): Future[Int] = {
-    val funcName = "setJobCalcCrc"
+    //    val funcName = "setJobCalcCrc"
     //    logger.debug(s"$funcName device = $device   $status")
 
     val update = {
