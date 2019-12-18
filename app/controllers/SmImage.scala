@@ -33,7 +33,7 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
     database.runAsync(
       (for {
         fcRow <- Tables.SmFileCard
-        if fcRow.storeName === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && fcRow.sha256.nonEmpty
+        if fcRow.deviceUid === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && fcRow.sha256.nonEmpty
       }
         yield (fcRow.id, fcRow.fParent, fcRow.fName, fcRow.fExtension, fcRow.sha256)
         ).result)
@@ -61,7 +61,7 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
   def viewImages(deviceUid: String, fParent: String): Action[AnyContent] = Action.async {
 
     database.runAsync(Tables.SmFileCard
-      .filter(_.storeName === deviceUid)
+      .filter(_.deviceUid === deviceUid)
       .filter(_.fParent === fParent)
       .filter(_.sha256.nonEmpty)
       .filter(_.fMimeTypeJava === "image/jpeg")

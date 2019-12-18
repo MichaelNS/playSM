@@ -95,7 +95,7 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
 
     val baseQry = for {
       (fcRow, device) <- Tables.SmFileCard joinLeft Tables.SmDevice on ((fc, device) => {
-        fc.storeName === device.uid
+        fc.deviceUid === device.uid
       })
     } yield (fcRow, device)
 

@@ -35,7 +35,7 @@ object SmDevice {
 
 case class SmFileCard(
                        id: String,
-                       storeName: String,
+                       deviceUid: String,
                        fParent: String,
                        fName: String,
                        fExtension: Option[String] = None,
@@ -49,7 +49,7 @@ case class SmFileCard(
   def toRow: _root_.models.db.Tables.SmFileCardRow = {
     Tables.SmFileCardRow(
       id = id,
-      storeName = storeName,
+      deviceUid = deviceUid,
       fParent = fParent,
       fName = fName,
       fExtension = fExtension,
@@ -69,7 +69,7 @@ object SmFileCard {
       id = row.id,
       data = SmFileCard(
         id = row.id,
-        storeName = row.storeName,
+        deviceUid = row.deviceUid,
         fParent = row.fParent,
         fName = row.fName,
         fExtension = row.fExtension,

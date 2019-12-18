@@ -73,7 +73,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
         x2.name,
         x2.label,
         x2.uid,
-        x2.describe,
+        x2.description,
         x2.sync_date,
         x2.visible,
         x2.reliable
@@ -83,7 +83,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
       .as[(String, String, String, String, DateTime, Boolean, Boolean)]
     database.runAsync(qry).map { rowSeq =>
       val devices = ArrayBuffer[DeviceView]()
-      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = p._6, reliable = p._7, withOutCrc = 0) }
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = p._6, reliable = p._7, withOutCrc = 0) }
 
       Ok(views.html.device_import(devices))
     }
@@ -205,7 +205,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
     val lstToIns = ArrayBuffer[Tables.SmFileCard#TableElementType]()
     val hSmBoFileCard = FileUtils.getFilesFromStore(impPath, deviceUid, mountPoint, sExclusionFile)
     val hInMap = database.runAsync(Tables.SmFileCard
-      .filter(_.storeName === deviceUid).filter(_.fParent === impPath)
+      .filter(_.deviceUid === deviceUid).filter(_.fParent === impPath)
       .map(fld => (fld.id, fld.fLastModifiedDate)).result)
       .map { dbGet =>
         val hInMap: Map[String, Seq[(String, LocalDateTime)]] = dbGet.groupBy(_._1)
@@ -215,11 +215,11 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
     val resMerge = hInMap.map { hInMap =>
       hSmBoFileCard.foreach { value => // add FC
         if (!hInMap.contains(value.id)) {
-          lstToIns += Tables.SmFileCardRow(value.id, value.storeName, value.fParent, value.fName, value.fExtension,
+          lstToIns += Tables.SmFileCardRow(value.id, value.deviceUid, value.fParent, value.fName, value.fExtension,
             value.fCreationDate, value.fLastModifiedDate, value.fSize, value.fMimeTypeJava, None, value.fNameLc)
         } else { // upd FC
           if (hInMap(value.id).head._2 != value.fLastModifiedDate) {
-            logger.info("1 UPD " + value.storeName + " " + value.fParent + " " + value.fName)
+            logger.info("1 UPD " + value.deviceUid + " " + value.fParent + " " + value.fName)
             database.runAsync(
               (for {uRow <- Tables.SmFileCard if uRow.id === value.id} yield (uRow.sha256, uRow.fCreationDate, uRow.fLastModifiedDate, uRow.fSize))
                 .update((None, value.fCreationDate, value.fLastModifiedDate, value.fSize))
@@ -274,14 +274,14 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
       debug(device)
       if (device.isDefined) {
         database.runAsync(Tables.SmFileCard
-          .filter(_.storeName === deviceUid)
+          .filter(_.deviceUid === deviceUid)
           .map(fld => fld.fParent)
           .distinct.result)
           .map { dbGet =>
             dbGet.foreach { cPath =>
               if (!Paths.get(device.get.mountpoint + OsConf.fsSeparator + cPath).toFile.exists) {
                 logger.debug(s"deleteNonExistsFpathInDb ${device.get.mountpoint + OsConf.fsSeparator + cPath}")
-                val insRes = database.runAsync(Tables.SmFileCard.filter(_.storeName === deviceUid).filter(_.fParent === cPath).delete)
+                val insRes = database.runAsync(Tables.SmFileCard.filter(_.deviceUid === deviceUid).filter(_.fParent === cPath).delete)
                 insRes onComplete {
                   case Success(suc) => logger.debug(s"deleted [$suc] row , fParent = [$cPath]")
                   case Failure(ex) => logger.error(s"delFromDb -> Delete from DB error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
@@ -302,7 +302,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
     logger.info(s"calcCRC maxSizeFiles = $maxSizeFiles   maxCalcFiles = $maxCalcFiles")
 
     database.runAsync(Tables.SmFileCard
-      .filter(_.storeName === device)
+      .filter(_.deviceUid === device)
       .filter(_.sha256.isEmpty)
       .filter(size => size.fSize > 0L && size.fSize <= maxSizeFiles)
       .sortBy(_.fParent.asc)

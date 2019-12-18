@@ -34,7 +34,7 @@ class SmView @Inject()(val database: DBService)
                        array_agg(DISTINCT sm_category_fc.category_type) filter (where sm_category_fc is not null)
        FROM "sm_file_card" fc
               left outer join sm_category_fc on fc.sha256 = sm_category_fc.id and fc.f_name = sm_category_fc.f_name
-       where fc.store_name = '#$deviceName'
+       where fc.device_uid = '#$deviceName'
        and fc.f_size > 0
        GROUP BY split_part(fc.f_parent, '/', #$depth)
        ORDER BY split_part(fc.f_parent, '/', #$depth)
@@ -104,7 +104,7 @@ class SmView @Inject()(val database: DBService)
   def getFilesFromSha256(sha256: Option[String]): Future[Seq[(String, String, String, Option[String])]] = {
     val rowSeq = database.runAsync(Tables.SmFileCard
       .filter(_.sha256 === sha256)
-      .map(fc => (fc.storeName, fc.fParent, fc.fName, fc.fMimeTypeJava)).result)
+      .map(fc => (fc.deviceUid, fc.fParent, fc.fName, fc.fMimeTypeJava)).result)
       .map(rowSeq => rowSeq)
 
     rowSeq
@@ -121,10 +121,10 @@ class SmView @Inject()(val database: DBService)
     */
   def getFilesByNaturalKey(deviceUid: String, path: String, fName: String): Future[Seq[(String, String, String, Option[String])]] = {
     val rowSeq = database.runAsync(Tables.SmFileCard
-      .filter(_.storeName === deviceUid)
+      .filter(_.deviceUid === deviceUid)
       .filter(_.fParent === path)
       .filter(_.fName === fName)
-      .map(fc => (fc.storeName, fc.fParent, fc.fName, fc.fMimeTypeJava)).result)
+      .map(fc => (fc.deviceUid, fc.fParent, fc.fName, fc.fMimeTypeJava)).result)
       .map(rowSeq => rowSeq)
 
     rowSeq
@@ -173,7 +173,7 @@ class SmView @Inject()(val database: DBService)
        SELECT
          f_name,
          f_parent,
-         store_name
+         device_uid
        FROM sm_file_card card
        WHERE sha256 = '#$sha256'
       """
@@ -191,7 +191,7 @@ class SmView @Inject()(val database: DBService)
     val qry = sql"""
       select distinct (f_parent)
       from sm_file_card
-      where store_name = '#$deviceName';
+      where device_uid = '#$deviceName';
       """
       .as[String]
 

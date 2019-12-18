@@ -31,10 +31,10 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
         x2.name,
         x2.label,
         x2.uid,
-        x2.describe,
+        x2.description,
         x2.sync_date,
         x2.reliable,
-      (SELECT count(1) FROM sm_file_card x3 WHERE x3.store_name = x2.uid AND (x3.sha256 IS NULL)  AND (x3.f_size > 0))
+      (SELECT count(1) FROM sm_file_card x3 WHERE x3.device_uid = x2.uid AND (x3.sha256 IS NULL)  AND (x3.f_size > 0))
       FROM sm_device x2
       where x2.visible is true
       ORDER BY x2.label
@@ -44,7 +44,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
       //      logger.debug(pprint.apply(rowSeq).toString())
 
       val devices = ArrayBuffer[DeviceView]()
-      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, describe = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
 
       Ok(views.html.smr_index(devices))
     }
@@ -63,7 +63,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
 
     logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
 
-    database.runAsync(Tables.SmFileCard.filter(_.storeName === device).take(maxRes).map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate)).result).map { rowSeq =>
+    database.runAsync(Tables.SmFileCard.filter(_.deviceUid === device).take(maxRes).map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate)).result).map { rowSeq =>
       Ok(views.html.filecards(None, None, rowSeq))
     }
   }
@@ -75,7 +75,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
 
     database.runAsync(
       Tables.SmFileCard
-        .filter(_.storeName === device)
+        .filter(_.deviceUid === device)
         .filterNot(_.fParent endsWith "_files")
         .sortBy(_.fLastModifiedDate.desc)
         .map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate))
@@ -87,8 +87,8 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
   }
 
   def listStoreNameAndCnt: Action[AnyContent] = Action.async {
-    database.runAsync(Tables.SmFileCard.groupBy(p => p.storeName)
-      .map { case (storeName, cnt) => (storeName, cnt.map(_.storeName).length) }
+    database.runAsync(Tables.SmFileCard.groupBy(p => p.deviceUid)
+      .map { case (storeName, cnt) => (storeName, cnt.map(_.deviceUid).length) }
       .sortBy(_._1)
       .result
     ).map { rowSeq =>
@@ -102,7 +102,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
 
     val qry = (for {
       uRow <- Tables.SmDevice if uRow.label === device
-      v_fName <- Tables.SmFileCard if v_fName.storeName === uRow.label && v_fName.sha256.isEmpty && v_fName.fSize > 0L
+      v_fName <- Tables.SmFileCard if v_fName.deviceUid === uRow.label && v_fName.sha256.isEmpty && v_fName.fSize > 0L
     } yield (uRow, v_fName))
       .groupBy(uRow =>
         (uRow._1.label, uRow._1.syncDate))
@@ -120,9 +120,9 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
 
 
     database.runAsync(Tables.SmFileCard
-      .filter(_.storeName === device).filter(_.fParent === path)
+      .filter(_.deviceUid === device).filter(_.fParent === path)
       .unionAll(Tables.SmFileCard
-        .filter(_.storeName === device).filter(_.fParent startsWith path + OsConf.fsSeparator)
+        .filter(_.deviceUid === device).filter(_.fParent startsWith path + OsConf.fsSeparator)
       )
       .map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate))
       .take(ctnRec)

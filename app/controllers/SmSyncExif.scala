@@ -30,7 +30,7 @@ class SmSyncExif @Inject()(val database: DBService)
       (for {
         (fcRow, exifRow) <- Tables.SmFileCard joinLeft Tables.SmExif on ((fc, exif) => {
           fc.id === exif.id
-        }) if fcRow.storeName === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && exifRow.isEmpty}
+        }) if fcRow.deviceUid === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && exifRow.isEmpty}
         yield (fcRow.id, fcRow.fParent, fcRow.fName)
         ).result)
       .map { rowSeq =>

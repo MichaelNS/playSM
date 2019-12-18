@@ -60,7 +60,7 @@ class SmFileVisitor(glob: String, deviceUid: String, mountPoint: String, sExclus
 
     val fileCardSt: FileCardSt = FileCardSt(
       id = Hashing.sha256().hashString(deviceUid + fParent + fileName, StandardCharsets.UTF_8).toString.toUpperCase,
-      storeName = deviceUid,
+      deviceUid = deviceUid,
       fParent = fParent,
       fName = fileName,
       fExtension = if (extPos > 0) Some(fileName.substring(extPos + 1)) else None,

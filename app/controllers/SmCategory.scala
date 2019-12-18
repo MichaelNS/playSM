@@ -77,7 +77,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
           fc.sha256 === cat.id && fc.fName === cat.fName
         }) if fcRow.fParent.startsWith(fParent)
-      } yield (fcRow.storeName, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.subCategoryType), catRow.map(_.description))
+      } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.subCategoryType), catRow.map(_.description))
 
     }
     else {
@@ -85,7 +85,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
           fc.sha256 === cat.id && fc.fName === cat.fName
         }) if fcRow.fParent === fParent
-      } yield (fcRow.storeName, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.subCategoryType), catRow.map(_.description))
+      } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.subCategoryType), catRow.map(_.description))
     }
 
     database.runAsync(

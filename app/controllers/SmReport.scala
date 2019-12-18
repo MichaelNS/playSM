@@ -24,7 +24,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
   def listFilesWithoutSha256ByDevice(device: String): Action[AnyContent] = Action.async {
     val maxRows = 200
     val baseQry = Tables.SmFileCard
-      .filter(fc => fc.storeName === device && fc.sha256.isEmpty && fc.fSize > 0L)
+      .filter(fc => fc.deviceUid === device && fc.sha256.isEmpty && fc.fSize > 0L)
       .sortBy(_.fLastModifiedDate.desc)
       .map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate))
 
@@ -52,8 +52,8 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
 
     val baseQry = for {
       a <- Tables.SmFileCard
-      if a.sha256.nonEmpty && a.storeName === device && !Tables.SmFileCard
-        .filter(b => b.sha256.nonEmpty && b.sha256 === a.sha256 && b.storeName =!= device && b.storeName.inSet(backUpVolumes))
+      if a.sha256.nonEmpty && a.deviceUid === device && !Tables.SmFileCard
+        .filter(b => b.sha256.nonEmpty && b.sha256 === a.sha256 && b.deviceUid =!= device && b.deviceUid.inSet(backUpVolumes))
         .filterNot(b => b.fParent endsWith "_files")
         .map(p => p.fName)
         .exists
@@ -88,18 +88,18 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
          f_name,
          category_type,
          description,
-         store_name
+         device_uid
        FROM (
               SELECT
                 card.sha256,
                 card.f_name,
                 category.category_type,
                 category.description,
-                (SELECT store_name
+                (SELECT device_uid
                  FROM sm_file_card sq
                  WHERE sq.sha256 = card.sha256
-                 AND   sq.store_name NOT IN (#$device_Unreliable)
-                 LIMIT 1) AS store_name
+                 AND   sq.device_uid NOT IN (#$device_Unreliable)
+                 LIMIT 1) AS device_uid
               FROM "sm_file_card" card
                 JOIN sm_category_fc category ON category.f_name = card.f_name and category.id = card.sha256
               WHERE category.category_type IS NOT NULL
@@ -109,7 +109,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
                        category.description
               HAVING COUNT(1) < #$cntFiles
             ) AS res
-       WHERE store_name NOT IN (#$device_NotView)
+       WHERE device_uid NOT IN (#$device_NotView)
        LIMIT #$maxRows
       """
       .as[(String, String, String, String, String)]
@@ -135,17 +135,17 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
        SELECT
          sha256,
          f_name,
-         store_name,
+         device_uid,
          f_last_modified_date
        FROM (
               SELECT
                 card.sha256,
                 card.f_name,
-                (SELECT store_name
+                (SELECT device_uid
                  FROM sm_file_card sq
                  WHERE sq.sha256 = card.sha256
-                 AND   sq.store_name NOT IN (#$device_Unreliable)
-                 LIMIT 1) AS store_name,
+                 AND   sq.device_uid NOT IN (#$device_Unreliable)
+                 LIMIT 1) AS device_uid,
                  card.f_last_modified_date
               FROM sm_file_card card
               WHERE card.f_last_modified_date >= date_trunc('month', card.f_last_modified_date) - INTERVAL '1 year'
@@ -155,7 +155,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
               HAVING COUNT(1) < #$cntFiles
               order by card.f_last_modified_date desc
             ) AS res
-       WHERE store_name NOT IN (#$device_NotView)
+       WHERE device_uid NOT IN (#$device_NotView)
        LIMIT #$maxRows
       """
       .as[(String, String, String, DateTime)]
@@ -176,7 +176,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     val maxFileSize: Long = config.getBytes("checkDuplicates.maxFileSize")
 
     val qry = (for {
-      uRow <- Tables.SmFileCard if uRow.storeName === device && uRow.fSize > 0L && uRow.fSize > maxFileSize && uRow.sha256.nonEmpty
+      uRow <- Tables.SmFileCard if uRow.deviceUid === device && uRow.fSize > 0L && uRow.fSize > maxFileSize && uRow.sha256.nonEmpty
       v_fName <- Tables.SmFileCard if v_fName.id === uRow.id
     } yield (uRow, v_fName))
       .groupBy({
@@ -210,7 +210,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     val qry = for {
       (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
-      }) if fcRow.storeName === device && fcRow.sha256 === sha256
+      }) if fcRow.deviceUid === device && fcRow.sha256 === sha256
     } yield (fcRow.id, fcRow.fName, fcRow.fParent, fcRow.fLastModifiedDate, catRow.map(_.categoryType), catRow.map(_.description))
 
     database.runAsync(
@@ -242,7 +242,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
         array_agg(DISTINCT sm_category_fc.category_type) filter (where sm_category_fc is not null)
     FROM sm_file_card x2
            left outer join sm_category_fc on x2.sha256 = sm_category_fc.id
-    WHERE (((x2.store_name = '#$device')))
+    WHERE (((x2.device_uid = '#$device')))
       AND (NOT (x2.f_parent LIKE '%^_files' ESCAPE '^'))
       AND (NOT (x2.f_parent LIKE '%^_files/' ESCAPE '^'))
       AND split_part(x2.f_parent, '/', #$depth -1) = '#$cPath'
@@ -267,7 +267,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     val qry = for {
       (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
-      }) if fcRow.storeName === device && fcRow.sha256.nonEmpty && catRow.isEmpty
+      }) if fcRow.deviceUid === device && fcRow.sha256.nonEmpty && catRow.isEmpty
     } yield fcRow
     debugParam
 

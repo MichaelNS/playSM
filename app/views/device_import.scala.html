@@ -34,7 +34,7 @@
                     <td>@device.label</td>
                     <td><a href="@routes.SmApplication.deviceIndex(device.uid)" >@device.uid</a></td>
 
-                    <td>@device.describe</td>
+                    <td>@device.description</td>
 
                     @* new device has value LocalDateTime.MIN*@
                     @if(device.syncDate.getYear > -1) {

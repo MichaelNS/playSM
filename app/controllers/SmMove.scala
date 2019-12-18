@@ -3,6 +3,7 @@ package controllers
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.InvalidPathException
+import java.time.LocalDateTime
 
 import better.files.File
 import com.google.common.hash.Hashing
@@ -53,14 +54,14 @@ class SmMove @Inject()(val database: DBService)
     val qry = sql"""
        SELECT
          x2.f_parent,
-         (SELECT string_agg(DISTINCT x3.store_name, ', ')
+         (SELECT string_agg(DISTINCT x3.device_uid, ', ')
           FROM sm_file_card x3
           WHERE x3.f_parent = x2.f_parent),
          (SELECT count(1)
           FROM sm_file_card x3
           WHERE x3.f_parent = x2.f_parent),
          (SELECT pm.path_to
-          FROM sm_path_move pm
+          FROM sm_job_path_move pm
           WHERE pm.path_from = x2.f_parent)
       FROM sm_file_card x2
         JOIN sm_category_fc category ON category.f_name = x2.f_name and category.id = x2.sha256
@@ -97,7 +98,7 @@ class SmMove @Inject()(val database: DBService)
     database.runAsync(
       Tables.SmFileCard
         .filter(_.sha256 in lstBackUpSha256)
-        .groupBy(p => (p.storeName, p.fParent))
+        .groupBy(p => (p.deviceUid, p.fParent))
         .map({ case ((storename, fparent), cnt) => (storename, fparent, cnt.map(_.fParent).length) })
         .sortBy(_._2)
         .result)
@@ -114,12 +115,12 @@ class SmMove @Inject()(val database: DBService)
     * @see [[listPathByDescription]]
     * @param categoryType - category type for Redirect
     * @param description  - description for Redirect
-    * @param device       - for remove row [[models.db.Tables.SmPathMove]]
-    * @param path         - for remove row [[models.db.Tables.SmPathMove]]
+    * @param device       - for remove row [[models.db.Tables.SmJobPathMove]]
+    * @param path         - for remove row [[models.db.Tables.SmJobPathMove]]
     * @return Redirect 2 [[listPathByDescription]]
     **/
   def delJobToMove(categoryType: String, description: String, device: String, path: String): Action[AnyContent] = Action.async {
-    val insRes = database.runAsync(Tables.SmPathMove.filter(_.storeName === device).filter(_.pathFrom === path).delete)
+    val insRes = database.runAsync(Tables.SmJobPathMove.filter(_.deviceUid === device).filter(_.pathFrom === path).delete)
     insRes onComplete {
       case Success(suc) => logger.debug(s"del [$suc] row - device = [$device]")
       case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
@@ -137,10 +138,10 @@ class SmMove @Inject()(val database: DBService)
           val form = FormCrMove.form.fill(path).withError("newPath", " isEmpty")
           Future.successful(BadRequest(views.html.move_form(form, categoryType, description, device, oldPath)))
         } else {
-          val cRow = Tables.SmPathMoveRow(-1, device, oldPath, path.newPath)
+          val cRow = Tables.SmJobPathMoveRow(-1, device, oldPath, path.newPath)
           debug(cRow)
 
-          val insRes = database.runAsync((Tables.SmPathMove returning Tables.SmPathMove.map(_.id)) += cRow)
+          val insRes = database.runAsync((Tables.SmJobPathMove returning Tables.SmJobPathMove.map(_.id)) += cRow)
           insRes onComplete {
             case Success(insSuc) => logger.debug(s"Inserted row move = $insSuc   $cRow")
             case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
@@ -180,14 +181,14 @@ class SmMove @Inject()(val database: DBService)
     * Move files inside device
     *
     * @param device       - [[ru.ns.model.Device]] object
-    * @param maxJob       - max rows from [[models.db.Tables.SmPathMove]]
+    * @param maxJob       - max rows from [[models.db.Tables.SmJobPathMove]]
     * @param maxMoveFiles - maxMoveFiles from [[models.db.Tables.SmFileCard]]
     * @return String "moveByDevice is DONE"
     */
   def moveByDevice(device: Device, maxJob: Int, maxMoveFiles: Int): String = {
     debugParam
 
-    database.runAsync(Tables.SmPathMove.filter(_.storeName === device.uuid).take(maxJob).result).map { moveJobRow =>
+    database.runAsync(Tables.SmJobPathMove.filter(_.deviceUid === device.uuid).take(maxJob).result).map { moveJobRow =>
       debug(moveJobRow)
       moveJobRow.foreach { rowMove =>
         val pathFrom = rowMove.pathFrom
@@ -197,7 +198,7 @@ class SmMove @Inject()(val database: DBService)
 
         // TODO проверить, что соответствующий путь указан в конфиге для сканирования
         database.runAsync(Tables.SmFileCard
-          .filter(_.storeName === rowMove.storeName)
+          .filter(_.deviceUid === rowMove.deviceUid)
           .filter(_.fParent === pathFrom)
           .take(maxMoveFiles)
           .result).map { rowFcSeq =>
@@ -212,7 +213,7 @@ class SmMove @Inject()(val database: DBService)
             }
           }
         }
-        clearJob(idJob = rowMove.id, storeName = rowMove.storeName, mountPoint = device.mountpoint, pathFrom = pathFrom)
+        clearJob(idJob = rowMove.id, storeName = rowMove.deviceUid, mountPoint = device.mountpoint, pathFrom = pathFrom)
       }
     }
     logger.info("moveByDevice is DONE")
@@ -238,7 +239,7 @@ class SmMove @Inject()(val database: DBService)
     if (!fileTo.exists) {
       if (dirTo.exists() || dirTo.createDirectories().exists) {
         // get file from DB
-        val cRow = rowFc.copy(id = Hashing.sha256().hashString(rowFc.storeName + pathTo + rowFc.fName, StandardCharsets.UTF_8).toString.toUpperCase,
+        val cRow = rowFc.copy(id = Hashing.sha256().hashString(rowFc.deviceUid + pathTo + rowFc.fName, StandardCharsets.UTF_8).toString.toUpperCase,
           fParent = pathTo)
 
         // insert
@@ -275,7 +276,7 @@ class SmMove @Inject()(val database: DBService)
   }
 
   /**
-    * Remove row [[models.db.Tables.SmPathMove]]
+    * Remove row [[models.db.Tables.SmJobPathMove]]
     * Check 0 row count from query [[models.db.Tables.SmFileCard]]
     *
     * @param idJob      - id row
@@ -288,7 +289,7 @@ class SmMove @Inject()(val database: DBService)
     debugParam
 
     database.runAsync(Tables.SmFileCard
-      .filter(_.storeName === storeName)
+      .filter(_.deviceUid === storeName)
       .filter(_.fParent === pathFrom)
       .length.result).map { rowFcCnt =>
 
@@ -298,13 +299,11 @@ class SmMove @Inject()(val database: DBService)
         val dir = better.files.File(mountPoint + OsConf.fsSeparator + pathFrom)
         if (dir.entries.isEmpty) {
           try {
-            dir.delete(true)
+            dir.delete(swallowIOExceptions = true)
 
-            val insRes = database.runAsync(Tables.SmPathMove.filter(_.id === idJob).delete)
-            insRes onComplete {
-              case Success(suc) => logger.debug(s"del [$suc] row , id = [$idJob]")
-              case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
-            }
+            database.runAsync((for {uRow <- Tables.SmJobPathMove if uRow.id === idJob} yield uRow.done)
+              .update(Some(LocalDateTime.now())))
+              .map(_ => logger.info(s"done for move job complete for device $idJob"))
           } catch {
             case ex: IOException => logger.error(s"err delete = ${ex.toString}")
           }
