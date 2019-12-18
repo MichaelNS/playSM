@@ -252,12 +252,18 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
       debug(delDiff)
     }
 
-    delDiff.foreach { key =>
-      val insRes = database.runAsync(Tables.SmFileCard.filter(_.id === key).delete)
-      insRes onComplete {
-        case Success(suc) => logger.debug(s"deleted [$suc] row , id = [$key]")
-        case Failure(ex) => logger.error(s"delFromDb -> Delete from DB error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
-      }
+    val insRes = delDiff.map { key =>
+      database.runAsync(Tables.SmFileCard.filter(_.id === key).delete)
+    }
+    val futureListOfTrys = Future.sequence(insRes)
+    Thread.sleep(1000)
+    logger.debug(s"---")
+
+    futureListOfTrys onComplete {
+      case Success(suc) =>
+        suc.foreach(qq =>logger.debug(s"deleted [$qq] row "))
+
+      case Failure(ex) => logger.error(s"delFromDb -> Delete from DB error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
     }
 
     logger.debug(s"delFromDb - is done, path = [$path] "
