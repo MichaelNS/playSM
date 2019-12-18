@@ -39,7 +39,7 @@ CREATE TABLE sm_job_path_move
 DROP TABLE IF EXISTS sm_category_fc CASCADE;
 CREATE TABLE sm_category_fc
 (
-    id                VARCHAR,
+    id                INTEGER,
     f_name            VARCHAR,
     category_type     VARCHAR,
     sub_category_type VARCHAR,

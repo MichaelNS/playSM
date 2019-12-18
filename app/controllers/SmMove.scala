@@ -65,7 +65,7 @@ class SmMove @Inject()(val database: DBService)
           FROM sm_job_path_move pm
           WHERE pm.path_from = x2.f_parent)
       FROM sm_file_card x2
-        JOIN sm_category_fc category ON category.f_name = x2.f_name and category.id = x2.sha256
+        JOIN sm_category_fc category ON category.f_name = x2.f_name and category.sha256 = x2.sha256
        WHERE
              category.category_type = '#$categoryType'
          AND category.category = '#$category'

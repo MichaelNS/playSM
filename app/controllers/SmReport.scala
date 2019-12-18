@@ -101,7 +101,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
                  AND   sq.device_uid NOT IN (#$device_Unreliable)
                  LIMIT 1) AS device_uid
               FROM "sm_file_card" card
-                JOIN sm_category_fc category ON category.f_name = card.f_name and category.id = card.sha256
+                JOIN sm_category_fc category ON category.f_name = card.f_name and category.sha256 = card.sha256
               WHERE category.category_type IS NOT NULL
               GROUP BY card.sha256,
                        card.f_name,
