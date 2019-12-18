@@ -5,9 +5,9 @@ import org.scalatest.BeforeAndAfter
 import org.scalatestplus.play.guice.GuiceOneServerPerTest
 import org.scalatestplus.play.{HtmlUnitFactory, OneBrowserPerTest, PlaySpec, ServerProvider}
 import play.api.Logger
+import play.api.test.CSRFTokenHelper._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.test.CSRFTokenHelper._
 
 //import scala.concurrent.ExecutionContext.Implicits.global
 //import scala.util.{Failure, Success}
@@ -60,10 +60,19 @@ class SmCategorySpec extends PlaySpec
   // SmCategory ---------------------------------------------------------------------------------------------------------
   "UserController SmCategory" should {
 
+    "run listCategoryTypeAndCnt" in {
+      val controller = app.injector.instanceOf[SmCategoryView]
+      val request = FakeRequest().withCSRFToken
+      val result = controller.listCategoryTypeAndCnt.apply(request)
+
+      status(result) mustBe OK
+      contentType(result) mustBe Some("text/html")
+    }
+
     "run listCategoryAndCnt" in {
       val controller = app.injector.instanceOf[SmCategoryView]
       val request = FakeRequest().withCSRFToken
-      val result = controller.listCategoryAndCnt.apply(request)
+      val result = controller.listCategoryAndCnt("").apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
@@ -72,20 +81,12 @@ class SmCategorySpec extends PlaySpec
     "run listSubCategoryAndCnt" in {
       val controller = app.injector.instanceOf[SmCategoryView]
       val request = FakeRequest()
-      val result = controller.listSubCategoryAndCnt("").apply(request)
+      val result = controller.listSubCategoryAndCnt("", "").apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
     }
 
-    "run listDescriptionAndCnt" in {
-      val controller = app.injector.instanceOf[SmCategoryView]
-      val request = FakeRequest()
-      val result = controller.listDescriptionAndCnt("", "").apply(request)
-
-      status(result) mustBe OK
-      contentType(result) mustBe Some("text/html")
-    }
 
     "run listDirWithoutCatByLastDate" in {
       val controller = app.injector.instanceOf[SmCategoryView]

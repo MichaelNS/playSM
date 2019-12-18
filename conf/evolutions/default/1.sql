@@ -1,28 +1,16 @@
 # --- !Ups
 
-CREATE TABLE sm_category_fc
-(
-  id              VARCHAR NOT NULL,
-  f_name          VARCHAR NOT NULL,
-  category_type   VARCHAR,
-  category        VARCHAR,
-  sub_category    VARCHAR,
-  description     VARCHAR,
-  CONSTRAINT sm_category_fc_pkey PRIMARY KEY (id,f_name)
-);
-
-CREATE INDEX idx_sm_category_fc_category_type
-ON sm_category_fc (category_type, category, sub_category);
-
 CREATE TABLE sm_category_rule
 (
+  id              SERIAL NOT NULL,
   category_type   VARCHAR NOT NULL,
   category        VARCHAR NOT NULL,
   sub_category    VARCHAR NOT NULL,
   f_path          VARCHAR NOT NULL,
   is_begins       BOOL NOT NULL,
-  description     VARCHAR NOT NULL,
-  CONSTRAINT sm_category_rule_pkey PRIMARY KEY (category_type,category,sub_category)
+  description     VARCHAR,
+  CONSTRAINT sm_category_rule_pkey UNIQUE (category_type,category,sub_category),
+  CONSTRAINT unq_sm_category_rule_id UNIQUE (id)
 );
 
 CREATE TABLE sm_device
@@ -110,9 +98,6 @@ CREATE TABLE sm_job_path_move
   CONSTRAINT fk_sm_job_path_move_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid)
 );
 
-CREATE INDEX idx_sm_job_path_move_device_uid_0
-ON sm_job_path_move (device_uid);
-
 CREATE TABLE sm_log
 (
   create_date   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -126,6 +111,25 @@ CREATE TABLE sm_log
 
 CREATE INDEX idx_sm_log_device_uid
 ON sm_log (device_uid);
+
+CREATE TABLE sm_category_fc
+(
+  id              INTEGER NOT NULL,
+  sha256          VARCHAR NOT NULL,
+  f_name          VARCHAR NOT NULL,
+  category_type   VARCHAR,
+  category        VARCHAR,
+  sub_category    VARCHAR,
+  description     VARCHAR,
+  CONSTRAINT sm_category_fc_pkey PRIMARY KEY (sha256,f_name),
+  CONSTRAINT fk_sm_category_fc_sm_category_rule FOREIGN KEY (id) REFERENCES sm_category_rule (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX idx_sm_category_fc_category_type
+ON sm_category_fc (category_type, category, sub_category);
+
+CREATE INDEX idx_sm_category_fc_id
+ON sm_category_fc (id);
 
 CREATE TABLE sm_exif
 (

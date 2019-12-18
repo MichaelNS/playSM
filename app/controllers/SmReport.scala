@@ -209,7 +209,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
 
     val qry = for {
       (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-        fc.sha256 === cat.id && fc.fName === cat.fName
+        fc.sha256 === cat.sha256 && fc.fName === cat.fName
       }) if fcRow.deviceUid === device && fcRow.sha256 === sha256
     } yield (fcRow.id, fcRow.fName, fcRow.fParent, fcRow.fLastModifiedDate, catRow.map(_.categoryType), catRow.map(_.description))
 
@@ -241,7 +241,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
         count(1) filter (where sm_category_fc is null),
         array_agg(DISTINCT sm_category_fc.category_type) filter (where sm_category_fc is not null)
     FROM sm_file_card x2
-           left outer join sm_category_fc on x2.sha256 = sm_category_fc.id
+           left outer join sm_category_fc on x2.sha256 = sm_category_fc.sha256
     WHERE (((x2.device_uid = '#$device')))
       AND (NOT (x2.f_parent LIKE '%^_files' ESCAPE '^'))
       AND (NOT (x2.f_parent LIKE '%^_files/' ESCAPE '^'))
@@ -266,7 +266,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
   def lstDirByDevice(device: String, maxFiles: Int): Action[AnyContent] = Action.async {
     val qry = for {
       (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-        fc.sha256 === cat.id && fc.fName === cat.fName
+        fc.sha256 === cat.sha256 && fc.fName === cat.fName
       }) if fcRow.deviceUid === device && fcRow.sha256.nonEmpty && catRow.isEmpty
     } yield fcRow
     debugParam

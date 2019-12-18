@@ -93,10 +93,10 @@ class BrowserSpec extends PlaySpec
       contentType(result) mustBe Some("text/plain")
     }
 
-    "render the listPathByDescription" in {
+    "render the listPathByCategory" in {
       val controller = app.injector.instanceOf[SmMove]
       val request = FakeRequest().withCSRFToken
-      val result = controller.listPathByDescription("Project", "Some play").apply(request)
+      val result = controller.listPathByCategory("Project", "Src", "Some play").apply(request)
 
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
@@ -105,7 +105,7 @@ class BrowserSpec extends PlaySpec
     "render the createJobToMove" in {
       val controller = app.injector.instanceOf[SmMove]
       val request = FakeRequest().withCSRFToken
-      val result = controller.createJobToMove(categoryType = "1", description = "2", device = "deviceID", oldPath = "Downloads/html").apply(request)
+      val result = controller.createJobToMove(categoryType = "1", category = "2", subCategory = "3", device = "deviceID", oldPath = "Downloads/html").apply(request)
 
       status(result) mustBe BAD_REQUEST
       contentType(result) mustBe Some("text/html")
@@ -114,7 +114,7 @@ class BrowserSpec extends PlaySpec
     "render the delJobToMove" in {
       val controller = app.injector.instanceOf[SmMove]
       val request = FakeRequest().withCSRFToken
-      val result = controller.delJobToMove(categoryType = "", description = "", device = "", path = "").apply(request)
+      val result = controller.delJobToMove(categoryType = "", category = "", subCategory = "", device = "", path = "").apply(request)
 
       status(result) mustBe SEE_OTHER
       contentType(result) mustBe None

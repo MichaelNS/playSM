@@ -85,7 +85,8 @@ object SmFileCard {
 }
 
 case class SmCategoryFc(
-                         id: String,
+                         id: Int,
+                         sha256: String,
                          fName: String,
                          categoryType: Option[String] = None,
                          category: Option[String] = None,
@@ -95,6 +96,7 @@ case class SmCategoryFc(
   def toRow: Tables.SmCategoryFcRow = {
     Tables.SmCategoryFcRow(
       id = id,
+      sha256 = sha256,
       fName = fName,
       categoryType = categoryType,
       category = category,
@@ -105,11 +107,12 @@ case class SmCategoryFc(
 }
 
 object SmCategoryFc {
-  def apply(row: Tables.SmCategoryFcRow): EntitySmFc[SmCategoryFc] = {
-    EntitySmFc(
+  def apply(row: Tables.SmCategoryFcRow): Entity[SmCategoryFc] = {
+    Entity(
       id = row.id,
       data = SmCategoryFc(
         id = row.id,
+        sha256 = row.sha256,
         fName = row.fName,
         categoryType = row.categoryType,
         category = row.category,
@@ -200,4 +203,42 @@ object SmExif {
   }
 }
 
+case class SmCategoryRule(
+                           id: Int,
+                           categoryType: String,
+                           category: String,
+                           subCategory: String,
+                           fPath: String,
+                           isBegins: Boolean,
+                           description: Option[String] = None
+                         ) {
+  def toRow: Tables.SmCategoryRuleRow = {
+    Tables.SmCategoryRuleRow(
+      id = id,
+      categoryType = categoryType,
+      category = category,
+      subCategory = subCategory,
+      fPath = fPath,
+      isBegins = isBegins,
+      description = description
+    )
+  }
+}
+
+object SmCategoryRule {
+  def apply(row: Tables.SmCategoryRuleRow): Entity[SmCategoryRule] = {
+    Entity(
+      id = row.id,
+      data = SmCategoryRule(
+        id = row.id,
+        categoryType = row.categoryType,
+        category = row.category,
+        subCategory = row.subCategory,
+        fPath = row.fPath,
+        isBegins = row.isBegins,
+        description = row.description
+      )
+    )
+  }
+}
 

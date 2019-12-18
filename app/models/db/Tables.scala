@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2019-12-25T19:05:31.299+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2019-12-26T13:11:50.218+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -24,30 +24,33 @@ trait Tables {
 
   /** Entity class storing rows of table SmCategoryFc
     *
-    * @param id           Database column id SqlType(varchar)
+    * @param id           Database column id SqlType(int4)
+    * @param sha256       Database column sha256 SqlType(varchar)
     * @param fName        Database column f_name SqlType(varchar)
     * @param categoryType Database column category_type SqlType(varchar), Default(None)
     * @param category     Database column category SqlType(varchar), Default(None)
     * @param subCategory  Database column sub_category SqlType(varchar), Default(None)
     * @param description  Database column description SqlType(varchar), Default(None) */
-  case class SmCategoryFcRow(id: String, fName: String, categoryType: Option[String] = None, category: Option[String] = None, subCategory: Option[String] = None, description: Option[String] = None)
+  case class SmCategoryFcRow(id: Int, sha256: String, fName: String, categoryType: Option[String] = None, category: Option[String] = None, subCategory: Option[String] = None, description: Option[String] = None)
 
   /** GetResult implicit for fetching SmCategoryFcRow objects using plain SQL queries */
-  implicit def GetResultSmCategoryFcRow(implicit e0: GR[String], e1: GR[Option[String]]): GR[SmCategoryFcRow] = GR {
+  implicit def GetResultSmCategoryFcRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]]): GR[SmCategoryFcRow] = GR {
     prs =>
       import prs._
-      SmCategoryFcRow.tupled((<<[String], <<[String], <<?[String], <<?[String], <<?[String], <<?[String]))
+      SmCategoryFcRow.tupled((<<[Int], <<[String], <<[String], <<?[String], <<?[String], <<?[String], <<?[String]))
   }
 
   /** Table description of table sm_category_fc. Objects of this class serve as prototypes for rows in queries. */
   class SmCategoryFc(_tableTag: Tag) extends profile.api.Table[SmCategoryFcRow](_tableTag, "sm_category_fc") {
-    def * = (id, fName, categoryType, category, subCategory, description) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
+    def * = (id, sha256, fName, categoryType, category, subCategory, description) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(fName), categoryType, category, subCategory, description)).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3, _4, _5, _6))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(sha256), Rep.Some(fName), categoryType, category, subCategory, description)).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3.get, _4, _5, _6, _7))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
-    /** Database column id SqlType(varchar) */
-    val id: Rep[String] = column[String]("id")
+    /** Database column id SqlType(int4) */
+    val id: Rep[Int] = column[Int]("id")
+    /** Database column sha256 SqlType(varchar) */
+    val sha256: Rep[String] = column[String]("sha256")
     /** Database column f_name SqlType(varchar) */
     val fName: Rep[String] = column[String]("f_name")
     /** Database column category_type SqlType(varchar), Default(None) */
@@ -60,7 +63,10 @@ trait Tables {
     val description: Rep[Option[String]] = column[Option[String]]("description", O.Default(None))
 
     /** Primary key of SmCategoryFc (database name sm_category_fc_pkey) */
-    val pk = primaryKey("sm_category_fc_pkey", (id, fName))
+    val pk = primaryKey("sm_category_fc_pkey", (sha256, fName))
+
+    /** Foreign key referencing SmCategoryRule (database name fk_sm_category_fc_sm_category_rule) */
+    lazy val smCategoryRuleFk = foreignKey("fk_sm_category_fc_sm_category_rule", id, SmCategoryRule)(r => r.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
 
     /** Index over (categoryType,category,subCategory) (database name idx_sm_category_fc_category_type) */
     val index1 = index("idx_sm_category_fc_category_type", (categoryType, category, subCategory))
@@ -71,28 +77,31 @@ trait Tables {
 
   /** Entity class storing rows of table SmCategoryRule
     *
+    * @param id           Database column id SqlType(serial), AutoInc
     * @param categoryType Database column category_type SqlType(varchar)
     * @param category     Database column category SqlType(varchar)
     * @param subCategory  Database column sub_category SqlType(varchar)
     * @param fPath        Database column f_path SqlType(varchar)
     * @param isBegins     Database column is_begins SqlType(bool)
-    * @param description  Database column description SqlType(varchar) */
-  case class SmCategoryRuleRow(categoryType: String, category: String, subCategory: String, fPath: String, isBegins: Boolean, description: String)
+    * @param description  Database column description SqlType(varchar), Default(None) */
+  case class SmCategoryRuleRow(id: Int, categoryType: String, category: String, subCategory: String, fPath: String, isBegins: Boolean, description: Option[String] = None)
 
   /** GetResult implicit for fetching SmCategoryRuleRow objects using plain SQL queries */
-  implicit def GetResultSmCategoryRuleRow(implicit e0: GR[String], e1: GR[Boolean]): GR[SmCategoryRuleRow] = GR {
+  implicit def GetResultSmCategoryRuleRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Boolean], e3: GR[Option[String]]): GR[SmCategoryRuleRow] = GR {
     prs =>
       import prs._
-      SmCategoryRuleRow.tupled((<<[String], <<[String], <<[String], <<[String], <<[Boolean], <<[String]))
+      SmCategoryRuleRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[String], <<[Boolean], <<?[String]))
   }
 
   /** Table description of table sm_category_rule. Objects of this class serve as prototypes for rows in queries. */
   class SmCategoryRule(_tableTag: Tag) extends profile.api.Table[SmCategoryRuleRow](_tableTag, "sm_category_rule") {
-    def * = (categoryType, category, subCategory, fPath, isBegins, description) <> (SmCategoryRuleRow.tupled, SmCategoryRuleRow.unapply)
+    def * = (id, categoryType, category, subCategory, fPath, isBegins, description) <> (SmCategoryRuleRow.tupled, SmCategoryRuleRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(categoryType), Rep.Some(category), Rep.Some(subCategory), Rep.Some(fPath), Rep.Some(isBegins), Rep.Some(description))).shaped.<>({ r => import r._; _1.map(_ => SmCategoryRuleRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(categoryType), Rep.Some(category), Rep.Some(subCategory), Rep.Some(fPath), Rep.Some(isBegins), description)).shaped.<>({ r => import r._; _1.map(_ => SmCategoryRuleRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
+    /** Database column id SqlType(serial), AutoInc */
+    val id: Rep[Int] = column[Int]("id", O.AutoInc)
     /** Database column category_type SqlType(varchar) */
     val categoryType: Rep[String] = column[String]("category_type")
     /** Database column category SqlType(varchar) */
@@ -103,11 +112,13 @@ trait Tables {
     val fPath: Rep[String] = column[String]("f_path")
     /** Database column is_begins SqlType(bool) */
     val isBegins: Rep[Boolean] = column[Boolean]("is_begins")
-    /** Database column description SqlType(varchar) */
-    val description: Rep[String] = column[String]("description")
+    /** Database column description SqlType(varchar), Default(None) */
+    val description: Rep[Option[String]] = column[Option[String]]("description", O.Default(None))
 
-    /** Primary key of SmCategoryRule (database name sm_category_rule_pkey) */
-    val pk = primaryKey("sm_category_rule_pkey", (categoryType, category, subCategory))
+    /** Uniqueness Index over (categoryType,category,subCategory) (database name sm_category_rule_pkey) */
+    val index1 = index("sm_category_rule_pkey", (categoryType, category, subCategory), unique = true)
+    /** Uniqueness Index over (id) (database name unq_sm_category_rule_id) */
+    val index2 = index("unq_sm_category_rule_id", id, unique = true)
   }
 
   /** Collection-like TableQuery object for table SmCategoryRule */

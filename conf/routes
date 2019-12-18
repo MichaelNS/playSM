@@ -85,7 +85,7 @@ POST        /convertDeviceIdBatch                                     controller
 + nocsrf
 POST        /apply-rules-set-cathegory                                controllers.SmCategory.applyRulesSetCategory
 
-#GET         /move-rules-to-db                                         controllers.SmCategory.moveRulesToDb
+GET         /copy-rules-to-db                                         controllers.SmCategory.copyRulesToDb
 
 
 #view-file

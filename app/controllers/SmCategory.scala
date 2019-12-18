@@ -7,6 +7,7 @@ import akka.stream.ThrottleMode
 import akka.stream.scaladsl.{Sink, Source}
 import akka.{Done, NotUsed}
 import javax.inject.{Inject, Singleton}
+import models.SmCategoryRule
 import models.db.Tables
 import org.camunda.bpm.dmn.engine.{DmnDecision, DmnDecisionTableResult, DmnEngineConfiguration}
 import org.camunda.bpm.engine.variable.{VariableMap, Variables}
@@ -75,7 +76,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     val qry = if (isBegins) {
       for {
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
+          fc.sha256 === cat.sha256 && fc.fName === cat.fName
         }) if fcRow.fParent.startsWith(fParent)
       } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.category), catRow.map(_.subCategory), catRow.map(_.description))
 
@@ -83,7 +84,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     else {
       for {
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
+          fc.sha256 === cat.sha256 && fc.fName === cat.fName
         }) if fcRow.fParent === fParent
       } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, catRow.map(_.categoryType), catRow.map(_.category), catRow.map(_.subCategory), catRow.map(_.description))
     }
@@ -183,7 +184,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         val result: DmnDecisionTableResult = dmnEngine.evaluateDecisionTable(decision, variables)
         val outMap = result.getSingleResult.getEntryMap
         if (outMap.size() == 4) {
-          lstRules += Rule(rulePath, java.lang.Boolean.valueOf(outMap.get("isBegins").toString), outMap.get("categoryType").toString, outMap.get("category").toString, outMap.get("subcategory").toString, outMap.get("description").toString)
+          lstRules += Rule(rulePath, java.lang.Boolean.valueOf(outMap.get("isBegins").toString), outMap.get("category").toString, outMap.get("subcategory").toString, outMap.get("subcategory").toString, "")
         } else {
           logger.warn(s"applyRules -> out DMN has < 4 values - $rulePath")
         }
@@ -260,14 +261,14 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     val preQuery = if (isBegins) {
       for {
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
+          fc.sha256 === cat.sha256 && fc.fName === cat.fName
         }) if fcRow.fParent.startsWith(fParent) && fcRow.sha256.nonEmpty && catRow.isEmpty
       } yield (fcRow.sha256, fcRow.fName)
     }
     else {
       for {
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
+          fc.sha256 === cat.sha256 && fc.fName === cat.fName
         }) if fcRow.fParent.startsWith(fParent) && fcRow.sha256.nonEmpty && catRow.isEmpty
       } yield (fcRow.sha256, fcRow.fName)
     }
@@ -289,9 +290,33 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     * @return count upsert records SmCategoryFc
     */
   def writeToCategoryTbl(message: (Option[String], String), categoryType: String, category: String, subCategory: String, description: String): Future[Int] = {
-    val cRow = Tables.SmCategoryFcRow(message._1.get, message._2, Some(categoryType), Some(category), Some(subCategory), Some(description))
+    val cRow = Tables.SmCategoryFcRow(-1, message._1.get, message._2, Some(categoryType), Some(category), Some(subCategory), Some(description))
     val insRes = database.runAsync(Tables.SmCategoryFc.insertOrUpdate(models.SmCategoryFc.apply(cRow).data.toRow))
 
     insRes
   }
+
+  @deprecated
+  def copyRulesToDb: Action[AnyContent] = Action.async {
+    Source.fromIterator(() => getRules.iterator)
+      .throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+      .mapAsync(1) { rulePath =>
+        debug(rulePath)
+
+        val cRow = Tables.SmCategoryRuleRow(-1, rulePath.category, rulePath.subCategory, rulePath.description, rulePath.fParent, rulePath.isBegins, None)
+
+        database.runAsync((Tables.SmCategoryRule returning Tables.SmCategoryRule.map(_.id)) += SmCategoryRule.apply(cRow).data.toRow)
+      }
+      .recover { case t: Throwable =>
+        logger.error("copyRulesToDb. Error retrieving output from file", t)
+        None
+      }
+      .runWith(Sink.ignore)
+      .onComplete {
+        case Success(_) => logger.info("copyRulesToDb done ")
+        case Failure(ex) => logger.error(s"copyRulesToDb error : ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+      }
+    Future.successful(Ok("Done"))
+  }
+
 }
