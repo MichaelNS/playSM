@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 
 class CalcCrcTask @Inject()(actorSystem: ActorSystem, cc: MessagesControllerComponents, config: Configuration, val database: DBService)(implicit executionContext: ExecutionContext) {
   actorSystem.scheduler.scheduleAtFixedRate(initialDelay = 1.minute, interval = 1.minute) { () =>
-    actorSystem.log.info("Executing CalcCrcTask")
+    //    actorSystem.log.info("Executing CalcCrcTask")
 
     val sss = new SmFcCrc(cc, config, database).calcAllCRCActor()
   }

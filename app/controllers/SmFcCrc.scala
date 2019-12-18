@@ -54,7 +54,7 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
       case Success(mntDevices) =>
         getDevicesForCalcCrc(mntDevices).onComplete {
           case Success(devices) =>
-            debug(devices)
+            //            debug(devices)
             val cntScan: Int = devices.count(_._2)
             if (cntScan < maxDevicesCalc) {
               //              devices.filter(_._2 == false).take(maxDevicesCalc)
@@ -66,7 +66,7 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
                   calcCrcByDevice(device._1, mntDevices)
                 }.runWith(Sink.ignore).onComplete {
                 case Success(_) =>
-                  logger.info(s"$funcName done calcCrcByDevice")
+                //                  logger.info(s"$funcName done calcCrcByDevice")
                 case Failure(ex) =>
                   logger.error(s"syncDevice error: ${ex.toString}")
               }
@@ -82,12 +82,14 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
 
   def calcAllCRC(): Action[AnyContent] = Action.async {
     calcAllCRCActor()
+
+    //    for (i <- 1 to 10) calcAllCRCActor()
     Future.successful(Ok("run calcAllCRC"))
   }
 
   def getDevicesForCalcCrc(mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device]): Future[Seq[(String, Boolean)]] = {
-    val funcName = "getDevicesForCalcCrc"
-    logger.debug(s"$funcName mntDevices = $mntDevices")
+    //    val funcName = "getDevicesForCalcCrc"
+    //    logger.debug(s"$funcName mntDevices = $mntDevices")
 
     database.runAsync(Tables.SmDevice
       .filter(job => job.visible === true && job.jobCalcExif === false && job.jobPathScan === false && job.jobResize === false &&
@@ -97,8 +99,15 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
       .result)
   }
 
-  def calcCrcByDevice(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device]): Future[Seq[Any]] = {
-    val funcName = "calcCrcByDevice"
+  def calcCrcByDevice(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device]): Future[(Seq[Any], Int)] = {
+    for {
+      startJob <- setJobCalcCrc(deviceUid, status = true)
+      calc <- calcCrcByDeviceDb(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device])
+      endJob <- setJobCalcCrc(deviceUid, status = false, calc.length)
+    } yield (calc, endJob)
+  }
+
+  def calcCrcByDeviceDb(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device]): Future[Seq[Any]] = {
     val maxCalcFiles: Long = config.get[Long]("CRC.maxCalcFiles")
     val maxSizeFiles: Long = config.underlying.getBytes("CRC.maxSizeFiles")
 
@@ -116,17 +125,7 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
       }
       sss
     }
-
-    val futureSequenceResults = Future.sequence(List(
-      setJobCalcCrc(deviceUid, status = true),
-      calcCrcRes,
-      setJobCalcCrc(deviceUid, status = false)))
-
-    futureSequenceResults.onComplete {
-      case Success(results) => logger.debug(s"$funcName results $results")
-      case Failure(e) => logger.error(s"funcName error for device [$deviceUid] , error = ${e.toString}\nStackTrace:\n ${e.getStackTrace.mkString("\n")}")
-    }
-    futureSequenceResults
+    calcCrcRes
   }
 
   /**
@@ -151,9 +150,9 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
     }
   }
 
-  def setJobCalcCrc(device: String, status: Boolean): Future[Int] = {
+  def setJobCalcCrc(device: String, status: Boolean, length: Int = -1): Future[Int] = {
     val funcName = "setJobCalcCrc"
-    logger.debug(s"$funcName device = $device   $status")
+    //    logger.debug(s"$funcName device = $device   $status")
 
     val update = {
       val q = for (uRow <- Tables.SmDevice if uRow.uid === device) yield (uRow.jobCalcCrc, uRow.crcDate)
