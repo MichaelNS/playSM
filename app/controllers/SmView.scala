@@ -33,7 +33,7 @@ class SmView @Inject()(val database: DBService)
                        count(1) filter (where sm_category_fc is null),
                        array_agg(DISTINCT sm_category_fc.category_type) filter (where sm_category_fc is not null)
        FROM "sm_file_card" fc
-              left outer join sm_category_fc on fc.sha256 = sm_category_fc.id
+              left outer join sm_category_fc on fc.sha256 = sm_category_fc.id and fc.f_name = sm_category_fc.f_name
        where fc.store_name = '#$deviceName'
        and fc.f_size > 0
        GROUP BY split_part(fc.f_parent, '/', #$depth)

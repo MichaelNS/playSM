@@ -7,7 +7,8 @@ CREATE TABLE sm_category_fc
   category_type     varchar,
   sub_category_type varchar,
   description       varchar,
-  CONSTRAINT sm_category_fc_pkey PRIMARY KEY (id, f_name)
+  CONSTRAINT sm_category_fc_pkey PRIMARY KEY (id, f_name),
+  CONSTRAINT unq_sm_category_fc_id UNIQUE (id)
 );
 
 CREATE TABLE sm_device
@@ -50,6 +51,17 @@ CREATE TABLE sm_exif
   CONSTRAINT sm_exif_pkey PRIMARY KEY (id)
 );
 
+CREATE TABLE sm_job_path_move
+(
+  id         serial  NOT NULL,
+  device_uid varchar NOT NULL,
+  path_from  varchar NOT NULL,
+  path_to    varchar NOT NULL,
+  done       bool DEFAULT false,
+  CONSTRAINT sm_job_path_move_pkey PRIMARY KEY (id),
+  CONSTRAINT unq_sm_job_path_move_device_uid UNIQUE (device_uid, path_from)
+);
+
 CREATE TABLE sm_file_card
 (
   id                   varchar   NOT NULL,
@@ -64,7 +76,10 @@ CREATE TABLE sm_file_card
   sha256               varchar,
   f_name_lc            varchar   NOT NULL,
   CONSTRAINT sm_file_card_pkey PRIMARY KEY (id),
-  CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (device_uid)
+  CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (device_uid),
+  CONSTRAINT fk_sm_file_card_sm_category_fc FOREIGN KEY (sha256, f_name) REFERENCES sm_category_fc (id, f_name),
+  CONSTRAINT fk_sm_file_card_sm_job_path_move FOREIGN KEY (device_uid, f_parent) REFERENCES sm_job_path_move (device_uid, path_from),
+  CONSTRAINT fk_sm_file_card_sm_exif FOREIGN KEY (id) REFERENCES sm_exif (id)
 );
 
 CREATE INDEX idx_f_parent ON sm_file_card ( f_parent ASC NULLS LAST);
@@ -75,15 +90,7 @@ CREATE INDEX idx_last_modified ON sm_file_card ( f_last_modified_date DESC NULLS
 
 CREATE INDEX idx_sha256 ON sm_file_card ( sha256 ASC NULLS LAST);
 
-CREATE TABLE sm_job_path_move
-(
-  id         serial  NOT NULL,
-  device_uid varchar NOT NULL,
-  path_from  varchar NOT NULL,
-  path_to    varchar NOT NULL,
-  done       bool DEFAULT false,
-  CONSTRAINT sm_job_path_move_pkey PRIMARY KEY (id)
-);
+CREATE INDEX idx_sm_file_card_device_uid ON sm_file_card ( device_uid, f_parent );
 
 # --- !Downs
 
