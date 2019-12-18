@@ -165,6 +165,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
                   description: String
                  )
 
+  @deprecated
   def getRules: ArrayBuffer[Rule] = {
     val ruleFilePath = "/category.dmn"
     val lstRules: ArrayBuffer[Rule] = ArrayBuffer[Rule]()
@@ -198,16 +199,33 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     }
   }
 
-  def applyRulesSetCategory: Action[AnyContent] = Action.async {
-    Source.fromIterator(() => getRules.iterator)
-      .throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
-      .mapAsync(1) { rulePath =>
-        batchAssignCategoryAndDescription(fParent = rulePath.fParent,
-          isBegins = rulePath.isBegins,
-          categoryType = rulePath.categoryType,
-          category = rulePath.category,
-          subCategory = rulePath.subCategory,
-          description = rulePath.description)
+  def getStreamRulesFromDb: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = {
+
+    val queryRes = Tables.SmCategoryRule.result
+    val databasePublisher: DatabasePublisher[Tables.SmCategoryRule#TableElementType] = database runStream queryRes
+    val akkaSourceFromSlick: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = Source fromPublisher databasePublisher
+
+    akkaSourceFromSlick
+  }
+
+  def applyRulesSetCategoryOld: Action[AnyContent] = Action.async {
+    //    Source.fromIterator(() => getRules.iterator)
+    val dbFcStream: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = getStreamRulesFromDb
+    dbFcStream.throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+      .mapAsync(1) { rule =>
+        debug(rule)
+        //        rulePath.fPath.map { path =>
+        val qwe = Source.fromIterator(() => rule.fPath.iterator).throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+          .mapAsync(1) { rulePath =>
+            batchAssignCategoryAndDescription(fParent = rulePath,
+              isBegins = rule.isBegins,
+              categoryType = rule.categoryType,
+              category = rule.category,
+              subCategory = rule.subCategory,
+              description = rule.description.getOrElse(""))
+          }
+        debug(qwe)
+        Future.successful()
       }
       .recover { case t: Throwable =>
         logger.error("Error retrieving output from flowA. Resuming without them.", t)
@@ -221,6 +239,37 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     Future.successful(Redirect(routes.SmCategoryView.listCategoryTypeAndCnt()))
   }
 
+
+  def applyRulesSetCategory: Action[AnyContent] = Action.async {
+    val dbFcStream: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = getStreamRulesFromDb
+    dbFcStream.throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+      .mapAsync(1) { rule =>
+        debug(rule)
+        val asd = rule.fPath.map { path =>
+            batchAssignCategoryAndDescription(fParent = path,
+              isBegins = rule.isBegins,
+              categoryType = rule.categoryType,
+              category = rule.category,
+              subCategory = rule.subCategory,
+              description = rule.description.getOrElse(""))
+          }
+//        debug(asd)
+        asd.last
+//        Future.successful()
+      }
+      .recover { case t: Throwable =>
+        logger.error("Error retrieving output from flowA. Resuming without them.", t)
+        None
+      }
+      .runWith(Sink.ignore)
+      .onComplete {
+        case Success(_) => logger.info("applyRulesSetCategory done ")
+        case Failure(ex) => logger.error(s"applyRulesSetCategory error : ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+      }
+    Future.successful(Redirect(routes.SmCategoryView.listCategoryTypeAndCnt()))
+  }
+
+
   /**
     * read input param from DMN
     * replaceAll quotas need because NPE occurs when DMN exec - .getSingleResult.getSingleEntry.toString
@@ -228,6 +277,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     * @param ruleFilePath List input DMN params
     * @return
     */
+  @deprecated
   def getXmlRule(ruleFilePath: String): Seq[String] = {
     val isDmn: InputStream = getClass.getResourceAsStream(ruleFilePath)
 
