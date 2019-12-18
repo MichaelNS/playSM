@@ -258,7 +258,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
           )
         }
         // TODO fix to wait all futures
-        asd.last
+        Future.sequence(asd)
       }
       .recover { case t: Throwable =>
         logger.error("Error retrieving output from flowA. Resuming without them.", t)
