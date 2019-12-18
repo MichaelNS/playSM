@@ -9,7 +9,7 @@ import akka.stream._
 import akka.stream.scaladsl.{Sink, Source}
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
-import models.{DeviceView, SmCategoryFc, SmDevice}
+import models.{DeviceView, SmDevice}
 import org.joda.time.DateTime
 import play.api.Configuration
 import play.api.mvc._
