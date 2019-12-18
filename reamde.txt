@@ -11,6 +11,52 @@ ORDER BY 3 DESC
 
 -------------------------------------------------------------------------------------------------------------------------------------
 
+SELECT * FROM   pg_settings WHERE  name in (
+'max_connections',
+'shared_buffers',
+'effective_cache_size',
+'maintenance_work_mem',
+'checkpoint_completion_target',
+'wal_buffers',
+'default_statistics_target',
+'random_page_cost',
+'effective_io_concurrency',
+'work_mem',
+'min_wal_size',
+'max_wal_size'
+);
+
+
+
+
+ALTER SYSTEM SET
+ max_connections = '100';
+ALTER SYSTEM SET
+ shared_buffers = '256MB';
+ALTER SYSTEM SET
+ effective_cache_size = '768MB';
+ALTER SYSTEM SET
+ maintenance_work_mem = '64MB';
+ALTER SYSTEM SET
+ checkpoint_completion_target = '0.9';
+ALTER SYSTEM SET
+ wal_buffers = '7864kB';
+ALTER SYSTEM SET
+ default_statistics_target = '100';
+ALTER SYSTEM SET
+ random_page_cost = '1.1';
+ALTER SYSTEM SET
+ effective_io_concurrency = '200';
+ALTER SYSTEM SET
+ work_mem = '1310kB';
+ALTER SYSTEM SET
+ min_wal_size = '1GB';
+ALTER SYSTEM SET
+ max_wal_size = '2GB';
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
 SELECT COALESCE(bgl.relation::regclass::TEXT,bgl.locktype) AS locked_item,
        NOW() - bda.query_start AS waiting_duration,
        bda.pid AS blocked_pid,
