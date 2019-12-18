@@ -2,14 +2,15 @@
 <project name="PostgreSQL" id="Project_29c4a95" template="Default" database="PostgreSQL" >
 	<schema name="public" catalogname="sm_db" schemaname="public" >
 		<table name="sm_category_fc" generator_rows="100" >
-			<column name="id" type="varchar" decimal="0" jt="12" mandatory="y" />
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="sha256" type="varchar" decimal="0" jt="12" mandatory="y" />
 			<column name="f_name" type="varchar" decimal="0" jt="12" mandatory="y" />
 			<column name="category_type" type="varchar" jt="12" />
 			<column name="category" type="varchar" jt="12" />
 			<column name="sub_category" type="varchar" jt="12" />
 			<column name="description" type="varchar" decimal="0" jt="12" />
 			<index name="sm_category_fc_pkey" unique="PRIMARY_KEY" >
-				<column name="id" />
+				<column name="sha256" />
 				<column name="f_name" />
 			</index>
 			<index name="idx_sm_category_fc_category_type" unique="NORMAL" >
@@ -17,18 +18,28 @@
 				<column name="category" />
 				<column name="sub_category" />
 			</index>
+			<index name="idx_sm_category_fc_id" unique="NORMAL" >
+				<column name="id" />
+			</index>
+			<fk name="fk_sm_category_fc_sm_category_rule" to_schema="public" to_table="sm_category_rule" delete_action="cascade" update_action="cascade" >
+				<fk_column name="id" pk="id" />
+			</fk>
 		</table>
 		<table name="sm_category_rule" generator_rows="100" >
+			<column name="id" type="serial" length="10" decimal="0" jt="4" mandatory="y" autoincrement="y" />
 			<column name="category_type" type="varchar" jt="12" mandatory="y" />
 			<column name="category" type="varchar" decimal="0" jt="12" mandatory="y" />
 			<column name="sub_category" type="varchar" jt="12" mandatory="y" />
-			<column name="f_path" type="varchar" jt="12" mandatory="y" />
+			<column name="f_path" type="_text" decimal="0" jt="2003" mandatory="y" />
 			<column name="is_begins" type="bool" jt="-7" mandatory="y" />
-			<column name="description" type="varchar" jt="12" mandatory="y" />
-			<index name="sm_category_rule_pkey" unique="PRIMARY_KEY" >
+			<column name="description" type="varchar" jt="12" />
+			<index name="sm_category_rule_pkey" unique="UNIQUE" >
 				<column name="category_type" />
 				<column name="category" />
 				<column name="sub_category" />
+			</index>
+			<index name="unq_sm_category_rule_id" unique="UNIQUE" >
+				<column name="id" />
 			</index>
 		</table>
 		<table name="sm_device" generator_rows="100" >
@@ -169,9 +180,6 @@
 			<index name="unq_sm_job_path_move" unique="UNIQUE" >
 				<column name="id" />
 			</index>
-			<index name="idx_sm_job_path_move_device_uid_0" unique="NORMAL" >
-				<column name="device_uid" />
-			</index>
 			<fk name="fk_sm_job_path_move_sm_device" to_schema="public" to_table="sm_device" >
 				<fk_column name="device_uid" pk="uid" />
 			</fk>
@@ -192,6 +200,7 @@
 				<fk_column name="device_uid" pk="uid" />
 			</fk>
 		</table>
+		<sequence name="sm_category_rule_id_seq" start="1" />
 		<sequence name="sm_device_id_seq" start="1" />
 		<sequence name="sm_job_path_move_id_seq" start="1" />
 		<procedure name="gin_extract_query_trgm" id="Procedure_31f373e" isSystem="false" params_known="y" >
@@ -488,15 +497,15 @@ AS '$libdir/pg_trgm', $function$word_similarity_op$function$
 	</schema>
 	<connector name="PostgreSQL" database="PostgreSQL" driver_class="org.postgresql.Driver" driver_jar="postgresql-42.2.2.jar" driver_desc="Standard" url="jdbc:postgresql://localhost:5432/sm_db?user=sm_user&amp;password=123" host="msk-tempg-db01t" port="5433" instance="postgres" user="oa_camunda" passwd="Y2FtdW5kYQ==" />
 	<layout name="Default Layout" id="Layout_2ff5c29" joined_routing="y" show_relation="columns" >
-		<entity schema="public" name="sm_device" color="BED3F4" x="240" y="64" />
 		<entity schema="public" name="sm_file_card" color="BED3F4" x="240" y="368" />
-		<entity schema="public" name="sm_category_rule" color="C1D8EE" x="48" y="64" />
-		<entity schema="public" name="sm_category_fc" color="BED3F4" x="48" y="240" />
 		<entity schema="public" name="sm_exif" color="BED3F4" x="448" y="368" />
 		<entity schema="public" name="sm_log" color="C1D8EE" x="656" y="96" />
 		<entity schema="public" name="sm_device_scan" color="C1D8EE" x="416" y="48" />
-		<entity schema="public" name="sm_job_path_move" color="BED3F4" x="496" y="224" />
 		<entity schema="public" name="sm_image_resize" color="C1D8EE" x="240" y="624" />
+		<entity schema="public" name="sm_device" color="BED3F4" x="240" y="64" />
+		<entity schema="public" name="sm_job_path_move" color="BED3F4" x="496" y="224" />
+		<entity schema="public" name="sm_category_fc" color="BED3F4" x="48" y="240" />
+		<entity schema="public" name="sm_category_rule" color="C1D8EE" x="48" y="64" />
 	</layout>
 	<layout name="Sample Layout with Tools" id="Layout_13ab4a1" show_column_type="y" show_relation="columns" >
 		<callout x="48" y="48" pointer="NO" >

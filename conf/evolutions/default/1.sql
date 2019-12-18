@@ -6,7 +6,7 @@ CREATE TABLE sm_category_rule
   category_type   VARCHAR NOT NULL,
   category        VARCHAR NOT NULL,
   sub_category    VARCHAR NOT NULL,
-  f_path          VARCHAR NOT NULL,
+  f_path          TEXT[] NOT NULL,
   is_begins       BOOL NOT NULL,
   description     VARCHAR,
   CONSTRAINT sm_category_rule_pkey UNIQUE (category_type,category,sub_category),

@@ -208,7 +208,7 @@ case class SmCategoryRule(
                            categoryType: String,
                            category: String,
                            subCategory: String,
-                           fPath: String,
+                           fPath: List[String],
                            isBegins: Boolean,
                            description: Option[String] = None
                          ) {

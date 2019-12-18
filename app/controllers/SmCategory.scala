@@ -184,7 +184,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         val result: DmnDecisionTableResult = dmnEngine.evaluateDecisionTable(decision, variables)
         val outMap = result.getSingleResult.getEntryMap
         if (outMap.size() == 4) {
-          lstRules += Rule(rulePath, java.lang.Boolean.valueOf(outMap.get("isBegins").toString), outMap.get("category").toString, outMap.get("subcategory").toString, outMap.get("subcategory").toString, "")
+          lstRules += Rule(rulePath, java.lang.Boolean.valueOf(outMap.get("isBegins").toString), outMap.get("category").toString, outMap.get("subcategory").toString, outMap.get("description").toString, "")
         } else {
           logger.warn(s"applyRules -> out DMN has < 4 values - $rulePath")
         }
@@ -301,11 +301,30 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     Source.fromIterator(() => getRules.iterator)
       .throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
       .mapAsync(1) { rulePath =>
+        debug("-----------------------------------")
+        debug("-----------------------------------")
         debug(rulePath)
+        //        val dbRes =
+        database.runAsync(Tables.SmCategoryRule.filter(q => q.categoryType === rulePath.categoryType && q.category === rulePath.category && q.subCategory === rulePath.subCategory).result)
+          .map { rowSeq =>
+            debug(rowSeq)
+            if (rowSeq.isEmpty) {
+              //              debug(rulePath.category, rulePath.subCategory, rulePath.description)
+              val cRow = Tables.SmCategoryRuleRow(-1, rulePath.categoryType, rulePath.category, rulePath.subCategory, List(rulePath.fParent), rulePath.isBegins, None)
+              //              debug(cRow)
+              database.runAsync((Tables.SmCategoryRule returning Tables.SmCategoryRule.map(_.id)) += SmCategoryRule.apply(cRow).data.toRow)
+            } else {
+              if (!rowSeq.head.fPath.toSet.contains(rulePath.fParent)) {
+                val pathes = rowSeq.head.fPath.toSet + rulePath.fParent
+                //                pathes.+(rulePath.fParent)
+                debug(pathes, rulePath.fParent)
 
-        val cRow = Tables.SmCategoryRuleRow(-1, rulePath.category, rulePath.subCategory, rulePath.description, rulePath.fParent, rulePath.isBegins, None)
-
-        database.runAsync((Tables.SmCategoryRule returning Tables.SmCategoryRule.map(_.id)) += SmCategoryRule.apply(cRow).data.toRow)
+                database.runAsync((for {uRow <- Tables.SmCategoryRule if uRow.categoryType === rulePath.categoryType && uRow.category === rulePath.category && uRow.subCategory === rulePath.subCategory} yield uRow.fPath)
+                  .update(pathes.toList))
+                  .map(_ => logger.info(s"update SmCategoryRule"))
+              }
+            }
+          }
       }
       .recover { case t: Throwable =>
         logger.error("copyRulesToDb. Error retrieving output from file", t)

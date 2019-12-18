@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2019-12-26T13:11:50.218+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2019-12-26T13:58:56.009+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -81,16 +81,16 @@ trait Tables {
     * @param categoryType Database column category_type SqlType(varchar)
     * @param category     Database column category SqlType(varchar)
     * @param subCategory  Database column sub_category SqlType(varchar)
-    * @param fPath        Database column f_path SqlType(varchar)
+    * @param fPath        Database column f_path SqlType(_text)
     * @param isBegins     Database column is_begins SqlType(bool)
     * @param description  Database column description SqlType(varchar), Default(None) */
-  case class SmCategoryRuleRow(id: Int, categoryType: String, category: String, subCategory: String, fPath: String, isBegins: Boolean, description: Option[String] = None)
+  case class SmCategoryRuleRow(id: Int, categoryType: String, category: String, subCategory: String, fPath: List[String], isBegins: Boolean, description: Option[String] = None)
 
   /** GetResult implicit for fetching SmCategoryRuleRow objects using plain SQL queries */
-  implicit def GetResultSmCategoryRuleRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Boolean], e3: GR[Option[String]]): GR[SmCategoryRuleRow] = GR {
+  implicit def GetResultSmCategoryRuleRow(implicit e0: GR[Int], e1: GR[String], e2: GR[List[String]], e3: GR[Boolean], e4: GR[Option[String]]): GR[SmCategoryRuleRow] = GR {
     prs =>
       import prs._
-      SmCategoryRuleRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[String], <<[Boolean], <<?[String]))
+      SmCategoryRuleRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[List[String]], <<[Boolean], <<?[String]))
   }
 
   /** Table description of table sm_category_rule. Objects of this class serve as prototypes for rows in queries. */
@@ -108,8 +108,8 @@ trait Tables {
     val category: Rep[String] = column[String]("category")
     /** Database column sub_category SqlType(varchar) */
     val subCategory: Rep[String] = column[String]("sub_category")
-    /** Database column f_path SqlType(varchar) */
-    val fPath: Rep[String] = column[String]("f_path")
+    /** Database column f_path SqlType(_text) */
+    val fPath: Rep[List[String]] = column[List[String]]("f_path")
     /** Database column is_begins SqlType(bool) */
     val isBegins: Rep[Boolean] = column[Boolean]("is_begins")
     /** Database column description SqlType(varchar), Default(None) */
