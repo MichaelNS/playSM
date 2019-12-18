@@ -15,7 +15,7 @@ CREATE TABLE sm_device
 (
   id            SERIAL NOT NULL,
   name          VARCHAR NOT NULL,
-  label         VARCHAR NOT NULL,
+  "label"       VARCHAR NOT NULL,
   uid           VARCHAR NOT NULL,
   sync_date     TIMESTAMP NOT NULL,
   description   VARCHAR,
@@ -24,6 +24,53 @@ CREATE TABLE sm_device
   CONSTRAINT sm_device_pkey PRIMARY KEY (id),
   CONSTRAINT idx_sm_device_device_uid UNIQUE (uid)
 );
+
+CREATE TABLE sm_job_path_move
+(
+  id           SERIAL NOT NULL,
+  device_uid   VARCHAR NOT NULL,
+  path_from    VARCHAR NOT NULL,
+  path_to      VARCHAR NOT NULL,
+  done         TIMESTAMP,
+  CONSTRAINT idx_sm_job_path_move_device_uid PRIMARY KEY ( device_uid, path_from ),
+  CONSTRAINT unq_sm_job_path_move UNIQUE ( id )
+);
+
+CREATE TABLE sm_file_card
+(
+  id                     VARCHAR NOT NULL,
+  device_uid             VARCHAR NOT NULL,
+  f_parent               VARCHAR NOT NULL,
+  f_name                 VARCHAR NOT NULL,
+  f_extension            VARCHAR,
+  f_creation_date        TIMESTAMP NOT NULL,
+  f_last_modified_date   TIMESTAMP NOT NULL,
+  f_size                 BIGINT,
+  f_mime_type_java       VARCHAR,
+  sha256                 VARCHAR,
+  f_name_lc              VARCHAR NOT NULL,
+  CONSTRAINT sm_file_card_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid),
+  CONSTRAINT fk_sm_file_card_sm_category_fc FOREIGN KEY (sha256,f_name) REFERENCES sm_category_fc (id,f_name)
+);
+
+CREATE INDEX idx_f_parent
+ON sm_file_card (f_parent);
+
+CREATE INDEX idx_fc_f_name_lc
+ON sm_file_card (f_name_lc);
+
+CREATE INDEX idx_last_modified
+ON sm_file_card (f_last_modified_date);
+
+CREATE INDEX idx_sha256
+ON sm_file_card (sha256);
+
+CREATE INDEX idx_sm_file_card_device_uid
+ON sm_file_card (device_uid, f_parent);
+
+CREATE INDEX idx_sm_file_card_sha256
+ON sm_file_card (sha256, f_name);
 
 CREATE TABLE sm_exif
 (
@@ -48,59 +95,9 @@ CREATE TABLE sm_exif
   gps_date_stamp          VARCHAR,
   gps_latitude_dec        DECIMAL,
   gps_longitude_dec       DECIMAL,
-  CONSTRAINT sm_exif_pkey PRIMARY KEY (id)
+  CONSTRAINT sm_exif_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_sm_exif_sm_file_card FOREIGN KEY (id) REFERENCES sm_file_card (id)
 );
-
-CREATE TABLE sm_job_path_move
-(
-  id           SERIAL NOT NULL,
-  device_uid   VARCHAR NOT NULL,
-  path_from    VARCHAR NOT NULL,
-  path_to      VARCHAR NOT NULL,
-  done         TIMESTAMP,
-  CONSTRAINT sm_job_path_move_pkey PRIMARY KEY (id),
-  CONSTRAINT unq_sm_job_path_move_device_uid UNIQUE (device_uid,path_from)
-);
-
-CREATE TABLE sm_file_card
-(
-  id                     VARCHAR NOT NULL,
-  device_uid             VARCHAR NOT NULL,
-  f_parent               VARCHAR NOT NULL,
-  f_name                 VARCHAR NOT NULL,
-  f_extension            VARCHAR,
-  f_creation_date        TIMESTAMP NOT NULL,
-  f_last_modified_date   TIMESTAMP NOT NULL,
-  f_size                 BIGINT,
-  f_mime_type_java       VARCHAR,
-  sha256                 VARCHAR,
-  f_name_lc              VARCHAR NOT NULL,
-  CONSTRAINT sm_file_card_pkey PRIMARY KEY (id),
-  CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid),
-  CONSTRAINT fk_sm_file_card_sm_category_fc FOREIGN KEY (sha256,f_name) REFERENCES sm_category_fc (id,f_name)
--- ,
---   CONSTRAINT fk_sm_file_card_sm_exif FOREIGN KEY (id) REFERENCES sm_exif (id),
---   CONSTRAINT fk_sm_file_card_sm_job_path_move FOREIGN KEY (device_uid,f_parent) REFERENCES sm_job_path_move (device_uid,path_from)
-);
-
-CREATE INDEX idx_f_parent
-ON sm_file_card (f_parent);
-
-CREATE INDEX idx_fc_f_name_lc
-ON sm_file_card (f_name_lc);
-
-CREATE INDEX idx_last_modified
-ON sm_file_card (f_last_modified_date);
-
-CREATE INDEX idx_sha256
-ON sm_file_card (sha256);
-
-CREATE INDEX idx_sm_file_card_device_uid
-ON sm_file_card (device_uid, f_parent);
-
-CREATE INDEX idx_sm_file_card_sha256
-ON sm_file_card (sha256, f_name);
-
 
 # --- !Downs
 

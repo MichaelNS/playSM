@@ -12,7 +12,6 @@ import ru.ns.model.{Device, FileCardSt, OsConf, SmPath}
 import ru.ns.tools.FileUtils
 
 import scala.collection.mutable.ArrayBuffer
-import scala.jdk.CollectionConverters._
 
 class FileUtilsSpec extends PlaySpec {
 
@@ -146,7 +145,7 @@ class FileUtilsSpec extends PlaySpec {
     val fName1 = "test1.txt"
     val fc_1 = FileCardSt(
       id = Hashing.sha256().hashString(deviceUid + fParent + OsConf.fsSeparator + fName1, StandardCharsets.UTF_8).toString.toUpperCase,
-      storeName = deviceUid,
+      deviceUid = deviceUid,
       fParent = fParent + "/",
       fName = fName1,
       fExtension = Some("txt"),
@@ -164,7 +163,7 @@ class FileUtilsSpec extends PlaySpec {
 
     val fc_2 = FileCardSt(
       id = Hashing.sha256().hashString(deviceUid + fParent + OsConf.fsSeparator + fName2, StandardCharsets.UTF_8).toString.toUpperCase,
-      storeName = deviceUid,
+      deviceUid = deviceUid,
       fParent = fParent + "/",
       fName = fName2,
       fExtension = Some("txt"),

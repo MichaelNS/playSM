@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS sm_file_card CASCADE;
 CREATE TABLE sm_file_card
 (
     id                   VARCHAR PRIMARY KEY NOT NULL,
-    store_name           VARCHAR             NOT NULL,
+    device_uid           VARCHAR             NOT NULL,
     f_parent             VARCHAR             NOT NULL,
     f_name               VARCHAR             NOT NULL,
     f_extension          VARCHAR,
@@ -27,11 +27,11 @@ CREATE TABLE sm_file_card
     f_name_lc            VARCHAR             NOT NULL
 );
 
-DROP TABLE IF EXISTS sm_path_move CASCADE;
-CREATE TABLE sm_path_move
+DROP TABLE IF EXISTS sm_job_path_move CASCADE;
+CREATE TABLE sm_job_path_move
 (
     id         SERIAL PRIMARY KEY,
-    store_name VARCHAR NOT NULL,
+    device_uid VARCHAR NOT NULL,
     path_from  VARCHAR NOT NULL,
     path_to    VARCHAR NOT NULL
 );
