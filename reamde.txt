@@ -1,3 +1,16 @@
+SELECT f_name_lc,
+       sha256,
+       COUNT(1),
+       ARRAY_TO_STRING(ARRAY_AGG(DISTINCT CONCAT (device_uid)),', '),
+       ARRAY_TO_STRING(ARRAY_AGG(DISTINCT CONCAT (f_parent)),', ')
+FROM sm_file_card
+WHERE sha256 IS NOT NULL
+GROUP BY sha256,
+         f_name_lc
+ORDER BY 3 DESC
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
 [PSQLException: ERROR: column x2.label does not exist Hint: Perhaps you meant to reference the column "x2.label_v". Position: 43]
 
 play.api.http.HttpErrorHandlerExceptions$$anon$1: Execution exception[[PSQLException: ERROR: column x2.label does not exist
@@ -26,3 +39,9 @@ Caused by: org.postgresql.util.PSQLException: ERROR: column x2.label does not ex
 	at com.zaxxer.hikari.pool.ProxyPreparedStatement.execute(ProxyPreparedStatement.java:44)
 	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.execute(HikariProxyPreparedStatement.java)
 	at slick.jdbc.StatementInvoker.results(StatementInvoker.scala:39)
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------------------------------------------------
