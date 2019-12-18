@@ -11,6 +11,37 @@ ORDER BY 3 DESC
 
 -------------------------------------------------------------------------------------------------------------------------------------
 
+SELECT COALESCE(bgl.relation::regclass::TEXT,bgl.locktype) AS locked_item,
+       NOW() - bda.query_start AS waiting_duration,
+       bda.pid AS blocked_pid,
+       bda.query AS blocked_query,
+       bdl.mode AS blocked_mode,
+       bga.pid AS blocking_pid,
+       bga.query AS blocking_query,
+       bgl.mode AS blocking_mode
+FROM pg_catalog.pg_locks bdl
+  JOIN pg_stat_activity bda ON bda.pid = bdl.pid
+  JOIN pg_catalog.pg_locks bgl
+    ON bgl.pid != bdl.pid
+   AND (bgl.transactionid = bdl.transactionid
+    OR bgl.relation = bdl.relation
+   AND bgl.locktype = bdl.locktype)
+  JOIN pg_stat_activity bga
+    ON bga.pid = bgl.pid
+   AND bga.datid = bda.datid
+WHERE NOT bdl.granted
+AND   bga.datname = current_database();
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+SELECT to_tsvector('My name is Alex and I''m a software developer.');
+
+SELECT to_tsvector('russian','Меня зовут Саша и я программист.');
+
+SELECT plainto_tsquery('Hello world');
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
 [PSQLException: ERROR: column x2.label does not exist Hint: Perhaps you meant to reference the column "x2.label_v". Position: 43]
 
 play.api.http.HttpErrorHandlerExceptions$$anon$1: Execution exception[[PSQLException: ERROR: column x2.label does not exist
