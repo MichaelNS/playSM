@@ -32,9 +32,12 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
     debugParam
     database.runAsync(
       (for {
-        (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
+        ((fcRow, catRow), rulesRow) <- Tables.SmFileCard.joinLeft(Tables.SmCategoryFc).on((fc, cat) => {
           fc.sha256 === cat.sha256 && fc.fName === cat.fName
-        })} yield (fcRow, catRow.map(_.categoryType))
+        })
+          .joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
+
+      } yield (fcRow, rulesRow.map(_.categoryType))
         )
         .filter(_._1.fSize > 0L)
         .groupBy(p => p._2)

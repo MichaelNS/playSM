@@ -1,5 +1,5 @@
 @import helper._
-@(fileCardSeq: Seq[(Option[Option[String]], Int)], extFcForm: Form[ExtensionForm])(implicit request: MessagesRequestHeader)
+@(fileCardSeq: Seq[(Option[String], Int)], extFcForm: Form[ExtensionForm])(implicit request: MessagesRequestHeader)
 @_template {
     <div class="row column">
         <h2>smr category</h2>
@@ -38,12 +38,12 @@
             <tbody>
             @for(fileCard <- fileCardSeq) {
                 <tr>
-                    @if(fileCard._1.flatten.isEmpty) {
+                    @if(fileCard._1.isEmpty) {
                         <td>Empty</td>
                         @*<td><a href="@routes.SmCategory.listDescriptionAndCnt("?")" >!Emtpy!</a></td>*@
                     } else {
 
-                        <td><a href="@routes.SmCategoryView.listCategoryAndCnt(fileCard._1.flatten.get)" >@fileCard._1</a></td>
+                        <td><a href="@routes.SmCategoryView.listCategoryAndCnt(fileCard._1.get)" >@fileCard._1</a></td>
                     }
                 <td>@fileCard._2</td>
                 </tr>
