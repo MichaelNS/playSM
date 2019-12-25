@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets
 
 import akka.NotUsed
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
 import com.google.common.hash.Hashing
 import javax.inject.{Inject, Singleton}
@@ -28,7 +27,6 @@ class SmMigrateDb @Inject()(val database: DBService)
   extends InjectedController {
 
   implicit val system: ActorSystem = ActorSystem()
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   /**
     * Update ID in [[models.db.Tables.SmFileCard]]

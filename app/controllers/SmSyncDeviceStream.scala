@@ -35,7 +35,6 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
   val logger = play.api.Logger(getClass)
 
   implicit val system: ActorSystem = ActorSystem()
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   def importDevice: Action[AnyContent] = Action.async {
     database.runAsync(Tables.SmDevice.sortBy(_.uid).map(_.uid).result).map { rowSeq =>

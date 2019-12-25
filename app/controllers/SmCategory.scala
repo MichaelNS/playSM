@@ -57,7 +57,6 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
   val logger = play.api.Logger(getClass)
 
   implicit val system: ActorSystem = ActorSystem()
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
 
   /**
