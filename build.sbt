@@ -13,7 +13,7 @@ lazy val commonSettings = Seq(
   // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/ScalaSettings.scala
 
   scalacOptions ++= Seq(
-    "-target:jvm-1.8",
+//    "-target:jvm-1.8",
 
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8", // Specify character encoding used by source files.
@@ -101,7 +101,7 @@ lazy val root = (project in file("."))
 addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 28.11
+coverageMinimum := 29.61
 coverageFailOnMinimum := true
 coverageHighlighting := true
 
