@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
 import models.DirWithoutCat
 import models.db.Tables
+import play.api.Logger
 import play.api.mvc._
 import services.db.DBService
 import utils.db.SmPostgresDriver.api._
@@ -20,14 +21,15 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
   extends MessagesAbstractController(cc)
     with play.api.i18n.I18nSupport {
 
-  val logger = play.api.Logger(getClass)
+  val logger: Logger = play.api.Logger(getClass)
 
   /**
-    * listCategoryAndCnt
+    * listCategoryTypeAndCnt
     *
-    * @return [[views.html.smr_category]]
+    * @return [[views.html.category.smr_category]]
     */
-  def listCategoryAndCnt: Action[AnyContent] = Action.async { implicit request: MessagesRequest[AnyContent] =>
+  def listCategoryTypeAndCnt: Action[AnyContent] = Action.async { implicit request: MessagesRequest[AnyContent] =>
+    debugParam
     database.runAsync(
       (for {
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
@@ -40,7 +42,30 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         .sortBy(_._2.desc)
         .result)
       .map { rowSeq =>
-        Ok(views.html.smr_category(rowSeq, ExtensionForm.form))
+        Ok(views.html.category.smr_category_type(rowSeq, ExtensionForm.form))
+      }
+  }
+
+  /**
+    * listCategoryAndCnt
+    *
+    * @param categoryType categoryType
+    * @return [[views.html.category.smr_category]]
+    */
+  def listCategoryAndCnt(categoryType: String): Action[AnyContent] = Action.async {
+    database.runAsync(
+      (for {
+        (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
+          fc.sha256 === cat.id && fc.fName === cat.fName
+        })} yield catRow
+        )
+        .filter(_.categoryType === categoryType)
+        .groupBy(p => p.category)
+        .map { case (description, cnt) => (description, cnt.map(_.category).length) }
+        .sortBy(_._2.desc)
+        .result)
+      .map { rowSeq =>
+        Ok(views.html.category.smr_category(categoryType, rowSeq))
       }
   }
 
@@ -48,9 +73,9 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
     * listSubCategoryAndCnt
     *
     * @param categoryType categoryType
-    * @return [[views.html.smr_sub_category]]
+    * @return [[views.html.category.smr_sub_category]]
     */
-  def listSubCategoryAndCnt(categoryType: String): Action[AnyContent] = Action.async {
+  def listSubCategoryAndCnt(categoryType: String, category: String): Action[AnyContent] = Action.async {
     database.runAsync(
       (for {
         (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
@@ -58,44 +83,20 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         })} yield catRow
         )
         .filter(_.categoryType === categoryType)
+        .filter(_.category === category)
         .groupBy(p => p.subCategory)
         .map { case (subcategory, cnt) => (subcategory, cnt.map(_.subCategory).length) }
         .sortBy(_._2.desc)
         .result)
       .map { rowSeq =>
-        Ok(views.html.smr_sub_category(categoryType, rowSeq))
-      }
-  }
-
-  /**
-    * listDescriptionAndCnt
-    *
-    * @param categoryType categoryType
-    * @param subCategory  subCategory
-    * @return [[views.html.smr_description]]
-    */
-  def listDescriptionAndCnt(categoryType: String, subCategory: String): Action[AnyContent] = Action.async {
-    database.runAsync(
-      (for {
-        (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.id && fc.fName === cat.fName
-        })} yield catRow
-        )
-        .filter(_.categoryType === categoryType)
-        .filter(_.subCategory === subCategory)
-        .groupBy(p => p.description)
-        .map { case (description, cnt) => (description, cnt.map(_.description).length) }
-        .sortBy(_._2.desc)
-        .result)
-      .map { rowSeq =>
-        Ok(views.html.smr_description(categoryType, rowSeq))
+        Ok(views.html.category.smr_sub_category(categoryType, category, rowSeq))
       }
   }
 
   /**
     * get Dirs without category, order by lastdate
     *
-    * @return [[views.html.cat_list_fc]]
+    * @return [[views.html.category.cat_list_fc]]
     */
   def listDirWithoutCatByLastDate: Action[AnyContent] = Action.async {
     val config = ConfigFactory.load("scanImport.conf")
@@ -103,7 +104,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
     val qry = (for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
       fc.sha256 === cat.id && fc.fName === cat.fName
     }) if catRow.isEmpty && fcRow.fSize > 0L
-    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
+                    } yield (fcRow.sha256, fcRow.fParent, fcRow.fLastModifiedDate)
       ).groupBy { p => (p._2, p._3) }
       .map(fld => (fld._1._1, fld._1._2))
     database.runAsync(qry.filterNot(_._1 endsWith "_files")
@@ -123,14 +124,14 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
       )
       vPath.clear()
 
-      Ok(views.html.cat_list_path(vView))
+      Ok(views.html.category.cat_list_path(vView))
     }
   }
 
   /**
     * get SmFileCard without category, order by lastdate
     *
-    * @return [[views.html.cat_list_fc]]
+    * @return [[views.html.category.cat_list_fc]]
     */
   def listFcWithoutCatByLastDate: Action[AnyContent] = Action.async {
     val config = ConfigFactory.load("scanImport.conf")
@@ -153,7 +154,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         .take(maxFilesTake)
         .result
     ).map { rowSeq =>
-      Ok(views.html.cat_list_fc(rowSeq))
+      Ok(views.html.category.cat_list_fc(rowSeq))
     }
   }
 
@@ -161,7 +162,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
   /**
     * get Dirs without category by extension, order count files
     *
-    * @return [[views.html.smr_category_dir_by_ext]]
+    * @return [[views.html.category.smr_category_dir_by_ext]]
     */
   def listDirWithoutCategoryByExtension(): Action[AnyContent] = Action.async { implicit request =>
     val config = ConfigFactory.load("scanImport.conf")
@@ -173,12 +174,12 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
       }) if catRow.isEmpty && fcRow.fSize > 0L
-      } yield (fcRow.sha256, fcRow.fParent)
+           } yield (fcRow.sha256, fcRow.fParent)
     } else {
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.id && fc.fName === cat.fName
       }) if catRow.isEmpty && fcRow.fSize > 0L && fcRow.fExtension.getOrElse("").toLowerCase === formData.extension.toLowerCase
-      } yield (fcRow.sha256, fcRow.fParent)
+           } yield (fcRow.sha256, fcRow.fParent)
     }
     database.runAsync(
       qry
@@ -189,7 +190,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         .take(maxFilesTake)
         .result
     ).map { rowSeq =>
-      Ok(views.html.smr_category_dir_by_ext(rowSeq))
+      Ok(views.html.category.smr_category_dir_by_ext(rowSeq))
     }
   }
 

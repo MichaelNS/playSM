@@ -46,7 +46,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
       val devices = ArrayBuffer[DeviceView]()
       rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
 
-      Ok(views.html.smr_index(devices))
+      Ok(views.html.category.smr_index(devices))
     }
   }
 

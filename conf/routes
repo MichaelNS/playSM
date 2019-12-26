@@ -55,18 +55,18 @@ GET         /getFcByDeviceSha256/:device/:sha256                      controller
 GET         /explorerDevice                                           controllers.SmReport.explorerDevice(device: String, treePath:String, path: String, depth: Int)
 GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
 
-GET         /listCategoryAndCnt                                       controllers.SmCategoryView.listCategoryAndCnt
-GET         /listSubCategoryAndCnt                                    controllers.SmCategoryView.listSubCategoryAndCnt(categoryType: String)
-GET         /listDescriptionAndCnt                                    controllers.SmCategoryView.listDescriptionAndCnt(categoryType: String, subCategoryType: String)
+GET         /listCategoryTypeAndCnt                                   controllers.SmCategoryView.listCategoryTypeAndCnt
+GET         /listCategoryAndCnt                                       controllers.SmCategoryView.listCategoryAndCnt(categoryType: String)
+GET         /listSubCategoryAndCnt                                    controllers.SmCategoryView.listSubCategoryAndCnt(categoryType: String, category: String)
 
 
-GET         /listPathByDescription                                    controllers.SmMove.listPathByDescription(categoryType: String, description: String)
+GET         /listPathByCategory                                       controllers.SmMove.listPathByCategory(categoryType: String, category: String, subCategory: String)
 GET         /listAllPathsByLstCrc                                     controllers.SmMove.listAllPathsByLstCrc(fParent: String)
 
 + nocsrf
-POST        /createJobToMove                                          controllers.SmMove.createJobToMove(categoryType: String, description: String, device: String, oldPath: String)
+POST        /createJobToMove                                          controllers.SmMove.createJobToMove(categoryType: String, category: String, subCategory: String, device: String, oldPath: String)
 + nocsrf
-POST        /delJobToMove                                             controllers.SmMove.delJobToMove(categoryType: String, description: String, device: String, path: String)
+POST        /delJobToMove                                             controllers.SmMove.delJobToMove(categoryType: String, category: String, subCategory: String, device: String, path: String)
 
 + nocsrf
 POST        /moveAllDevices                                           controllers.SmMove.moveAllDevices

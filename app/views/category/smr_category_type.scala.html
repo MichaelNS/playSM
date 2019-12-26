@@ -43,7 +43,7 @@
                         @*<td><a href="@routes.SmCategory.listDescriptionAndCnt("?")" >!Emtpy!</a></td>*@
                     } else {
 
-                        <td><a href="@routes.SmCategoryView.listSubCategoryAndCnt(fileCard._1.flatten.get)" >@fileCard._1</a></td>
+                        <td><a href="@routes.SmCategoryView.listCategoryAndCnt(fileCard._1.flatten.get)" >@fileCard._1</a></td>
                     }
                 <td>@fileCard._2</td>
                 </tr>

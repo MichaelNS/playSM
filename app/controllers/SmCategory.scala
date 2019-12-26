@@ -3,8 +3,8 @@ package controllers
 import java.io.{IOException, InputStream}
 
 import akka.actor.ActorSystem
+import akka.stream.ThrottleMode
 import akka.stream.scaladsl.{Sink, Source}
-import akka.stream.{ActorMaterializer, ThrottleMode}
 import akka.{Done, NotUsed}
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
@@ -64,7 +64,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     *
     * @param fParent  name dir for get SmFileCard
     * @param isBegins if true = get by startsWith, else by Equals
-    * @return [[views.html.cat_fc_path]]
+    * @return [[views.html.category.cat_fc_path]]
     */
   def listDirWithoutCatByParent(fParent: String,
                                 isBegins: Boolean = false
@@ -104,7 +104,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         )(FormCategoryUpdate.apply)(FormCategoryUpdate.unapply)
       )
 
-      Ok(views.html.cat_fc_path("path", fParent, rowSeq, catForm, isBegins))
+      Ok(views.html.category.cat_fc_path("path", fParent, rowSeq, catForm, isBegins))
     }
   }
 
@@ -120,11 +120,11 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
                                    isBegins: Boolean = false
                                   ): Action[AnyContent] = Action.async { implicit request =>
     FormCategoryUpdate.form.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.cat_form(formWithErrors, fParent, isBegins))),
+      formWithErrors => Future.successful(BadRequest(views.html.category.cat_form(formWithErrors, fParent, isBegins))),
       success = category => {
         if (category.categoryType.isEmpty || category.category.isEmpty || category.subCategory.isEmpty) {
           val form = FormCategoryUpdate.form.fill(category).withError("category", "categoryType isEmpty")
-          Future.successful(BadRequest(views.html.cat_form(form, fParent, isBegins)))
+          Future.successful(BadRequest(views.html.category.cat_form(form, fParent, isBegins)))
         } else {
           batchAssignCategoryAndDescription(fParent, isBegins, category.categoryType, category.category, category.subCategory, category.description)
 
@@ -217,7 +217,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         case Success(_) => logger.info("applyRulesSetCategory done ")
         case Failure(ex) => logger.error(s"applyRulesSetCategory error : ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
       }
-    Future.successful(Redirect(routes.SmCategoryView.listCategoryAndCnt()))
+    Future.successful(Redirect(routes.SmCategoryView.listCategoryTypeAndCnt()))
   }
 
   /**

@@ -47,10 +47,11 @@ class SmMove @Inject()(val database: DBService)
     * show list path from [[models.db.Tables.SmFileCard]]
     *
     * @param categoryType - for query row [[models.db.Tables.SmFileCard]]
-    * @param description  - for query row [[models.db.Tables.SmFileCard]]
-    * @return [[views.html.path_by_description]]
+    * @param category     - for query row [[models.db.Tables.SmFileCard]]
+    * @return [[views.html.category.path_by_category]]
     */
-  def listPathByDescription(categoryType: String, description: String): Action[AnyContent] = Action.async {
+  def listPathByCategory(categoryType: String, category: String, subCategory: String): Action[AnyContent] = Action.async {
+    debugParam
     val qry = sql"""
        SELECT
          x2.f_parent,
@@ -67,7 +68,8 @@ class SmMove @Inject()(val database: DBService)
         JOIN sm_category_fc category ON category.f_name = x2.f_name and category.id = x2.sha256
        WHERE
              category.category_type = '#$categoryType'
-         AND category.description = '#$description'
+         AND category.category = '#$category'
+         AND category.sub_category = '#$subCategory'
        GROUP BY x2.f_parent
        ORDER BY 3 DESC
       """
@@ -79,7 +81,7 @@ class SmMove @Inject()(val database: DBService)
         )(FormCrMove.apply)(FormCrMove.unapply)
       )
 
-      Ok(views.html.path_by_description(categoryType, description, rowSeq, moveForm))
+      Ok(views.html.category.path_by_category(categoryType, category, subCategory, rowSeq, moveForm))
     }
   }
 
@@ -94,7 +96,7 @@ class SmMove @Inject()(val database: DBService)
       .filter(_.fParent === fParent)
       .filter(_.sha256.nonEmpty)
       .map(_.sha256).distinct
-
+    // TODO fix to exist see SmReport.checkBackUp
     database.runAsync(
       Tables.SmFileCard
         .filter(_.sha256 in lstBackUpSha256)
@@ -109,34 +111,35 @@ class SmMove @Inject()(val database: DBService)
 
   /**
     * Cancel job to move files
-    * Call from [[views.html.path_by_description]] and [[listPathByDescription]]
+    * Call from [[views.html.category.path_by_category]] and [[listPathByCategory()]]
     *
-    * @see [[views.html.path_by_description]]
-    * @see [[listPathByDescription]]
+    * @see [[views.html.category.path_by_category]]
+    * @see [[listPathByCategory]]
     * @param categoryType - category type for Redirect
-    * @param description  - description for Redirect
+    * @param category     - category for Redirect
+    * @param subCategory  - subCategory for Redirect
     * @param device       - for remove row [[models.db.Tables.SmJobPathMove]]
     * @param path         - for remove row [[models.db.Tables.SmJobPathMove]]
-    * @return Redirect 2 [[listPathByDescription]]
+    * @return Redirect 2 [[listPathByCategory]]
     **/
-  def delJobToMove(categoryType: String, description: String, device: String, path: String): Action[AnyContent] = Action.async {
+  def delJobToMove(categoryType: String, category: String, subCategory: String, device: String, path: String): Action[AnyContent] = Action.async {
     val insRes = database.runAsync(Tables.SmJobPathMove.filter(_.deviceUid === device).filter(_.pathFrom === path).delete)
     insRes onComplete {
       case Success(suc) => logger.debug(s"del [$suc] row - device = [$device]")
       case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
     }
 
-    Future.successful(Redirect(routes.SmMove.listPathByDescription(categoryType, description)))
+    Future.successful(Redirect(routes.SmMove.listPathByCategory(categoryType, category, subCategory)))
   }
 
-  def createJobToMove(categoryType: String, description: String, device: String, oldPath: String): Action[AnyContent] = Action.async { implicit request =>
+  def createJobToMove(categoryType: String, category: String, subCategory: String, device: String, oldPath: String): Action[AnyContent] = Action.async { implicit request =>
     FormCrMove.form.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.move_form(formWithErrors, categoryType, description, device, oldPath))),
+      formWithErrors => Future.successful(BadRequest(views.html.move_form(formWithErrors, categoryType, category, subCategory, device, oldPath))),
       success = path => {
         logger.warn(path.newPath)
         if (path.newPath.isEmpty) {
           val form = FormCrMove.form.fill(path).withError("newPath", " isEmpty")
-          Future.successful(BadRequest(views.html.move_form(form, categoryType, description, device, oldPath)))
+          Future.successful(BadRequest(views.html.move_form(form, categoryType, category, subCategory, device, oldPath)))
         } else {
           val cRow = Tables.SmJobPathMoveRow(-1, device, oldPath, path.newPath)
           debug(cRow)
@@ -148,7 +151,7 @@ class SmMove @Inject()(val database: DBService)
           }
           debug(insRes)
 
-          Future.successful(Redirect(routes.SmMove.listPathByDescription(categoryType, description)))
+          Future.successful(Redirect(routes.SmMove.listPathByCategory(categoryType, category, subCategory)))
         }
       }
     )
