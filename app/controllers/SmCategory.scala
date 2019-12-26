@@ -127,7 +127,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
           val form = FormCategoryUpdate.form.fill(category).withError("category", "categoryType isEmpty")
           Future.successful(BadRequest(views.html.category.cat_form(form, fParent, isBegins)))
         } else {
-          batchAssignCategoryAndDescription(fParent, isBegins, category.categoryType, category.category, category.subCategory, category.description)
+          batchAssignCategoryAndDescription(fParent, isBegins, -1, category.categoryType, category.category, category.subCategory, category.description)
 
           Future.successful(Redirect(routes.SmCategory.listDirWithoutCatByParent(fParent, isBegins)))
         }
@@ -137,6 +137,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
 
   def batchAssignCategoryAndDescription(fParent: String,
                                         isBegins: Boolean = false,
+                                        id: Int,
                                         categoryType: String,
                                         category: String,
                                         subCategory: String,
@@ -150,7 +151,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     val dbFcStream: Source[(Option[String], String), NotUsed] = getStreamFcByParent(fParent, isBegins)
     val applyRule = dbFcStream
       .throttle(elements = 500, 10.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
-      .mapAsync(1)(writeToCategoryTbl(_, categoryType, category, subCategory, description))
+      .mapAsync(1)(writeToCategoryTbl(_, id, categoryType, category, subCategory, description))
       .runWith(Sink.ignore)
 
     applyRule.map(ll => logger.info(s"end rulePath = $fParent   ${System.currentTimeMillis - start} ms  $ll"))
@@ -219,6 +220,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
           .mapAsync(1) { rulePath =>
             batchAssignCategoryAndDescription(fParent = rulePath,
               isBegins = rule.isBegins,
+              id = -1,
               categoryType = rule.categoryType,
               category = rule.category,
               subCategory = rule.subCategory,
@@ -246,13 +248,14 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
       .mapAsync(1) { rule =>
         debug(rule)
         val asd = rule.fPath.map { path =>
-            batchAssignCategoryAndDescription(fParent = path,
-              isBegins = rule.isBegins,
-              categoryType = rule.categoryType,
-              category = rule.category,
-              subCategory = rule.subCategory,
-              description = rule.description.getOrElse(""))
-          }
+          batchAssignCategoryAndDescription(fParent = path,
+            isBegins = rule.isBegins,
+            id = rule.id,
+            categoryType = rule.categoryType,
+            category = rule.category,
+            subCategory = rule.subCategory,
+            description = rule.description.getOrElse(""))
+        }
 //        debug(asd)
         asd.last
 //        Future.successful()
@@ -339,8 +342,8 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     * @param description  description
     * @return count upsert records SmCategoryFc
     */
-  def writeToCategoryTbl(message: (Option[String], String), categoryType: String, category: String, subCategory: String, description: String): Future[Int] = {
-    val cRow = Tables.SmCategoryFcRow(-1, message._1.get, message._2, Some(categoryType), Some(category), Some(subCategory), Some(description))
+  def writeToCategoryTbl(message: (Option[String], String), id: Int, categoryType: String, category: String, subCategory: String, description: String): Future[Int] = {
+    val cRow = Tables.SmCategoryFcRow(id, message._1.get, message._2, Some(categoryType), Some(category), Some(subCategory), Some(description))
     val insRes = database.runAsync(Tables.SmCategoryFc.insertOrUpdate(models.SmCategoryFc.apply(cRow).data.toRow))
 
     insRes
