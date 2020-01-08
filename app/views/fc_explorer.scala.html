@@ -19,7 +19,7 @@
             <tbody>
             @for(path <- lstPath) {
                 <tr>
-                    <td><a href="@routes.SmReport.explorerDevice(device, treePath + OsConf.fsSeparator + path._1, path._1, depth + 1)" >@path._1</a></td>
+                    <td><a href="@routes.SmView.explorerDevice(device, treePath + OsConf.fsSeparator + path._1, path._1, depth + 1)" >@path._1</a></td>
                     <td>@path._2</td>
                     <td>@path._3</td>
                     <td>@path._4</td>

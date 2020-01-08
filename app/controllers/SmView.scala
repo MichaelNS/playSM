@@ -30,10 +30,11 @@ class SmView @Inject()(val database: DBService)
        select distinct split_part(fc.f_parent, '/', #$depth),
                        cast(sum(f_size) / 1024 /1024 as int),
                        count(1),
-                       count(1) filter (where sm_category_fc is null),
-                       array_agg(DISTINCT sm_category_fc.category_type) filter (where sm_category_fc is not null)
+                       count(1) filter (where sm_category_rule is null),
+                       array_agg(DISTINCT sm_category_rule.category_type) filter (where sm_category_fc is not null)
        FROM "sm_file_card" fc
               left outer join sm_category_fc on fc.sha256 = sm_category_fc.sha256 and fc.f_name = sm_category_fc.f_name
+              left outer join sm_category_rule ON sm_category_rule.id = sm_category_fc.id
        where fc.device_uid = '#$deviceName'
        and fc.f_size > 0
        GROUP BY split_part(fc.f_parent, '/', #$depth)
@@ -43,6 +44,40 @@ class SmView @Inject()(val database: DBService)
 
     database.runAsync(qry).map { rowSeq =>
       Ok(views.html.smd_explorer(deviceName, rowSeq, depth + 1))
+    }
+  }
+
+  /**
+    * Explorer device
+    *
+    * @param device   device
+    * @param treePath treePath
+    * @param cPath    path
+    * @param depth    path depth
+    * @return
+    */
+  def explorerDevice(device: String, treePath: String, cPath: String, depth: Int): Action[AnyContent] = Action.async {
+    debugParam
+
+    val qry = sql"""
+      SELECT
+        split_part(x2.f_parent, '/', #$depth),
+        count(1),
+        count(1) filter (where sm_category_fc is null),
+        array_agg(DISTINCT category_rule.category_type) filter (where sm_category_fc is not null)
+    FROM sm_file_card x2
+           left outer join sm_category_fc on x2.sha256 = sm_category_fc.sha256
+           left outer join  sm_category_rule category_rule ON category_rule.id = sm_category_fc.id
+    WHERE (((x2.device_uid = '#$device')))
+      AND (NOT (x2.f_parent LIKE '%^_files' ESCAPE '^'))
+      AND (NOT (x2.f_parent LIKE '%^_files/' ESCAPE '^'))
+      AND split_part(x2.f_parent, '/', #$depth -1) = '#$cPath'
+      GROUP BY split_part(x2.f_parent, '/', #$depth)
+      ORDER BY split_part(x2.f_parent, '/', #$depth)
+      """
+      .as[(String, Int, Int, String)]
+    database.runAsync(qry).map { rowSeq =>
+      Ok(views.html.fc_explorer(device, treePath, rowSeq, depth))
     }
   }
 

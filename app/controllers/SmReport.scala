@@ -93,8 +93,8 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
               SELECT
                 card.sha256,
                 card.f_name,
-                category.category_type,
-                category.description,
+                category_rule.category_type,
+                category_rule.description,
                 (SELECT device_uid
                  FROM sm_file_card sq
                  WHERE sq.sha256 = card.sha256
@@ -102,11 +102,12 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
                  LIMIT 1) AS device_uid
               FROM "sm_file_card" card
                 JOIN sm_category_fc category ON category.f_name = card.f_name and category.sha256 = card.sha256
-              WHERE category.category_type IS NOT NULL
+                JOIN sm_category_rule category_rule ON category_rule.id = category.id
+              WHERE category_rule.category_type IS NOT NULL
               GROUP BY card.sha256,
                        card.f_name,
-                       category.category_type,
-                       category.description
+                       category_rule.category_type,
+                       category_rule.description
               HAVING COUNT(1) < #$cntFiles
             ) AS res
        WHERE device_uid NOT IN (#$device_NotView)
@@ -208,10 +209,12 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
   def getFcByDeviceSha256(device: String, sha256: String): Action[AnyContent] = Action.async {
 
     val qry = for {
-      (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
+      ((fcRow, catRow), rulesRow) <- Tables.SmFileCard .joinLeft (Tables.SmCategoryFc). on ((fc, cat) => {
         fc.sha256 === cat.sha256 && fc.fName === cat.fName
-      }) if fcRow.deviceUid === device && fcRow.sha256 === sha256
-    } yield (fcRow.id, fcRow.fName, fcRow.fParent, fcRow.fLastModifiedDate, catRow.map(_.categoryType), catRow.map(_.description))
+      }).joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
+
+      if fcRow.deviceUid === device && fcRow.sha256 === sha256
+    } yield (fcRow.id, fcRow.fName, fcRow.fParent, fcRow.fLastModifiedDate, rulesRow.map(_.categoryType), rulesRow.map(_.description))
 
     database.runAsync(
       qry
@@ -219,39 +222,6 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
         .result
     ).map { rowSeq =>
       Ok(views.html.sm_device_sha256(device, rowSeq))
-    }
-  }
-
-  /**
-    * Explorer device
-    *
-    * @param device   device
-    * @param treePath treePath
-    * @param cPath    path
-    * @param depth    path depth
-    * @return
-    */
-  def explorerDevice(device: String, treePath: String, cPath: String, depth: Int): Action[AnyContent] = Action.async {
-    debugParam
-
-    val qry = sql"""
-      SELECT
-        split_part(x2.f_parent, '/', #$depth),
-        count(1),
-        count(1) filter (where sm_category_fc is null),
-        array_agg(DISTINCT sm_category_fc.category_type) filter (where sm_category_fc is not null)
-    FROM sm_file_card x2
-           left outer join sm_category_fc on x2.sha256 = sm_category_fc.sha256
-    WHERE (((x2.device_uid = '#$device')))
-      AND (NOT (x2.f_parent LIKE '%^_files' ESCAPE '^'))
-      AND (NOT (x2.f_parent LIKE '%^_files/' ESCAPE '^'))
-      AND split_part(x2.f_parent, '/', #$depth -1) = '#$cPath'
-      GROUP BY split_part(x2.f_parent, '/', #$depth)
-      ORDER BY split_part(x2.f_parent, '/', #$depth)
-      """
-      .as[(String, Int, Int, String)]
-    database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.fc_explorer(device, treePath, rowSeq, depth))
     }
   }
 

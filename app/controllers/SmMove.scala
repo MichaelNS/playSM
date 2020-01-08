@@ -66,10 +66,11 @@ class SmMove @Inject()(val database: DBService)
           WHERE pm.path_from = x2.f_parent)
       FROM sm_file_card x2
         JOIN sm_category_fc category ON category.f_name = x2.f_name and category.sha256 = x2.sha256
+        JOIN sm_category_rule category_rule ON category_rule.id = category.id
        WHERE
-             category.category_type = '#$categoryType'
-         AND category.category = '#$category'
-         AND category.sub_category = '#$subCategory'
+             category_rule.category_type = '#$categoryType'
+         AND category_rule.category = '#$category'
+         AND category_rule.sub_category = '#$subCategory'
        GROUP BY x2.f_parent
        ORDER BY 3 DESC
       """

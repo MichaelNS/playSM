@@ -25,8 +25,8 @@ class BrowserSpec extends PlaySpec
 
   val config: Config = ConfigFactory.load("application.conf")
 
-  val driver = "org.h2.Driver"
-  val url = "jdbc:h2:mem:play_test;DATABASE_TO_UPPER=false;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
+  val driver: String = config.getString("slick.dbs.default.db.profile")
+  val url: String = config.getString("slick.dbs.default.db.url")
   val username: String = config.getString("slick.dbs.default.db.user")
   val password: String = config.getString("slick.dbs.default.db.password")
 
@@ -153,8 +153,8 @@ class BrowserSpec extends PlaySpec
   }
 
   // SmSyncDeviceStream -----------------------------------------------------------------------------------------------
-  "UserController refresh device" should {
-    "render the refresh device" in {
+  "UserController import device" should {
+    "render the import device" in {
       val controller = app.injector.instanceOf[SmSyncDeviceStream]
       val request = FakeRequest().withCSRFToken
       val result = controller.importDevice().apply(request)
@@ -185,8 +185,8 @@ class BrowserSpec extends PlaySpec
       contentType(result) mustBe Some("text/html")
     }
   }
-  /*
-    "UserController checkBackFilesLastYear" should {
+
+  "UserController checkBackFilesLastYear" should {
       "render the checkBackFilesLastYear" in {
         val controller = app.injector.instanceOf[SmReport]
         val request = FakeRequest().withCSRFToken
@@ -196,11 +196,10 @@ class BrowserSpec extends PlaySpec
         contentType(result) mustBe Some("text/html")
       }
     }
-    */
-  /*
-    "UserController explorerDevice" should {
+
+  "UserController explorerDevice" should {
       "render the explorerDevice" in {
-        val controller = app.injector.instanceOf[SmReport]
+        val controller = app.injector.instanceOf[SmView]
         val request = FakeRequest().withCSRFToken
         val result = controller.explorerDevice("","","",1).apply(request)
 
@@ -208,8 +207,6 @@ class BrowserSpec extends PlaySpec
         contentType(result) mustBe Some("text/html")
       }
     }
-
-   */
 
   // SmSearch ---------------------------------------------------------------------------------------------------------
   "UserController byFileName" should {
@@ -224,7 +221,6 @@ class BrowserSpec extends PlaySpec
   }
 
   // SmView ---------------------------------------------------------------------------------------------------------
-  /*
   "UserController viewStorage" should {
     "render the viewStorage" in {
       val controller = app.injector.instanceOf[SmView]
@@ -235,7 +231,7 @@ class BrowserSpec extends PlaySpec
       contentType(result) mustBe Some("text/html")
     }
   }
-*/
+
   "UserController viewPathBySha256" should {
     "render the viewPathBySha256" in {
       val controller = app.injector.instanceOf[SmView]
@@ -246,6 +242,5 @@ class BrowserSpec extends PlaySpec
       contentType(result) mustBe Some("text/html")
     }
   }
-  //
-  //
+
 }

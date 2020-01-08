@@ -37,9 +37,9 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         })
           .joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
 
-      } yield (fcRow, rulesRow.map(_.categoryType))
+      } yield (fcRow.fSize, rulesRow.map(_.categoryType))
         )
-        .filter(_._1.fSize > 0L)
+        .filter(_._1 > 0L)
         .groupBy(p => p._2)
         .map { case (categoryType, cnt) => (categoryType, cnt.map(_._2).length) }
         .sortBy(_._2.desc)
@@ -58,13 +58,17 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
   def listCategoryAndCnt(categoryType: String): Action[AnyContent] = Action.async {
     database.runAsync(
       (for {
-        (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
+        ((fcRow, catRow), rulesRow) <- Tables.SmFileCard.join(Tables.SmCategoryFc).on((fc, cat) => {
           fc.sha256 === cat.sha256 && fc.fName === cat.fName
-        })} yield catRow
+        })
+          .joinLeft(Tables.SmCategoryRule).on(_._2.id === _.id)
+
+      } yield (fcRow.fSize, rulesRow.map(_.categoryType), rulesRow.map(_.category))
         )
-        .filter(_.categoryType === categoryType)
-        .groupBy(p => p.category)
-        .map { case (description, cnt) => (description, cnt.map(_.category).length) }
+        .filter(_._2 === categoryType)
+        .filter(_._1 > 0L)
+        .groupBy(p => p._3)
+        .map { case (description, cnt) => (description, cnt.map(_._3).length) }
         .sortBy(_._2.desc)
         .result)
       .map { rowSeq =>
@@ -81,14 +85,18 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
   def listSubCategoryAndCnt(categoryType: String, category: String): Action[AnyContent] = Action.async {
     database.runAsync(
       (for {
-        (fcRow, catRow) <- Tables.SmFileCard join Tables.SmCategoryFc on ((fc, cat) => {
+        ((fcRow, catRow), rulesRow)  <- Tables.SmFileCard.join (Tables.SmCategoryFc). on ((fc, cat) => {
           fc.sha256 === cat.sha256 && fc.fName === cat.fName
-        })} yield catRow
+        })
+          .joinLeft(Tables.SmCategoryRule).on(_._2.id === _.id)
+
+      } yield (fcRow.fSize, rulesRow.map(_.categoryType), rulesRow.map(_.category), rulesRow.map(_.subCategory))
         )
-        .filter(_.categoryType === categoryType)
-        .filter(_.category === category)
-        .groupBy(p => p.subCategory)
-        .map { case (subcategory, cnt) => (subcategory, cnt.map(_.subCategory).length) }
+        .filter(_._2 === categoryType)
+        .filter(_._3 === category)
+        .filter(_._1 > 0L)
+        .groupBy(p => p._4)
+        .map { case (subcategory, cnt) => (subcategory, cnt.map(_._4).length) }
         .sortBy(_._2.desc)
         .result)
       .map { rowSeq =>

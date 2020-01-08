@@ -87,21 +87,13 @@ object SmFileCard {
 case class SmCategoryFc(
                          id: Int,
                          sha256: String,
-                         fName: String,
-                         categoryType: Option[String] = None,
-                         category: Option[String] = None,
-                         subCategory: Option[String] = None,
-                         description: Option[String] = None
+                         fName: String
                        ) {
   def toRow: Tables.SmCategoryFcRow = {
     Tables.SmCategoryFcRow(
       id = id,
       sha256 = sha256,
-      fName = fName,
-      categoryType = categoryType,
-      category = category,
-      subCategory = subCategory,
-      description = description
+      fName = fName
     )
   }
 }
@@ -113,11 +105,7 @@ object SmCategoryFc {
       data = SmCategoryFc(
         id = row.id,
         sha256 = row.sha256,
-        fName = row.fName,
-        categoryType = row.categoryType,
-        category = row.category,
-        subCategory = row.subCategory,
-        description = row.description
+        fName = row.fName
       )
     )
   }

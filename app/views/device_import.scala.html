@@ -62,7 +62,7 @@
 
                     <td>
                         <div class="input-group-button">
-                            <form action="@routes.SmSyncDeviceStream.calcCRC(device.uid)" method="post">
+                            <form action="@routes.SmFcCrc.calcCRC(device.uid)" method="post">
                                 <button class="button primary">calcCRC</button>
                             </form>
                         </div>
@@ -81,7 +81,7 @@
         </table>
     </div>
 
-    @form(routes.SmSyncDeviceStream.calcAllCRC()) {
+    @form(routes.SmFcCrc.calcAllCRC()) {
         @CSRF.formField
 
         <button class="button success">calcAllCRC</button>

@@ -11,11 +11,6 @@ POST        /deviceTree/:device                                       controller
 
 POST        /importDevice                                             controllers.SmSyncDeviceStream.importDevice
 
-+ nocsrf
-POST        /calcCRC/:device                                          controllers.SmSyncDeviceStream.calcCRC(device: String)
-
-+ nocsrf
-POST        /calc-all-crc                                             controllers.SmSyncDeviceStream.calcAllCRC
 
 GET         /deviceImport                                             controllers.SmSyncDeviceStream.deviceImport
 
@@ -28,6 +23,13 @@ POST        /syncs-single-name-path-stream                            controller
 
 + nocsrf
 POST        /syncDeviceStream/deleteNonExistsFpathInDb/:device        controllers.SmSyncDeviceStream.deleteNonExistsFpathInDb(device: String)
+
+
++ nocsrf
+POST        /calcCRC/:device                                          controllers.SmFcCrc.calcCRC(device: String)
+
++ nocsrf
+POST        /calc-all-crc                                             controllers.SmFcCrc.calcAllCRC
 
 
 GET         /sync-compare-directory/children/:device                  controllers.SmSyncCmpDir.getChildren(device: String, id:String)
@@ -55,7 +57,6 @@ GET         /checkBackAllFiles                                        controller
 GET         /checkBackFilesLastYear                                   controllers.SmReport.checkBackFilesLastYear
 GET         /checkDuplicates/:device                                  controllers.SmReport.checkDuplicates(device: String)
 GET         /getFcByDeviceSha256/:device/:sha256                      controllers.SmReport.getFcByDeviceSha256(device: String, sha256: String)
-GET         /explorerDevice                                           controllers.SmReport.explorerDevice(device: String, treePath:String, path: String, depth: Int)
 GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
 
 GET         /listCategoryTypeAndCnt                                   controllers.SmCategoryView.listCategoryTypeAndCnt
@@ -93,6 +94,7 @@ GET         /copy-rules-to-db                                         controller
 
 #view-file
 GET         /view-storage                                             controllers.SmView.viewStorage(device: String)
+GET         /explorerDevice                                           controllers.SmView.explorerDevice(device: String, treePath:String, path: String, depth: Int)
 GET         /view-file                                                controllers.SmView.viewFile(sha256: Option[String])
 GET         /view-file-by-natural-key                                 controllers.SmView.viewFileByNaturalKey(deviceUid: String, path: String, fName: String)
 

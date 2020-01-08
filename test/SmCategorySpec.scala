@@ -27,8 +27,8 @@ class SmCategorySpec extends PlaySpec
 
   val config: Config = ConfigFactory.load("application.conf")
 
-  val driver = "org.h2.Driver"
-  val url = "jdbc:h2:mem:play_test;DATABASE_TO_UPPER=false;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
+  val driver: String = config.getString("slick.dbs.default.db.profile")
+  val url: String = config.getString("slick.dbs.default.db.url")
   val username: String = config.getString("slick.dbs.default.db.user")
   val password: String = config.getString("slick.dbs.default.db.password")
 
@@ -171,7 +171,7 @@ class SmCategorySpec extends PlaySpec
       val controller = app.injector.instanceOf[SmCategory]
       val message: (Option[String], String) = (Some("sha_id"), "fileName")
 
-      controller.writeToCategoryTbl(message, -1, "categoryType", "category", "subCategory", "description")
+      controller.writeToCategoryTbl(message, -1)
       //      val result = controller.writeToCategoryTbl(message, "categoryType", "description")
       //      result.onComplete {
       //        case Success(insSuc) => logger.warn(s"Upsert cat = $insSuc")

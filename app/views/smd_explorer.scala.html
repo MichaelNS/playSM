@@ -19,7 +19,7 @@
             <tbody>
             @for(folder <- folders) {
                 <tr>
-                    <td><a href="@routes.SmReport.explorerDevice(device, folder._1, folder._1, depth)" >@folder._1</a></td>
+                    <td><a href="@routes.SmView.explorerDevice(device, folder._1, folder._1, depth)" >@folder._1</a></td>
                     <td>@folder._2</td>
                     <td>@folder._3</td>
                     <td>@folder._4</td>

@@ -60,22 +60,22 @@ CREATE TABLE sm_file_card
 );
 
 CREATE INDEX idx_f_parent
-  ON sm_file_card (f_parent);
+ON sm_file_card (f_parent);
 
 CREATE INDEX idx_fc_f_name_lc
-  ON sm_file_card (f_name_lc);
+ON sm_file_card (f_name_lc);
 
 CREATE INDEX idx_last_modified
-  ON sm_file_card (f_last_modified_date);
+ON sm_file_card (f_last_modified_date);
 
 CREATE INDEX idx_sm_file_card_device_uid
-  ON sm_file_card (device_uid, f_parent);
+ON sm_file_card (device_uid, f_parent);
 
 CREATE INDEX idx_sha256
-  ON sm_file_card (sha256);
+ON sm_file_card (sha256);
 
 CREATE INDEX idx_fc_sha_name
-  ON sm_file_card (sha256, f_name);
+ON sm_file_card (sha256, f_name);
 
 CREATE TABLE sm_image_resize
 (
@@ -86,7 +86,7 @@ CREATE TABLE sm_image_resize
 
 CREATE TABLE sm_job_path_move
 (
-  id           serial NOT NULL,
+  id           SERIAL NOT NULL,
   device_uid   VARCHAR NOT NULL,
   path_from    VARCHAR NOT NULL,
   path_to      VARCHAR NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE sm_log
 (
   create_date   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   device_uid    VARCHAR NOT NULL,
-  level VARCHAR NOT NULL,
+  level         VARCHAR NOT NULL,
   step          VARCHAR NOT NULL,
   error         VARCHAR NOT NULL,
   stack_trace   VARCHAR,
@@ -108,19 +108,19 @@ CREATE TABLE sm_log
 );
 
 CREATE INDEX idx_sm_log_device_uid
-  ON sm_log (device_uid);
+ON sm_log (device_uid);
 
 CREATE TABLE sm_category_fc
 (
-  id       INTEGER NOT NULL,
-  sha256   VARCHAR NOT NULL,
-  f_name   VARCHAR NOT NULL,
+  id              INTEGER NOT NULL,
+  sha256          VARCHAR NOT NULL,
+  f_name          VARCHAR NOT NULL,
   CONSTRAINT sm_category_fc_pkey PRIMARY KEY (sha256,f_name),
   CONSTRAINT fk_sm_category_fc_sm_category_rule FOREIGN KEY (id) REFERENCES sm_category_rule (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE INDEX idx_sm_category_fc_id
-  ON sm_category_fc (id);
+ON sm_category_fc (id);
 
 CREATE TABLE sm_exif
 (

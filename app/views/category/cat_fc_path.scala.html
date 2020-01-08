@@ -6,9 +6,9 @@
                         String,
                         java.time.LocalDateTime,
                         Option[String],
-                        Option[Option[String]],
-                        Option[Option[String]],
-                        Option[Option[String]],
+                        Option[String],
+                        Option[String],
+                        Option[String],
                         Option[Option[String]])],
         catForm: Form[FormCategoryUpdate],
         isBegins: Boolean
@@ -49,7 +49,7 @@
             </div>
             <div class="row column">
                 <label>Description
-                    <input type="text" name="description" value="" placeholder="description" required>
+                    <input type="text" name="description" value="" placeholder="description" >
                     @catForm.error("description").map { formError =>
                         <span class="form-error is-visible">@formError.message</span>
                     }
