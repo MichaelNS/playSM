@@ -73,28 +73,15 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
                                ): Action[AnyContent] = Action.async {
     debugParam
 
-    // query by startsWith
-    val qry = if (isBegins) {
-      for {
-        ((fcRow, catRow), rulesRow) <- Tables.SmFileCard.joinLeft(Tables.SmCategoryFc).on((fc, cat) => {
-          fc.sha256 === cat.sha256 && fc.fName === cat.fName
-        }).joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
-
-        if fcRow.fParent.startsWith(fParent)
-      } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, rulesRow.map(_.categoryType), rulesRow.map(_.category), rulesRow.map(_.subCategory), rulesRow.map(_.description))
-
-    }
-    else {
-      for {
-        ((fcRow, catRow), rulesRow) <- Tables.SmFileCard.joinLeft(Tables.SmCategoryFc).on((fc, cat) => {
-          fc.sha256 === cat.sha256 && fc.fName === cat.fName
-        }).joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
-        if fcRow.fParent === fParent
-      } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, rulesRow.map(_.categoryType), rulesRow.map(_.category), rulesRow.map(_.subCategory), rulesRow.map(_.description))
-    }
+    val qry = for {
+      ((fcRow, catRow), rulesRow) <- Tables.SmFileCard.joinLeft(Tables.SmCategoryFc).on((fc, cat) => {
+        fc.sha256 === cat.sha256 && fc.fName === cat.fName
+      }).joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
+    } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, rulesRow.map(_.categoryType), rulesRow.map(_.category), rulesRow.map(_.subCategory), rulesRow.map(_.description))
 
     database.runAsync(
       qry
+        .filter(if (isBegins) _._2.startsWith(fParent) else _._2 === fParent)
         .sortBy(_._3)
         .sortBy(_._2)
         .sortBy(_._1)
@@ -141,6 +128,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
   }
 
   def writeCategoryToDb(fParent: String, isBegins: Boolean = false, catForm: FormCategoryUpdate): Future[Any] = {
+    // TODO fix Future[Any] 2 Int
     val dbRes = database.runAsync(Tables.SmCategoryRule.filter(q => q.categoryType === catForm.categoryType && q.category === catForm.category && q.subCategory === catForm.subCategory).result)
       .map { rowSeq =>
         debug(rowSeq)
@@ -257,7 +245,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
             id = rule.id
           )
         }
-        // TODO fix to wait all futures
+        // TODO check - fix to wait all futures
         Future.sequence(asd)
       }
       .recover { case t: Throwable =>
