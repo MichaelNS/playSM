@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.LocalDateTime
+
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
 import play.api.mvc.{Action, AnyContent, InjectedController}
@@ -39,6 +41,10 @@ class SmSyncExif @Inject()(val database: DBService)
             if (device.isDefined) {
               val mountPoint = device.head.mountpoint
               rowSeq.foreach { cFc => writeExif(cFc._1, mountPoint + OsConf.fsSeparator + cFc._2 + cFc._3) }
+
+              database.runAsync((for {uRow <- Tables.SmDevice if uRow.uid === deviceUid} yield uRow.exifDate)
+                .update(Some(LocalDateTime.now())))
+                .map(_ => logger.info(s"Exif complete for device $deviceUid"))
             }
           case Failure(ex)
           => logger.error(s"calcCRC error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")

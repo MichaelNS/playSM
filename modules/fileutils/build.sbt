@@ -4,7 +4,7 @@ name := "fileutils"
 lazy val commonSettings = Seq(
   organization := "ru.ns",
   version := "0.0.2",
-  scalaVersion := "2.13.0",
+  scalaVersion := "2.13.3",
 
   scalacOptions ++= Seq(
 //    "-target:jvm-1.8",
@@ -59,14 +59,14 @@ lazy val fileutils = (project in file("."))
 
     libraryDependencies += "com.google.guava" % "guava" % "23.0",
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.9",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.7",
+    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.2.1",
+    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.9",
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7",
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.9",
 
-    libraryDependencies += "com.drewnoakes" % "metadata-extractor" % "2.12.0",
+    libraryDependencies += "com.drewnoakes" % "metadata-extractor" % "2.14.0",
 
-    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0"
+    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.9.1"
   )
 
 // sbt-scoverage

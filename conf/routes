@@ -58,6 +58,8 @@ GET         /checkBackFilesLastYear                                   controller
 GET         /checkDuplicates/:device                                  controllers.SmReport.checkDuplicates(device: String)
 GET         /getFcByDeviceSha256/:device/:sha256                      controllers.SmReport.getFcByDeviceSha256(device: String, sha256: String)
 GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
+GET         /cmpBackupAndroindDeviceByFile/:fileName                  controllers.SmReport.cmpBackupAndroindDeviceByFile(fileName:String)
+
 
 GET         /listCategoryTypeAndCnt                                   controllers.SmCategoryView.listCategoryTypeAndCnt
 GET         /listCategoryAndCnt                                       controllers.SmCategoryView.listCategoryAndCnt(categoryType: String)
@@ -104,5 +106,8 @@ GET         /viewPathBySha256                                         controller
 GET         /search-form                                              controllers.SmSearch.queryForm
 GET         /search-by-file-name                                      controllers.SmSearch.byFileName(name: String, limit: Int ?= 50)
 GET         /get-files-by-file-name                                   controllers.SmSearch.getFilesbyName(draw: Int, start:Int, length:Int)
+
+GET         /exif-devices                                             controllers.browser.SmExifDevice.listExifDevices
+GET         /exif-files-by-device                                     controllers.browser.SmExifDevice.listFilesByExifDevice(exifMake: String, exifDevice: String)
 
 GET         /assets/*file                                             controllers.Assets.versioned(path="/public", file: Asset)

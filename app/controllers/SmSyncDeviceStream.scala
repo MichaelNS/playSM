@@ -256,8 +256,6 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
       database.runAsync(Tables.SmFileCard.filter(_.id === key).delete)
     }
     val futureListOfTrys = Future.sequence(insRes)
-    Thread.sleep(1000)
-    logger.debug(s"---")
 
     futureListOfTrys onComplete {
       case Success(suc) =>

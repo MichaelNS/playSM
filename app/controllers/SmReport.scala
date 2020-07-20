@@ -11,6 +11,7 @@ import services.db.DBService
 import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.jdk.CollectionConverters._
 
@@ -259,4 +260,47 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
         Ok(views.html.dirs_fc(rowSeq))
       }
   }
+
+  /**
+    * Check backup android
+    * ls -at > /tmp/123.txt
+    *
+    * Android Debug Bridge
+    * adb shell ls /sdcard/DCIM/Camera/ > /tmp/111222
+    *
+    * @param fileName file name
+    * @return
+    */
+  def cmpBackupAndroindDeviceByFile(fileName: String): Action[AnyContent] = Action.async {
+    val copyFrom = "/sdcard/DCIM/Camera/"
+    val copyTo = "/tmp/cp_back/"
+
+    val file = better.files.File(s"/tmp/$fileName")
+    val content: String = file.contentAsString
+    val lines = content.split("\n")
+
+    val fileNamesImp = ArrayBuffer[String]()
+    val fileNamesExp = ArrayBuffer[String]()
+
+    lines.foreach { tt =>
+      val fileName = tt.replace("\n", "").replace("\r", "")
+      //      fileNamesImp.append(fileName + "1")
+      fileNamesImp.append(fileName)
+    }
+
+    database.runAsync(Tables.SmFileCard.filter(_.fName inSet fileNamesImp).map(_.fName).result).map { rowSeq =>
+      val files2copy = fileNamesImp diff rowSeq
+      files2copy.foreach { fileName =>
+        if (fileName.startsWith("IMG_") || fileName.startsWith("VID_")) {
+          val sss = s"adb pull $copyFrom$fileName $copyTo$fileName"
+          fileNamesExp.append(sss)
+        }
+      }
+      val fileWr = better.files.File(s"/tmp/$fileName.sh")
+      fileWr.overwrite(fileNamesExp.mkString("\n"))
+
+      Ok(fileNamesExp.length.toString)
+    }
+  }
+
 }

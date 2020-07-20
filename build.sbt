@@ -4,7 +4,7 @@ name := "playSM"
 lazy val commonSettings = Seq(
   organization := "ru.ns",
   version := "0.1.3",
-  scalaVersion := "2.13.0",
+  scalaVersion := "2.13.3",
 
   //  https://tpolecat.github.io/2017/04/25/scalac-flags.html
   // https://nathankleyn.com/2019/05/13/recommended-scalac-flags-for-2-13/
@@ -68,8 +68,8 @@ lazy val root = (project in file("."))
 
     libraryDependencies += "com.typesafe.slick" %% "slick" % "3.3.2",
     libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.18.1",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.18.1",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.19.0",
+    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.19.0",
     libraryDependencies += "com.typesafe.play" %% "play-slick" % "5.0.0",
     libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
 
@@ -78,19 +78,20 @@ lazy val root = (project in file("."))
 
     libraryDependencies += guice,
 
-    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0" % Test,
+    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test,
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.9",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.7",
+    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.2.1",
+    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.9",
 
-    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0",
+    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.9.1",
 
     //    scala-fixture:
     libraryDependencies += "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
     libraryDependencies += "com.h2database" % "h2" % "1.4.200" % Test,
-    libraryDependencies += "org.flywaydb" % "flyway-core" % "6.1.3" % "test",
+    libraryDependencies += "org.flywaydb" % "flyway-core" % "6.5.0" % "test",
 
     libraryDependencies += "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
+
   )
   .enablePlugins(PlayScala)
   .enablePlugins(ScalaUnidocPlugin)
