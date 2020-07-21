@@ -99,7 +99,7 @@ object FileUtils {
     debug(fsUniq)
 
     if (fsUniq.nonEmpty) {
-      val pp = Pattern.compile("\\(([^)]+)\\)")
+      val pp = Pattern.compile(OsConf.getMacWinDeviceRegexp)
 
       for (cFileStore <- fileStores.asScala.filter(fs => fsUniq.contains(fs.name))) {
 
