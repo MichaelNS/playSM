@@ -82,7 +82,7 @@ class SmMove @Inject()(val database: DBService)
         )(FormCrMove.apply)(FormCrMove.unapply)
       )
 
-      Ok(views.html.category.path_by_category(categoryType, category, subCategory, rowSeq, moveForm))
+      Ok(views.html.category.path_by_category(categoryType, category, subCategory, rowSeq, moveForm)())
     }
   }
 
@@ -106,7 +106,7 @@ class SmMove @Inject()(val database: DBService)
         .sortBy(_._2)
         .result)
       .map { rowSeq =>
-        Ok(views.html.move_by_path(rowSeq))
+        Ok(views.html.move_by_path(rowSeq)())
       }
   }
 
@@ -134,13 +134,13 @@ class SmMove @Inject()(val database: DBService)
   }
 
   def createJobToMove(categoryType: String, category: String, subCategory: String, device: String, oldPath: String): Action[AnyContent] = Action.async { implicit request =>
-    FormCrMove.form.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.move_form(formWithErrors, categoryType, category, subCategory, device, oldPath))),
+    FormCrMove.form.bindFromRequest().fold(
+      formWithErrors => Future.successful(BadRequest(views.html.move_form(formWithErrors, categoryType, category, subCategory, device, oldPath)())),
       success = path => {
         logger.warn(path.newPath)
         if (path.newPath.isEmpty) {
           val form = FormCrMove.form.fill(path).withError("newPath", " isEmpty")
-          Future.successful(BadRequest(views.html.move_form(form, categoryType, category, subCategory, device, oldPath)))
+          Future.successful(BadRequest(views.html.move_form(form, categoryType, category, subCategory, device, oldPath)()))
         } else {
           val cRow = Tables.SmJobPathMoveRow(-1, device, oldPath, path.newPath)
           debug(cRow)

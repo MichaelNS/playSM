@@ -77,7 +77,7 @@ class SmView @Inject()(val database: DBService)
       """
       .as[(String, Int, Int, String)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.fc_explorer(device, treePath, rowSeq, depth))
+      Ok(views.html.fc_explorer(device, treePath, rowSeq, depth)())
     }
   }
 
@@ -214,7 +214,7 @@ class SmView @Inject()(val database: DBService)
       """
       .as[(String, String, String)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.fc_by_sha256(sha256, rowSeq))
+      Ok(views.html.fc_by_sha256(sha256, rowSeq)())
     }
   }
 

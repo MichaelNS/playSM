@@ -77,7 +77,7 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
             )
           }
         debug(images)
-        Ok(views.html.view_image(dbGet.size, maxResult, images))
+        Ok(views.html.view_image(dbGet.size, maxResult, images)())
       }
   }
 

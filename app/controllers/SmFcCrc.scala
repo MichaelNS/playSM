@@ -103,7 +103,7 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
     for {
       startJob <- setJobCalcCrc(deviceUid, status = true)
       calc <- calcCrcByDeviceDb(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device])
-      endJob <- setJobCalcCrc(deviceUid, status = false, calc.length)
+      endJob <- setJobCalcCrc(deviceUid, status = false)
     } yield (calc, endJob)
   }
 
@@ -150,10 +150,7 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
     }
   }
 
-  def setJobCalcCrc(device: String, status: Boolean, length: Int = -1): Future[Int] = {
-    //    val funcName = "setJobCalcCrc"
-    //    logger.debug(s"$funcName device = $device   $status")
-
+  def setJobCalcCrc(device: String, status: Boolean): Future[Int] = {
     val update = {
       val q = for (uRow <- Tables.SmDevice if uRow.uid === device) yield (uRow.jobCalcCrc, uRow.crcDate)
       q.update((status, Some(LocalDateTime.now())))

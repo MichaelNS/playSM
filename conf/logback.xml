@@ -63,13 +63,14 @@
     <logger name="play" level="INFO"/>
     <logger name="application" level="INFO"/>
 
-    <logger name="controllers" level="DEBUG"/>
+    <logger name="controllers" level="INFO"/>
     <logger name="controllers.SmApplication" level="INFO"/>
     <logger name="controllers.SmCategory" level="INFO"/>
     <logger name="controllers.SmCategoryView" level="INFO"/>
+    <logger name="controllers.SmImage" level="INFO"/>
     <logger name="controllers.SmSearch" level="INFO"/>
     <logger name="controllers.SmSyncDeviceStream" level="INFO"/>
-    <logger name="controllers.SmImage" level="INFO"/>
+    <logger name="controllers.SmSyncExif" level="INFO"/>
 
     <logger name="models" level="INFO"/>
 

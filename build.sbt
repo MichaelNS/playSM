@@ -4,7 +4,7 @@ name := "playSM"
 lazy val commonSettings = Seq(
   organization := "ru.ns",
   version := "0.1.3",
-  scalaVersion := "2.13.2",
+  scalaVersion := "2.13.3",
 
   //  https://tpolecat.github.io/2017/04/25/scalac-flags.html
   // https://nathankleyn.com/2019/05/13/recommended-scalac-flags-for-2-13/
@@ -33,7 +33,7 @@ lazy val commonSettings = Seq(
     "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
     "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
     "-Xlint:missing-interpolator", // A string literal appears to be missing an interpolator id.
-    "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
+//    "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
     "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
     "-Xlint:option-implicit", // Option.apply used implicit view.
     "-Xlint:package-object-classes", // Class or object defined in package object.
@@ -64,33 +64,35 @@ lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .settings(routesGenerator := InjectedRoutesGenerator)
   .settings(
-    libraryDependencies += ehcache,
+    libraryDependencies ++= Seq(
+      ehcache,
 
-    libraryDependencies += "com.typesafe.slick" %% "slick" % "3.3.2",
-    libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg" % "0.19.0",
-    libraryDependencies += "com.github.tminglei" %% "slick-pg_joda-time" % "0.19.0",
-    libraryDependencies += "com.typesafe.play" %% "play-slick" % "5.0.0",
-    libraryDependencies += "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
+      "com.typesafe.slick" %% "slick" % "3.3.2",
+      "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
+      "com.github.tminglei" %% "slick-pg" % "0.19.0",
+      "com.github.tminglei" %% "slick-pg_joda-time" % "0.19.0",
+      "com.typesafe.play" %% "play-slick" % "5.0.0",
+      "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
 
-    libraryDependencies += "org.webjars" %% "webjars-play" % "2.8.0",
-    libraryDependencies += "org.webjars" % "foundation" % "6.4.3",
+      "org.webjars" %% "webjars-play" % "2.8.0",
+      "org.webjars" % "foundation" % "6.4.3",
 
-    libraryDependencies += guice,
+      guice,
 
-    libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test,
+      "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test,
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.2.1",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.9",
+      "com.lihaoyi" %% "sourcecode" % "0.2.1",
+      "com.lihaoyi" %% "pprint" % "0.5.9",
 
-    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.9.1",
+      "com.github.pathikrit" %% "better-files" % "3.9.1",
 
-    //    scala-fixture:
-    libraryDependencies += "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
-    libraryDependencies += "com.h2database" % "h2" % "1.4.200" % Test,
-    libraryDependencies += "org.flywaydb" % "flyway-core" % "6.5.0" % "test",
+      //    scala-fixture:
+      "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
+      "com.h2database" % "h2" % "1.4.200" % Test,
+      "org.flywaydb" % "flyway-core" % "6.5.2" % "test",
 
-    libraryDependencies += "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
+      "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
+    )
 
   )
   .enablePlugins(PlayScala)

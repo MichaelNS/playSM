@@ -22,7 +22,7 @@ class ViewsTest extends PlaySpec
       val device_2: DeviceView = DeviceView("sdb3", "Bcer", "111-222", "Acer 2", DateTime.parse("-292275055-05-17T01:30:17.000+02:30:17"), visible = true, reliable = true, 1)
 
       val rowSeq = Vector[DeviceView](device_1, device_2, DeviceView("sdb1", "WD", "qwerty", "WD 4", DateTime.parse("2010-06-30T01:20"), true, true, 1))
-      val viewRes = views.html.smr_index(rowSeq.toBuffer)
+      val viewRes = views.html.smr_index(rowSeq.toBuffer)()
 
       contentType(viewRes) mustBe "text/html"
       contentAsString(viewRes) must include("sdb2")

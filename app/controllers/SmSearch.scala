@@ -6,6 +6,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, _}
 import play.api.mvc.{Action, _}
 import services.db.DBService
+import utils.db.SmPostgresDriver
 import utils.db.SmPostgresDriver.api._
 
 import scala.collection.mutable.ArrayBuffer
@@ -108,20 +109,11 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
     val cntFiltered = filtered.length.result
     val qryBySearch = filtered.drop(start).take(length)
 
-    val sortedQ = (sortCol, sortDir) match {
-      case (0, "desc") => qryBySearch.sortBy(_._1._2.desc)
-      case (1, "asc") => qryBySearch.sortBy(_._1._3)
-      case (1, "desc") => qryBySearch.sortBy(_._1._3.desc)
-      case (2, "asc") => qryBySearch.sortBy(_._1._4)
-      case (2, "desc") => qryBySearch.sortBy(_._1._4.desc)
-      case (3, "asc") => qryBySearch.sortBy(_._1._5)
-      case (3, "desc") => qryBySearch.sortBy(_._1._5.desc)
-      case (_, _) => qryBySearch.sortBy(_._1._2)
-    }
+    val sortedQry = getSortedQry(sortCol, sortDir, qryBySearch)
 
     val composedAction = for {cntAll <- cntAll
                               cntFiltered <- cntFiltered
-                              qryBySearch <- sortedQ.result
+                              qryBySearch <- sortedQry.result
     } yield (cntAll, cntFiltered, qryBySearch)
 
     database.runAsync(composedAction).map { rowSeq =>
@@ -131,6 +123,24 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
       val ret = Paging(draw, rowSeq._1, rowSeq._2, filePath.toSeq, "")
 
       Ok(Json.toJson(ret))
+    }
+  }
+
+  def getSortedQry(sortCol: Int,
+                   sortDir: String,
+                   qryBySearch: Query[((Rep[String], Rep[String], Rep[String], Rep[Option[String]], Rep[Option[String]]), Rep[Int]), ((String, String, String, Option[String], Option[String]), Int), scala.Seq]
+                  ): Query[((SmPostgresDriver.api.Rep[String], SmPostgresDriver.api.Rep[String], SmPostgresDriver.api.Rep[String], SmPostgresDriver.api.Rep[Option[String]],
+    SmPostgresDriver.api.Rep[Option[String]]), SmPostgresDriver.api.Rep[Int]), ((String, String, String, Option[String], Option[String]), Int), Seq] = {
+
+    (sortCol, sortDir) match {
+      case (0, "desc") => qryBySearch.sortBy(_._1._2.desc)
+      case (1, "asc") => qryBySearch.sortBy(_._1._3)
+      case (1, "desc") => qryBySearch.sortBy(_._1._3.desc)
+      case (2, "asc") => qryBySearch.sortBy(_._1._4)
+      case (2, "desc") => qryBySearch.sortBy(_._1._4.desc)
+      case (3, "asc") => qryBySearch.sortBy(_._1._5)
+      case (3, "desc") => qryBySearch.sortBy(_._1._5.desc)
+      case (_, _) => qryBySearch.sortBy(_._1._2)
     }
   }
 }

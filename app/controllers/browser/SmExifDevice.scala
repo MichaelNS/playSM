@@ -2,7 +2,6 @@ package controllers.browser
 
 import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
-import play.api.Configuration
 import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
 import services.db.DBService
 import slick.jdbc.GetResult
@@ -11,7 +10,7 @@ import utils.db.SmPostgresDriver.api._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
-class SmExifDevice @Inject()(cc: MessagesControllerComponents, config: Configuration, val database: DBService)
+class SmExifDevice @Inject()(cc: MessagesControllerComponents, val database: DBService)
   extends MessagesAbstractController(cc) {
 
   implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
@@ -29,7 +28,7 @@ class SmExifDevice @Inject()(cc: MessagesControllerComponents, config: Configura
       """
       .as[(String, String, DateTime, Int)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.browser.sm_exif_device(rowSeq))
+      Ok(views.html.browser.sm_exif_device(rowSeq)())
     }
   }
 
@@ -50,7 +49,7 @@ class SmExifDevice @Inject()(cc: MessagesControllerComponents, config: Configura
       """
       .as[(String, String, String, String, DateTime)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.browser.sm_files_by_device(rowSeq))
+      Ok(views.html.browser.sm_files_by_device(rowSeq)())
     }
   }
 

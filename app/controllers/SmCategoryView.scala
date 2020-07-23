@@ -72,7 +72,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         .sortBy(_._2.desc)
         .result)
       .map { rowSeq =>
-        Ok(views.html.category.smr_category(categoryType, rowSeq))
+        Ok(views.html.category.smr_category(categoryType, rowSeq)())
       }
   }
 
@@ -100,7 +100,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         .sortBy(_._2.desc)
         .result)
       .map { rowSeq =>
-        Ok(views.html.category.smr_sub_category(categoryType, category, rowSeq))
+        Ok(views.html.category.smr_sub_category(categoryType, category, rowSeq)())
       }
   }
 
@@ -135,7 +135,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
       )
       vPath.clear()
 
-      Ok(views.html.category.cat_list_path(vView))
+      Ok(views.html.category.cat_list_path(vView)())
     }
   }
 
@@ -165,7 +165,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         .take(maxFilesTake)
         .result
     ).map { rowSeq =>
-      Ok(views.html.category.cat_list_fc(rowSeq))
+      Ok(views.html.category.cat_list_fc(rowSeq)())
     }
   }
 
@@ -179,7 +179,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
     val config = ConfigFactory.load("scanImport.conf")
     val maxFilesTake: Long = config.getBytes("Category.maxFilesTake")
 
-    val formData: ExtensionForm = ExtensionForm.form.bindFromRequest.get
+    val formData: ExtensionForm = ExtensionForm.form.bindFromRequest().get
 
     val qry = if (formData.extension.isEmpty) {
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
@@ -201,7 +201,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
         .take(maxFilesTake)
         .result
     ).map { rowSeq =>
-      Ok(views.html.category.smr_category_dir_by_ext(rowSeq))
+      Ok(views.html.category.smr_category_dir_by_ext(rowSeq)())
     }
   }
 

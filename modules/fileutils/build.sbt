@@ -4,7 +4,7 @@ name := "fileutils"
 lazy val commonSettings = Seq(
   organization := "ru.ns",
   version := "0.0.2",
-  scalaVersion := "2.13.2",
+  scalaVersion := "2.13.3",
 
   scalacOptions ++= Seq(
 //    "-target:jvm-1.8",
@@ -27,7 +27,7 @@ lazy val commonSettings = Seq(
     "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
     "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
     "-Xlint:missing-interpolator", // A string literal appears to be missing an interpolator id.
-    "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
+//    "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
     "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
     "-Xlint:option-implicit", // Option.apply used implicit view.
     "-Xlint:package-object-classes", // Class or object defined in package object.
@@ -54,19 +54,21 @@ lazy val commonSettings = Seq(
 lazy val fileutils = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
-    libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
-    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
+    libraryDependencies ++= Seq(
+      "ch.qos.logback" % "logback-classic" % "1.2.3",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
 
-    libraryDependencies += "com.google.guava" % "guava" % "23.0",
+      "com.google.guava" % "guava" % "23.0",
 
-    libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.2.1",
-    libraryDependencies += "com.lihaoyi" %% "pprint" % "0.5.9",
+      "com.lihaoyi" %% "sourcecode" % "0.2.1",
+      "com.lihaoyi" %% "pprint" % "0.5.9",
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.9",
+      "org.json4s" %% "json4s-native" % "3.6.9",
 
-    libraryDependencies += "com.drewnoakes" % "metadata-extractor" % "2.14.0",
+      "com.drewnoakes" % "metadata-extractor" % "2.14.0",
 
-    libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.9.1"
+      "com.github.pathikrit" %% "better-files" % "3.9.1"
+    )
   )
 
 // sbt-scoverage

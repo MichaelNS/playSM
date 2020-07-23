@@ -46,12 +46,12 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
       val devices = ArrayBuffer[DeviceView]()
       rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
 
-      Ok(views.html.smr_index(devices))
+      Ok(views.html.smr_index(devices)())
     }
   }
 
   def deviceIndex(device: String): Action[AnyContent] = Action {
-    Ok(views.html.smd_index(device, ConfigFactory.load("scanImport.conf").getInt("Category.maxFilesInDir")))
+    Ok(views.html.smd_index(device, ConfigFactory.load("scanImport.conf").getInt("Category.maxFilesInDir"))())
   }
 
   def deviceTree(device: String): Action[AnyContent] = Action {
@@ -64,7 +64,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
     logger.info(s"smFileCards # maxRes=$maxRes | device = $device")
 
     database.runAsync(Tables.SmFileCard.filter(_.deviceUid === device).take(maxRes).map(fld => (fld.fParent, fld.fName, fld.fLastModifiedDate)).result).map { rowSeq =>
-      Ok(views.html.filecards(None, None, rowSeq))
+      Ok(views.html.filecards(None, None, rowSeq)())
     }
   }
 
@@ -82,7 +82,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
         .take(maxRes)
         .result
     ).map { rowSeq =>
-      Ok(views.html.filecards(None, None, rowSeq))
+      Ok(views.html.filecards(None, None, rowSeq)())
     }
   }
 
@@ -92,7 +92,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
       .sortBy(_._1)
       .result
     ).map { rowSeq =>
-      Ok(views.html.storename(rowSeq))
+      Ok(views.html.storename(rowSeq)())
     }
   }
 
@@ -128,7 +128,7 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
       .take(ctnRec)
       .result
     ).map { rowSeq =>
-      Ok(views.html.filecards(None, None, rowSeq))
+      Ok(views.html.filecards(None, None, rowSeq)())
     }
   }
 }

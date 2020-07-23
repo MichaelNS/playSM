@@ -29,7 +29,7 @@ POST        /syncDeviceStream/deleteNonExistsFpathInDb/:device        controller
 POST        /calcCRC/:device                                          controllers.SmFcCrc.calcCRC(device: String)
 
 + nocsrf
-POST        /calc-all-crc                                             controllers.SmFcCrc.calcAllCRC
+POST        /calc-all-crc                                             controllers.SmFcCrc.calcAllCRC()
 
 
 GET         /sync-compare-directory/children/:device                  controllers.SmSyncCmpDir.getChildren(device: String, id:String)
@@ -78,9 +78,9 @@ POST        /delJobToMove                                             controller
 POST        /moveAllDevices                                           controllers.SmMove.moveAllDevices
 
 
-GET         /listDirWithoutCatByLastDate                              controllers.SmCategoryView.listDirWithoutCatByLastDate
-GET         /listFcWithoutCatByLastDate                               controllers.SmCategoryView.listFcWithoutCatByLastDate
-POST        /listDirWithoutCategoryByExtension                        controllers.SmCategoryView.listDirWithoutCategoryByExtension
+GET         /listDirWithoutCatByLastDate                              controllers.SmCategoryView.listDirWithoutCatByLastDate()
+GET         /listFcWithoutCatByLastDate                               controllers.SmCategoryView.listFcWithoutCatByLastDate()
+POST        /listDirWithoutCategoryByExtension                        controllers.SmCategoryView.listDirWithoutCategoryByExtension()
 GET         /listDirWithoutCatByParent/:isBegins/:path                controllers.SmCategory.listDirWithoutCatByParent(path: String, isBegins: Boolean)
 + nocsrf
 POST        /setCategoryAndDescription/:isBegins/:fParent             controllers.SmCategory.assignCategoryAndDescription(fParent: String, isBegins: Boolean)
@@ -89,16 +89,16 @@ POST        /setCategoryAndDescription/:isBegins/:fParent             controller
 POST        /convertDeviceIdBatch                                     controllers.SmMigrateDb.convertDeviceIdBatch(device)
 
 + nocsrf
-POST        /apply-rules-set-cathegory                                controllers.SmCategory.applyRulesSetCategory
+POST        /apply-rules-set-cathegory                                controllers.SmCategory.applyRulesSetCategory()
 
-GET         /copy-rules-to-db                                         controllers.SmCategory.copyRulesToDb
+#GET         /copy-rules-to-db                                         controllers.SmCategory.copyRulesToDb
 
 
 #view-file
 GET         /view-storage                                             controllers.SmView.viewStorage(device: String)
 GET         /explorerDevice                                           controllers.SmView.explorerDevice(device: String, treePath:String, path: String, depth: Int)
 GET         /view-file                                                controllers.SmView.viewFile(sha256: Option[String])
-GET         /view-file-by-natural-key                                 controllers.SmView.viewFileByNaturalKey(deviceUid: String, path: String, fName: String)
+#GET         /view-file-by-natural-key                                 controllers.SmView.viewFileByNaturalKey(deviceUid: String, path: String, fName: String)
 
 GET         /viewPathBySha256                                         controllers.SmView.viewPathBySha256(sha256: String)
 

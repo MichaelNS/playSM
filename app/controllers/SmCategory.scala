@@ -96,7 +96,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         )(FormCategoryUpdate.apply)(FormCategoryUpdate.unapply)
       )
 
-      Ok(views.html.category.cat_fc_path("path", fParent, rowSeq, catForm, isBegins))
+      Ok(views.html.category.cat_fc_path("path", fParent, rowSeq, catForm, isBegins)())
     }
   }
 
@@ -111,12 +111,12 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
   def assignCategoryAndDescription(fParent: String,
                                    isBegins: Boolean = false
                                   ): Action[AnyContent] = Action.async { implicit request =>
-    FormCategoryUpdate.form.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.category.cat_form(formWithErrors, fParent, isBegins))),
+    FormCategoryUpdate.form.bindFromRequest().fold(
+      formWithErrors => Future.successful(BadRequest(views.html.category.cat_form(formWithErrors, fParent, isBegins)())),
       success = category => {
         if (category.categoryType.isEmpty || category.category.isEmpty || category.subCategory.isEmpty) {
           val form = FormCategoryUpdate.form.fill(category).withError("category", "categoryType isEmpty")
-          Future.successful(BadRequest(views.html.category.cat_form(form, fParent, isBegins)))
+          Future.successful(BadRequest(views.html.category.cat_form(form, fParent, isBegins)()))
         } else {
           debug(category)
           writeCategoryToDb(fParent, isBegins, category)
@@ -136,7 +136,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
           addCategoryRuleToDb(fParent, isBegins, catForm)
         } else {
           if (!rowSeq.head.fPath.toSet.contains(fParent)) {
-            updateCategoryRuleInDb(fParent, isBegins, catForm, rowSeq.head.fPath.toSet + fParent)
+            updateCategoryRuleInDb(fParent, catForm, rowSeq.head.fPath.toSet + fParent)
           }
         }
       }
@@ -153,7 +153,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     database.runAsync((Tables.SmCategoryRule returning Tables.SmCategoryRule.map(_.id)) += SmCategoryRule.apply(cRow).data.toRow)
   }
 
-  def updateCategoryRuleInDb(fParent: String, isBegins: Boolean = false, catForm: FormCategoryUpdate, pathes: Set[String]): Future[Int] = {
+  def updateCategoryRuleInDb(fParent: String, catForm: FormCategoryUpdate, pathes: Set[String]): Future[Int] = {
     debug((pathes, fParent))
 
     val dbRes = database.runAsync((for {uRow <- Tables.SmCategoryRule if uRow.categoryType === catForm.categoryType && uRow.category === catForm.category && uRow.subCategory === catForm.subCategory} yield uRow.fPath)

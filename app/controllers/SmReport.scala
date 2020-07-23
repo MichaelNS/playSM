@@ -33,7 +33,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
                               qry <- baseQry.take(maxRows).result} yield (cnt, qry)
 
     database.runAsync(composedAction).map { rowSeq =>
-      Ok(views.html.filecards(Some(rowSeq._1), Some(maxRows), rowSeq._2)
+      Ok(views.html.filecards(Some(rowSeq._1), Some(maxRows), rowSeq._2)()
       )
     }
   }
@@ -69,7 +69,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
                               filtQry <- filtQry.result} yield (cnt, filtQry)
 
     database.runAsync(composedAction).map { rowSeq =>
-      Ok(views.html.sm_chk_device_backup(rowSeq._1, maxRows, rowSeq._2))
+      Ok(views.html.sm_chk_device_backup(rowSeq._1, maxRows, rowSeq._2)())
     }
   }
 
@@ -116,7 +116,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
       """
       .as[(String, String, String, String, String)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.sm_chk_all_backup(rowSeq, device_Unreliable, device_NotView, cntFiles, rowSeq.length, maxRows))
+      Ok(views.html.sm_chk_all_backup(rowSeq, device_Unreliable, device_NotView, cntFiles, rowSeq.length, maxRows)())
     }
 
   }
@@ -162,7 +162,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
       """
       .as[(String, String, String, DateTime)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.sm_chk_backup_last_year(rowSeq, device_Unreliable, device_NotView, cntFiles, rowSeq.length, maxRows))
+      Ok(views.html.sm_chk_backup_last_year(rowSeq, device_Unreliable, device_NotView, cntFiles, rowSeq.length, maxRows)())
     }
   }
 
@@ -196,7 +196,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
       qry.result
     ).map { rowSeq =>
 
-      Ok(views.html.f_duplicates(device, maxFileSize, rowSeq))
+      Ok(views.html.f_duplicates(device, maxFileSize, rowSeq)())
     }
   }
 
@@ -222,7 +222,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
         .sortBy(_._3)
         .result
     ).map { rowSeq =>
-      Ok(views.html.sm_device_sha256(device, rowSeq))
+      Ok(views.html.sm_device_sha256(device, rowSeq)())
     }
   }
 
@@ -257,7 +257,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
         //        val max = 20
         //        rowSeq.take(max) foreach { q => Logger.debug(s"${q._1}   ${q._1.count(_ == '\\')}") }
         //        Ok("123")
-        Ok(views.html.dirs_fc(rowSeq))
+        Ok(views.html.dirs_fc(rowSeq)())
       }
   }
 
