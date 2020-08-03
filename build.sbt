@@ -69,8 +69,8 @@ lazy val root = (project in file("."))
 
       "com.typesafe.slick" %% "slick" % "3.3.2",
       "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
-      "com.github.tminglei" %% "slick-pg" % "0.19.0",
-      "com.github.tminglei" %% "slick-pg_joda-time" % "0.19.0",
+      "com.github.tminglei" %% "slick-pg" % "0.19.2",
+      "com.github.tminglei" %% "slick-pg_joda-time" % "0.19.2",
       "com.typesafe.play" %% "play-slick" % "5.0.0",
       "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
 
@@ -82,14 +82,14 @@ lazy val root = (project in file("."))
       "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test,
 
       "com.lihaoyi" %% "sourcecode" % "0.2.1",
-      "com.lihaoyi" %% "pprint" % "0.5.9",
+      "com.lihaoyi" %% "pprint" % "0.6.0",
 
       "com.github.pathikrit" %% "better-files" % "3.9.1",
 
       //    scala-fixture:
       "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
       "com.h2database" % "h2" % "1.4.200" % Test,
-      "org.flywaydb" % "flyway-core" % "6.5.2" % "test",
+      "org.flywaydb" % "flyway-core" % "6.5.3" % "test",
 
       "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
     )
@@ -104,7 +104,7 @@ lazy val root = (project in file("."))
 addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 30.92
+coverageMinimum := 28.77
 coverageFailOnMinimum := true
 coverageHighlighting := true
 

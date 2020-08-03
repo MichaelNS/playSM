@@ -6,6 +6,8 @@ case class Entity[T](id: Int, data: T)
 
 case class EntitySmFc[T](id: String, data: T)
 
+case class EntitySha[T](data: T)
+
 case class SmDevice(name: String, labelV: String, uid: String, pathScanDate: java.time.LocalDateTime) {
   def toRow: Tables.SmDeviceRow = {
     Tables.SmDeviceRow(
@@ -230,3 +232,28 @@ object SmCategoryRule {
   }
 }
 
+
+case class SmImageResize(sha256: String,
+                         fName: String,
+                         fileId: String) {
+  def toRow: Tables.SmImageResizeRow = {
+    Tables.SmImageResizeRow(
+      sha256 = sha256,
+      fName = fName,
+      fileId = fileId
+    )
+  }
+}
+
+object SmImageResize {
+  def apply(row: Tables.SmImageResizeRow): EntitySmFc[SmImageResize] = {
+    EntitySmFc(
+      id = row.fileId,
+      data = SmImageResize(
+        sha256 = row.sha256,
+        fName = row.fName,
+        fileId = row.fileId
+      )
+    )
+  }
+}

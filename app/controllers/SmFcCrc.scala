@@ -99,12 +99,12 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
       .result)
   }
 
-  def calcCrcByDevice(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device]): Future[(Seq[Any], Int)] = {
+  def calcCrcByDevice(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device]): Future[(Int, Seq[Any], Int)] = {
     for {
       startJob <- setJobCalcCrc(deviceUid, status = true)
       calc <- calcCrcByDeviceDb(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device])
       endJob <- setJobCalcCrc(deviceUid, status = false)
-    } yield (calc, endJob)
+    } yield (startJob, calc, endJob)
   }
 
   def calcCrcByDeviceDb(deviceUid: String, mntDevices: scala.collection.mutable.ArrayBuffer[ru.ns.model.Device]): Future[Seq[Any]] = {

@@ -1,20 +1,25 @@
 package controllers
 
 
-import akka.stream.scaladsl.{FileIO, Source}
+import akka.NotUsed
+import akka.actor.ActorSystem
+import akka.stream.ThrottleMode
+import akka.stream.scaladsl.{FileIO, Sink, Source}
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
-import play.api.Configuration
 import play.api.http.HttpEntity
 import play.api.mvc._
+import play.api.{Configuration, Logger}
 import ru.ns.model.OsConf
 import ru.ns.tools.{FileUtils, SmImageUtil}
 import services.db.DBService
+import slick.basic.DatabasePublisher
 import utils.db.SmPostgresDriver.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 
 /**
@@ -24,40 +29,64 @@ import scala.concurrent.Future
 class SmImage @Inject()(config: Configuration, val database: DBService)
   extends InjectedController {
 
-  val logger = play.api.Logger(getClass)
+  val logger: Logger = play.api.Logger(getClass)
   val maxResult: Int = config.get[Int]("Images.maxResult")
   val pathCache: String = config.get[String]("Images.pathCache")
 
+  implicit val system: ActorSystem = ActorSystem()
+
+  type DbImageRes = (String, String, Option[String], Option[String])
+
   def resizeImage(deviceUid: String): Action[AnyContent] = Action.async {
     debugParam
-    database.runAsync(
-      // TODO add resize table
-      (for {
-        fcRow <- Tables.SmFileCard
-        if fcRow.deviceUid === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && fcRow.sha256.nonEmpty
-      }
-        yield (fcRow.id, fcRow.fParent, fcRow.fName, fcRow.fExtension, fcRow.sha256)
-        ).result)
-      .map { rowSeq =>
-        FileUtils.getDeviceInfo(deviceUid) map { device =>
-          if (device.isDefined) {
-            val mountPoint = device.head.mountpoint
 
-            debug(rowSeq.length)
-
-            rowSeq.foreach { cFc =>
-              SmImageUtil.saveImageResize(
-                pathCache,
-                mountPoint + OsConf.fsSeparator + cFc._2 + cFc._3,
-                cFc._3,
-                cFc._4.getOrElse(""),
-                cFc._5.get)
-            }
-            // TODO add resize table
-          }
-        }
-        Ok("run resizeImage")
+    FileUtils.getDeviceInfo(deviceUid) map { device =>
+      if (device.isDefined) {
+        val mountPoint: String = device.head.mountpoint
+        val dbFcStream: Source[DbImageRes, NotUsed] = getStreamImageByDevice(deviceUid)
+        dbFcStream
+          .throttle(elements = 400, 10.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+          .mapAsync(2)(writeImageResizeToDb(_, mountPoint))
+          .runWith(Sink.ignore)
       }
+    }
+
+    Future.successful(Ok("run resizeImage"))
+  }
+
+  def getStreamImageByDevice(deviceUid: String): Source[DbImageRes, NotUsed] = {
+
+    // TODO add group by (fcRow.fParent, fcRow.fName, fcRow.fExtension, fcRow.sha256)
+    // TODO add job_resize
+    val queryRes = (for {
+      fcRow <- Tables.SmFileCard
+      if fcRow.deviceUid === deviceUid && fcRow.fMimeTypeJava === "image/jpeg" && fcRow.sha256.nonEmpty && !Tables.SmImageResize
+        .filter(imgRes => fcRow.sha256 === imgRes.sha256 && fcRow.fName === imgRes.fName)
+        .map(p => p.fName)
+        .exists
+    }
+      yield (fcRow.fParent, fcRow.fName, fcRow.fExtension, fcRow.sha256)
+      ).result
+    val databasePublisher: DatabasePublisher[DbImageRes] = database runStream queryRes
+    val akkaSourceFromSlick: Source[DbImageRes, NotUsed] = Source fromPublisher databasePublisher
+
+    akkaSourceFromSlick
+  }
+
+  def writeImageResizeToDb(cFc: (String, String, Option[String], Option[String]), mountPoint: String): Future[Future[(String, String)]] = {
+    SmImageUtil.saveImageResize(
+      pathCache,
+      mountPoint + OsConf.fsSeparator + cFc._1 + cFc._2,
+      cFc._2,
+      cFc._3.getOrElse(""),
+      cFc._4.get).map { file_id =>
+      if (file_id.isDefined) {
+        val cRow = Tables.SmImageResizeRow(cFc._4.get, cFc._2, file_id.get)
+        database.runAsync((Tables.SmImageResize returning Tables.SmImageResize.map(r => (r.sha256, r.fName))) += models.SmImageResize.apply(cRow).data.toRow)
+      } else {
+        Future.successful(("",""))
+      }
+    }
   }
 
   def viewImages(deviceUid: String, fParent: String): Action[AnyContent] = Action.async {

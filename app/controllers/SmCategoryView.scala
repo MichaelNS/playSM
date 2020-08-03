@@ -125,7 +125,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
     ).map { rowSeq =>
       val vPath = new mutable.HashMap[String, DirWithoutCat]()
       rowSeq.foreach { row =>
-        if (vPath.get(row._1).isEmpty) {
+        if (!vPath.contains(row._1)) {
           vPath += (row._1 -> DirWithoutCat(row._1, row._2.toLocalDate))
         }
       }

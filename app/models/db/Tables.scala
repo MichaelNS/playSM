@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2019-12-30T23:26:59.230266+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2020-07-31T22:06:38.606783+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -18,7 +18,7 @@ trait Tables {
   /** DDL for all tables. Call .create to execute. */
   lazy val schema: profile.SchemaDescription = Array(SmCategoryFc.schema, SmCategoryRule.schema, SmDevice.schema, SmDeviceScan.schema, SmExif.schema, SmFileCard.schema, SmImageResize.schema, SmJobPathMove.schema, SmLog.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
-  def ddl = schema
+  def ddl: profile.DDL = schema
 
   /** Entity class storing rows of table SmCategoryFc
     *
@@ -38,7 +38,7 @@ trait Tables {
     def * = (id, sha256, fName) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(sha256), Rep.Some(fName))).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(sha256), Rep.Some(fName)).shaped.<>({ r => import r._; _1.map(_ => SmCategoryFcRow.tupled((_1.get, _2.get, _3.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(int4) */
     val id: Rep[Int] = column[Int]("id")
@@ -78,7 +78,7 @@ trait Tables {
     def * = (id, categoryType, category, subCategory, fPath, isBegins, description) <> (SmCategoryRuleRow.tupled, SmCategoryRuleRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(categoryType), Rep.Some(category), Rep.Some(subCategory), Rep.Some(fPath), Rep.Some(isBegins), description)).shaped.<>({ r => import r._; _1.map(_ => SmCategoryRuleRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(categoryType), Rep.Some(category), Rep.Some(subCategory), Rep.Some(fPath), Rep.Some(isBegins), description).shaped.<>({ r => import r._; _1.map(_ => SmCategoryRuleRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(serial), AutoInc */
     val id: Rep[Int] = column[Int]("id", O.AutoInc)
@@ -133,7 +133,7 @@ trait Tables {
     def * = (id, uid, name, labelV, nameV, description, visible, reliable, pathScanDate, crcDate, exifDate, jobPathScan, jobCalcCrc, jobCalcExif, jobResize) <> (SmDeviceRow.tupled, SmDeviceRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(uid), Rep.Some(name), Rep.Some(labelV), nameV, description, Rep.Some(visible), Rep.Some(reliable), Rep.Some(pathScanDate), crcDate, exifDate, Rep.Some(jobPathScan), Rep.Some(jobCalcCrc), Rep.Some(jobCalcExif), Rep.Some(jobResize))).shaped.<>({ r => import r._; _1.map(_ => SmDeviceRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7.get, _8.get, _9.get, _10, _11, _12.get, _13.get, _14.get, _15.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(uid), Rep.Some(name), Rep.Some(labelV), nameV, description, Rep.Some(visible), Rep.Some(reliable), Rep.Some(pathScanDate), crcDate, exifDate, Rep.Some(jobPathScan), Rep.Some(jobCalcCrc), Rep.Some(jobCalcExif), Rep.Some(jobResize)).shaped.<>({ r => import r._; _1.map(_ => SmDeviceRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7.get, _8.get, _9.get, _10, _11, _12.get, _13.get, _14.get, _15.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(serial), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
@@ -189,7 +189,7 @@ trait Tables {
     def * = (deviceUid, fPath) <> (SmDeviceScanRow.tupled, SmDeviceScanRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(deviceUid), Rep.Some(fPath))).shaped.<>({ r => import r._; _1.map(_ => SmDeviceScanRow.tupled((_1.get, _2.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(deviceUid), Rep.Some(fPath)).shaped.<>({ r => import r._; _1.map(_ => SmDeviceScanRow.tupled((_1.get, _2.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column device_uid SqlType(varchar) */
     val deviceUid: Rep[String] = column[String]("device_uid")
@@ -241,7 +241,7 @@ trait Tables {
     def * = (id, dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight, gpsVersionId, gpsLatitudeRef, gpsLatitude, gpsLongitudeRef, gpsLongitude, gpsAltitudeRef, gpsAltitude, gpsTimeStamp, gpsProcessingMethod, gpsDateStamp, gpsLatitudeDec, gpsLongitudeDec) <> (SmExifRow.tupled, SmExifRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight, gpsVersionId, gpsLatitudeRef, gpsLatitude, gpsLongitudeRef, gpsLongitude, gpsAltitudeRef, gpsAltitude, gpsTimeStamp, gpsProcessingMethod, gpsDateStamp, gpsLatitudeDec, gpsLongitudeDec)).shaped.<>({ r => import r._; _1.map(_ => SmExifRow.tupled((_1.get, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight, gpsVersionId, gpsLatitudeRef, gpsLatitude, gpsLongitudeRef, gpsLongitude, gpsAltitudeRef, gpsAltitude, gpsTimeStamp, gpsProcessingMethod, gpsDateStamp, gpsLatitudeDec, gpsLongitudeDec).shaped.<>({ r => import r._; _1.map(_ => SmExifRow.tupled((_1.get, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(varchar), PrimaryKey */
     val id: Rep[String] = column[String]("id", O.PrimaryKey)
@@ -318,7 +318,7 @@ trait Tables {
     def * = (id, deviceUid, fParent, fName, fExtension, fCreationDate, fLastModifiedDate, fSize, fMimeTypeJava, sha256, fNameLc) <> (SmFileCardRow.tupled, SmFileCardRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(deviceUid), Rep.Some(fParent), Rep.Some(fName), fExtension, Rep.Some(fCreationDate), Rep.Some(fLastModifiedDate), fSize, fMimeTypeJava, sha256, Rep.Some(fNameLc))).shaped.<>({ r => import r._; _1.map(_ => SmFileCardRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8, _9, _10, _11.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(deviceUid), Rep.Some(fParent), Rep.Some(fName), fExtension, Rep.Some(fCreationDate), Rep.Some(fLastModifiedDate), fSize, fMimeTypeJava, sha256, Rep.Some(fNameLc)).shaped.<>({ r => import r._; _1.map(_ => SmFileCardRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8, _9, _10, _11.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(varchar), PrimaryKey */
     val id: Rep[String] = column[String]("id", O.PrimaryKey)
@@ -365,29 +365,32 @@ trait Tables {
   /** Entity class storing rows of table SmImageResize
     *
     * @param sha256 Database column sha256 SqlType(varchar)
-    * @param fName  Database column f_name SqlType(varchar) */
-  case class SmImageResizeRow(sha256: String, fName: String)
+    * @param fName  Database column f_name SqlType(varchar)
+    * @param fileId Database column file_id SqlType(varchar), PrimaryKey */
+  case class SmImageResizeRow(sha256: String, fName: String, fileId: String)
 
   /** GetResult implicit for fetching SmImageResizeRow objects using plain SQL queries */
   implicit def GetResultSmImageResizeRow(implicit e0: GR[String]): GR[SmImageResizeRow] = GR {
     prs =>
       import prs._
-      SmImageResizeRow.tupled((<<[String], <<[String]))
+      SmImageResizeRow.tupled((<<[String], <<[String], <<[String]))
   }
   /** Table description of table sm_image_resize. Objects of this class serve as prototypes for rows in queries. */
   class SmImageResize(_tableTag: Tag) extends profile.api.Table[SmImageResizeRow](_tableTag, "sm_image_resize") {
-    def * = (sha256, fName) <> (SmImageResizeRow.tupled, SmImageResizeRow.unapply)
+    def * = (sha256, fName, fileId) <> (SmImageResizeRow.tupled, SmImageResizeRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(sha256), Rep.Some(fName))).shaped.<>({ r => import r._; _1.map(_ => SmImageResizeRow.tupled((_1.get, _2.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(sha256), Rep.Some(fName), Rep.Some(fileId)).shaped.<>({ r => import r._; _1.map(_ => SmImageResizeRow.tupled((_1.get, _2.get, _3.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column sha256 SqlType(varchar) */
     val sha256: Rep[String] = column[String]("sha256")
     /** Database column f_name SqlType(varchar) */
     val fName: Rep[String] = column[String]("f_name")
+    /** Database column file_id SqlType(varchar), PrimaryKey */
+    val fileId: Rep[String] = column[String]("file_id", O.PrimaryKey)
 
     /** Uniqueness Index over (sha256,fName) (database name sm_image_resize_uniq) */
-    val index1 = index("sm_image_resize_uniq", (sha256, fName), unique=true)
+    val index1 = index("sm_image_resize_uniq", (sha256, fName), unique = true)
   }
   /** Collection-like TableQuery object for table SmImageResize */
   lazy val SmImageResize = new TableQuery(tag => new SmImageResize(tag))
@@ -412,7 +415,7 @@ trait Tables {
     def * = (id, deviceUid, pathFrom, pathTo, done) <> (SmJobPathMoveRow.tupled, SmJobPathMoveRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(deviceUid), Rep.Some(pathFrom), Rep.Some(pathTo), done)).shaped.<>({ r => import r._; _1.map(_ => SmJobPathMoveRow.tupled((_1.get, _2.get, _3.get, _4.get, _5))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(deviceUid), Rep.Some(pathFrom), Rep.Some(pathTo), done).shaped.<>({ r => import r._; _1.map(_ => SmJobPathMoveRow.tupled((_1.get, _2.get, _3.get, _4.get, _5))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(serial), AutoInc */
     val id: Rep[Int] = column[Int]("id", O.AutoInc)
@@ -458,7 +461,7 @@ trait Tables {
     def * = (createDate, deviceUid, level, step, error, stackTrace) <> (SmLogRow.tupled, SmLogRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((createDate, Rep.Some(deviceUid), Rep.Some(level), Rep.Some(step), Rep.Some(error), stackTrace)).shaped.<>({ r => import r._; _2.map(_ => SmLogRow.tupled((_1, _2.get, _3.get, _4.get, _5.get, _6))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (createDate, Rep.Some(deviceUid), Rep.Some(level), Rep.Some(step), Rep.Some(error), stackTrace).shaped.<>({ r => import r._; _2.map(_ => SmLogRow.tupled((_1, _2.get, _3.get, _4.get, _5.get, _6))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column create_date SqlType(timestamp) */
     val createDate: Rep[Option[java.time.LocalDateTime]] = column[Option[java.time.LocalDateTime]]("create_date")

@@ -20,6 +20,7 @@ import ru.ns.model.SmExif
 object SmExifUtil {
   private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))
   private val formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
+  private val formatter2 = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
   private val tagsJpeg = List[String]("Make", "Model", "Software", "Date/Time", "Date/Time Original", "Date/Time Digitized", "Exif Image Width", "Exif Image Height")
   private val tagsMp4 = List[String]("Creation Time", "Modification Time")
 
@@ -164,8 +165,18 @@ object SmExifUtil {
   }
 
   def extractDateTimeKeyFromExifMap(hTags: Map[String, String], key: String): Option[java.time.LocalDateTime] = {
-    if (hTags.contains(key) && !hTags.getOrElse(key, "").startsWith("0000:00:00")) {
-      Some(LocalDateTime.parse(hTags.getOrElse(key, ""), formatter))
+    val keyVal = hTags.getOrElse(key, "")
+
+    if (keyVal.nonEmpty) {
+      if (keyVal.contains("/")) {
+        Some(LocalDateTime.parse(keyVal, formatter2))
+      }
+      else if (keyVal.contains(":") && !keyVal.startsWith("0000:00:00")) {
+        // TODO parse val '2010:05:19 11:33: 7'
+        Some(LocalDateTime.parse(keyVal, formatter))
+      } else {
+        None
+      }
     } else {
       None
     }
@@ -211,7 +222,7 @@ object SmExifUtil {
       .optionalEnd()
 
       // use the same resolver style and chronology
-      .toFormatter().withResolverStyle(ResolverStyle.SMART).withChronology(IsoChronology.INSTANCE);
+      .toFormatter().withResolverStyle(ResolverStyle.SMART).withChronology(IsoChronology.INSTANCE)
 
     if (hTags.contains(key)) {
       Some(LocalDateTime.parse(hTags.getOrElse(key, ""), fmt))

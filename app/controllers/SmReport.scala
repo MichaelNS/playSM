@@ -8,7 +8,6 @@ import play.api.Configuration
 import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
 import ru.ns.model.OsConf
 import services.db.DBService
-import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
 
 import scala.collection.mutable.ArrayBuffer
@@ -127,8 +126,6 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     val maxRows: Int = config.getInt("BackUp.allFiles.maxRows")
     val device_Unreliable: String = config.getStringList("BackUp.allFiles.device_Unreliable").asScala.toSet.mkString("'", "', '", "'")
     val device_NotView: String = config.getStringList("BackUp.allFiles.device_NotView").asScala.toSet.mkString("'", "', '", "'")
-
-    implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
 
     debug(device_Unreliable)
     debug(device_NotView)

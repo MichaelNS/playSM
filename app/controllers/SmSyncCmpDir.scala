@@ -1,10 +1,10 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.Configuration
 import play.api.libs.functional.syntax.{unlift, _}
 import play.api.libs.json.{JsPath, Json, Writes}
 import play.api.mvc.{Action, _}
+import play.api.{Configuration, Logger}
 import ru.ns.model.OsConf
 import ru.ns.tools.FileUtils
 import services.db.DBService
@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmSyncCmpDir @Inject()(implicit assetsFinder: AssetsFinder, config: Configuration, val database: DBService)
   extends InjectedController {
 
-  val logger = play.api.Logger(getClass)
+  val logger: Logger = play.api.Logger(getClass)
 
   case class State(opened: Boolean = false,
                    disabled: Boolean = false,
@@ -75,7 +75,7 @@ class SmSyncCmpDir @Inject()(implicit assetsFinder: AssetsFinder, config: Config
 
         Ok(Json.toJson(roots))
       } else {
-        Ok("device mountpoint is empty")
+        Ok("device mountPoint is empty")
       }
     }
   }

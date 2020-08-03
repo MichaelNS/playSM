@@ -1,10 +1,10 @@
 package controllers.browser
 
+import controllers.getDateTimeResult
 import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
 import services.db.DBService
-import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -13,7 +13,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmExifDevice @Inject()(cc: MessagesControllerComponents, val database: DBService)
   extends MessagesAbstractController(cc) {
 
-  implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
 
   def listExifDevices: Action[AnyContent] = Action.async {
     val qry = sql"""

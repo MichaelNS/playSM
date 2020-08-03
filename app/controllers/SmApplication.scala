@@ -5,10 +5,10 @@ import javax.inject.{Inject, Singleton}
 import models.DeviceView
 import models.db.Tables
 import org.joda.time.DateTime
+import play.api.Logger
 import play.api.mvc._
 import ru.ns.model.OsConf
 import services.db.DBService
-import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
 
 import scala.collection.mutable.ArrayBuffer
@@ -21,11 +21,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database: DBService)
   extends InjectedController {
 
-  val logger = play.api.Logger(getClass)
+  val logger: Logger = play.api.Logger(getClass)
 
   def smIndex: Action[AnyContent] = Action.async {
-    implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
-
     val qry = sql"""
       SELECT
         x2.name,

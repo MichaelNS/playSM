@@ -1,8 +1,12 @@
-
+import org.joda.time.DateTime
+import play.api.Logger
+import slick.jdbc.GetResult
 
 package object controllers {
 
-  val logger = play.api.Logger(getClass)
+  implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
+
+  val logger: Logger = play.api.Logger(getClass)
 
   def debugParam(implicit line: sourcecode.Line, enclosing: sourcecode.Enclosing, args: sourcecode.Args): Unit = {
     logger.debug(s"debugParam ${enclosing.value} : ${line.value}  - "

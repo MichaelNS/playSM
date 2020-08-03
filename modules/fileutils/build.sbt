@@ -61,7 +61,7 @@ lazy val fileutils = (project in file("."))
       "com.google.guava" % "guava" % "23.0",
 
       "com.lihaoyi" %% "sourcecode" % "0.2.1",
-      "com.lihaoyi" %% "pprint" % "0.5.9",
+      "com.lihaoyi" %% "pprint" % "0.6.0",
 
       "org.json4s" %% "json4s-native" % "3.6.9",
 
@@ -72,5 +72,5 @@ lazy val fileutils = (project in file("."))
   )
 
 // sbt-scoverage
-coverageMinimum := 38.90
+coverageMinimum := 30.76
 coverageFailOnMinimum := true

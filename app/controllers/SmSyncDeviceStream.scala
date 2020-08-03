@@ -16,7 +16,6 @@ import play.api.{Configuration, Logger}
 import ru.ns.model.OsConf
 import ru.ns.tools.FileUtils
 import services.db.DBService
-import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
 
 import scala.collection.mutable.ArrayBuffer
@@ -65,8 +64,6 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
   }
 
   def deviceImport: Action[AnyContent] = Action.async { implicit request: MessagesRequest[AnyContent] =>
-    implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
-
     val qry = sql"""
       SELECT
         x2.name,
@@ -153,7 +150,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
 
 
     val resPath = Source.fromIterator(() => FileUtils.getPathesRecursive
-    (path2scan.toString, mountPoint, config.get[Seq[String]]("paths2Scan.exclusionPath")).iterator)
+    (path2scan, mountPoint, config.get[Seq[String]]("paths2Scan.exclusionPath")).iterator)
       .throttle(elements = 1, 10.millisecond, maximumBurst = 10, mode = ThrottleMode.Shaping)
       .mapAsync(1) { path =>
         mergePath2Db(deviceUid = deviceUid, mountPoint = mountPoint,

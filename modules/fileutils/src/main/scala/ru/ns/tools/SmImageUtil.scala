@@ -35,11 +35,15 @@ object SmImageUtil {
     val hashFileName = Hashing.sha256().hashString(fileName, StandardCharsets.UTF_8).toString.toUpperCase
     val fileExtension = if (extension.nonEmpty) s".$extension" else ""
 
-    s"$cacheNameDir${OsConf.fsSeparator}${getGroupDirName(sha256)}${OsConf.fsSeparator}${sha256}_${hashFileName}$fileExtension"
+    s"${sha256}_$hashFileName$fileExtension"
   }
 
-  def saveImageResize(inPathCache: String, origImage: String, fileName: String, extension: String, sha256: String): Future[Boolean] = {
-    var success = false
+  def getImageFullKey(sha256: String, imageKey: String): String = {
+    s"$cacheNameDir${OsConf.fsSeparator}${getGroupDirName(sha256)}${OsConf.fsSeparator}$imageKey"
+  }
+
+  def saveImageResize(inPathCache: String, origImage: String, fileName: String, extension: String, sha256: String): Future[Option[String]] = {
+    var res: Option[String] = None
     val pathCacheName = inPathCache + OsConf.fsSeparator
     try {
       val cacheDir = better.files.File(pathCacheName + cacheNameDir)
@@ -48,10 +52,12 @@ object SmImageUtil {
         val groupDirName = pathCacheName + cacheNameDir + OsConf.fsSeparator + getGroupDirName(sha256)
         val groupDir = better.files.File(groupDirName)
 
-        val resizedImage = new File(pathCacheName + getImageKey(sha256, fileName, extension))
+        val imageKey = getImageKey(sha256, fileName, extension)
+        val imageFullKey = getImageFullKey(sha256, imageKey)
+        val resizedImageFName = new File(pathCacheName + imageFullKey)
 
         groupDir.exists || groupDir.createDirectories().exists
-        if (!resizedImage.exists()) {
+        if (!resizedImageFName.exists()) {
           // Target size
           val width = 200
           val height = 200
@@ -63,19 +69,19 @@ object SmImageUtil {
           val bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB) // Saving Image back to disk
           bufferedImage.getGraphics.drawImage(resized, 0, 0, null)
 
-          ImageIO.write(bufferedImage, "JPEG", resizedImage)
+          ImageIO.write(bufferedImage, "JPEG", resizedImageFName)
 
-          debug(resizedImage)
-          success = true
+          debug(resizedImageFName)
         }
+        res = Some(imageKey)
       }
       else {
-        logger.warn(s"Can`t create path = ${fileName}")
+        logger.warn(s"Can`t create path = $fileName")
       }
     } catch {
       case e: FileNotFoundException => logger.error("saveImageResize FileNotFoundException", e)
       case e: IOException => logger.error("saveImageResize IOException", e)
     }
-    Future.successful(success)
+    Future.successful(res)
   }
 }

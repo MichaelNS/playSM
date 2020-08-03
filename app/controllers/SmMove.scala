@@ -10,6 +10,7 @@ import com.google.common.hash.Hashing
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.Constraints
@@ -27,7 +28,7 @@ import scala.util.{Failure, Success}
 case class FormCrMove(newPath: String)
 
 object FormCrMove {
-  val form = Form(mapping(
+  val form: Form[FormCrMove] = Form(mapping(
     "newPath" -> text.verifying(Constraints.nonEmpty)
   )(FormCrMove.apply)(FormCrMove.unapply))
 }
@@ -41,7 +42,7 @@ object FormCrMove {
 class SmMove @Inject()(val database: DBService)
   extends InjectedController {
 
-  val logger = play.api.Logger(getClass)
+  val logger: Logger = play.api.Logger(getClass)
 
   /**
     * show list path from [[models.db.Tables.SmFileCard]]
@@ -127,7 +128,7 @@ class SmMove @Inject()(val database: DBService)
     val insRes = database.runAsync(Tables.SmJobPathMove.filter(_.deviceUid === device).filter(_.pathFrom === path).delete)
     insRes onComplete {
       case Success(suc) => logger.debug(s"del [$suc] row - device = [$device]")
-      case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
+      case Failure(t) => logger.error(s"An error has occurred: = ${t.getMessage}")
     }
 
     Future.successful(Redirect(routes.SmMove.listPathByCategory(categoryType, category, subCategory)))
@@ -148,7 +149,7 @@ class SmMove @Inject()(val database: DBService)
           val insRes = database.runAsync((Tables.SmJobPathMove returning Tables.SmJobPathMove.map(_.id)) += cRow)
           insRes onComplete {
             case Success(insSuc) => logger.debug(s"Inserted row move = $insSuc   $cRow")
-            case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
+            case Failure(t) => logger.error(s"An error has occurred: = ${t.getMessage}")
           }
           debug(insRes)
 
@@ -175,7 +176,7 @@ class SmMove @Inject()(val database: DBService)
         for (device <- lstDevices) {
           moveByDevice(device = device, maxJob: Int, maxMoveFiles)
         }
-      case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
+      case Failure(t) => logger.error(s"An error has occurred: = ${t.getMessage}")
     }
 
     Future.successful(Ok("run moveAllDevices"))
@@ -250,7 +251,7 @@ class SmMove @Inject()(val database: DBService)
         val insRes = database.runAsync((Tables.SmFileCard returning Tables.SmFileCard.map(_.id)) += cRow)
         insRes onComplete {
           case Success(insSuc) => logger.debug(s"Inserted row move = $insSuc   $cRow")
-          case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
+          case Failure(t) => logger.error(s"An error has occurred: = ${t.getMessage}")
         }
         // move + delete
         try {
@@ -259,7 +260,7 @@ class SmMove @Inject()(val database: DBService)
           val insRes = database.runAsync(Tables.SmFileCard.filter(_.id === rowFc.id).delete)
           insRes onComplete {
             case Success(suc) => logger.debug(s"del [$suc] row , id = [$rowFc.id]")
-            case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
+            case Failure(t) => logger.error(s"An error has occurred: = ${t.getMessage}")
           }
         } catch {
           case ex: IOException =>
@@ -268,7 +269,7 @@ class SmMove @Inject()(val database: DBService)
             val insRes = database.runAsync(Tables.SmFileCard.filter(_.id === rowFc.id).delete)
             insRes onComplete {
               case Success(suc) => logger.debug(s"del [$suc] row , id = [$rowFc.id]")
-              case Failure(t) => logger.error(s"An error has occured: = ${t.getMessage}")
+              case Failure(t) => logger.error(s"An error has occurred: = ${t.getMessage}")
             }
         }
       } else {
