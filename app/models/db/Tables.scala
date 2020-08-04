@@ -10,6 +10,7 @@ object Tables extends {
 /** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.) */
 trait Tables {
   val profile: utils.db.SmPostgresDriver
+
   import profile.api._
   import slick.model.ForeignKeyAction
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
@@ -17,6 +18,7 @@ trait Tables {
 
   /** DDL for all tables. Call .create to execute. */
   lazy val schema: profile.SchemaDescription = Array(SmCategoryFc.schema, SmCategoryRule.schema, SmDevice.schema, SmDeviceScan.schema, SmExif.schema, SmFileCard.schema, SmImageResize.schema, SmJobPathMove.schema, SmLog.schema).reduceLeft(_ ++ _)
+
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl: profile.DDL = schema
 
@@ -33,6 +35,7 @@ trait Tables {
       import prs._
       SmCategoryFcRow.tupled((<<[Int], <<[String], <<[String]))
   }
+
   /** Table description of table sm_category_fc. Objects of this class serve as prototypes for rows in queries. */
   class SmCategoryFc(_tableTag: Tag) extends profile.api.Table[SmCategoryFcRow](_tableTag, "sm_category_fc") {
     def * = (id, sha256, fName) <> (SmCategoryFcRow.tupled, SmCategoryFcRow.unapply)
@@ -53,6 +56,7 @@ trait Tables {
     /** Foreign key referencing SmCategoryRule (database name fk_sm_category_fc_sm_category_rule) */
     lazy val smCategoryRuleFk = foreignKey("fk_sm_category_fc_sm_category_rule", id, SmCategoryRule)(r => r.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
   }
+
   /** Collection-like TableQuery object for table SmCategoryFc */
   lazy val SmCategoryFc = new TableQuery(tag => new SmCategoryFc(tag))
 
@@ -73,6 +77,7 @@ trait Tables {
       import prs._
       SmCategoryRuleRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[List[String]], <<[Boolean], <<?[String]))
   }
+
   /** Table description of table sm_category_rule. Objects of this class serve as prototypes for rows in queries. */
   class SmCategoryRule(_tableTag: Tag) extends profile.api.Table[SmCategoryRuleRow](_tableTag, "sm_category_rule") {
     def * = (id, categoryType, category, subCategory, fPath, isBegins, description) <> (SmCategoryRuleRow.tupled, SmCategoryRuleRow.unapply)
@@ -98,8 +103,9 @@ trait Tables {
     /** Uniqueness Index over (categoryType,category,subCategory) (database name sm_category_rule_pkey) */
     val index1 = index("sm_category_rule_pkey", (categoryType, category, subCategory), unique = true)
     /** Uniqueness Index over (id) (database name unq_sm_category_rule_id) */
-    val index2 = index("unq_sm_category_rule_id", id, unique=true)
+    val index2 = index("unq_sm_category_rule_id", id, unique = true)
   }
+
   /** Collection-like TableQuery object for table SmCategoryRule */
   lazy val SmCategoryRule = new TableQuery(tag => new SmCategoryRule(tag))
 
@@ -128,6 +134,7 @@ trait Tables {
       import prs._
       SmDeviceRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<[Boolean], <<[Boolean], <<[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<[Boolean], <<[Boolean], <<[Boolean], <<[Boolean]))
   }
+
   /** Table description of table sm_device. Objects of this class serve as prototypes for rows in queries. */
   class SmDevice(_tableTag: Tag) extends profile.api.Table[SmDeviceRow](_tableTag, "sm_device") {
     def * = (id, uid, name, labelV, nameV, description, visible, reliable, pathScanDate, crcDate, exifDate, jobPathScan, jobCalcCrc, jobCalcExif, jobResize) <> (SmDeviceRow.tupled, SmDeviceRow.unapply)
@@ -167,8 +174,9 @@ trait Tables {
     val jobResize: Rep[Boolean] = column[Boolean]("job_resize", O.Default(false))
 
     /** Uniqueness Index over (uid) (database name idx_sm_device_device_uid) */
-    val index1 = index("idx_sm_device_device_uid", uid, unique =true)
+    val index1 = index("idx_sm_device_device_uid", uid, unique = true)
   }
+
   /** Collection-like TableQuery object for table SmDevice */
   lazy val SmDevice = new TableQuery(tag => new SmDevice(tag))
 
@@ -184,6 +192,7 @@ trait Tables {
       import prs._
       SmDeviceScanRow.tupled((<<[String], <<[String]))
   }
+
   /** Table description of table sm_device_scan. Objects of this class serve as prototypes for rows in queries. */
   class SmDeviceScan(_tableTag: Tag) extends profile.api.Table[SmDeviceScanRow](_tableTag, "sm_device_scan") {
     def * = (deviceUid, fPath) <> (SmDeviceScanRow.tupled, SmDeviceScanRow.unapply)
@@ -200,8 +209,9 @@ trait Tables {
     lazy val smDeviceFk = foreignKey("fk_sm_device_scan_sm_device", deviceUid, SmDevice)(r => r.uid, onUpdate = ForeignKeyAction.NoAction, onDelete = ForeignKeyAction.NoAction)
 
     /** Uniqueness Index over (deviceUid,fPath) (database name idx_sm_device_scan_device_uid) */
-    val index1 = index("idx_sm_device_scan_device_uid", (deviceUid, fPath), unique=true)
+    val index1 = index("idx_sm_device_scan_device_uid", (deviceUid, fPath), unique = true)
   }
+
   /** Collection-like TableQuery object for table SmDeviceScan */
   lazy val SmDeviceScan = new TableQuery(tag => new SmDeviceScan(tag))
 
@@ -236,6 +246,7 @@ trait Tables {
       import prs._
       SmExifRow.tupled((<<[String], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[scala.math.BigDecimal], <<?[scala.math.BigDecimal]))
   }
+
   /** Table description of table sm_exif. Objects of this class serve as prototypes for rows in queries. */
   class SmExif(_tableTag: Tag) extends profile.api.Table[SmExifRow](_tableTag, "sm_exif") {
     def * = (id, dateTime, dateTimeOriginal, dateTimeDigitized, make, model, software, exifImageWidth, exifImageHeight, gpsVersionId, gpsLatitudeRef, gpsLatitude, gpsLongitudeRef, gpsLongitude, gpsAltitudeRef, gpsAltitude, gpsTimeStamp, gpsProcessingMethod, gpsDateStamp, gpsLatitudeDec, gpsLongitudeDec) <> (SmExifRow.tupled, SmExifRow.unapply)
@@ -289,6 +300,7 @@ trait Tables {
     /** Foreign key referencing SmFileCard (database name fk_sm_exif_sm_file_card) */
     lazy val smFileCardFk = foreignKey("fk_sm_exif_sm_file_card", id, SmFileCard)(r => r.id, onUpdate = ForeignKeyAction.NoAction, onDelete = ForeignKeyAction.Cascade)
   }
+
   /** Collection-like TableQuery object for table SmExif */
   lazy val SmExif = new TableQuery(tag => new SmExif(tag))
 
@@ -313,6 +325,7 @@ trait Tables {
       import prs._
       SmFileCardRow.tupled((<<[String], <<[String], <<[String], <<[String], <<?[String], <<[java.time.LocalDateTime], <<[java.time.LocalDateTime], <<?[Long], <<?[String], <<?[String], <<[String]))
   }
+
   /** Table description of table sm_file_card. Objects of this class serve as prototypes for rows in queries. */
   class SmFileCard(_tableTag: Tag) extends profile.api.Table[SmFileCardRow](_tableTag, "sm_file_card") {
     def * = (id, deviceUid, fParent, fName, fExtension, fCreationDate, fLastModifiedDate, fSize, fMimeTypeJava, sha256, fNameLc) <> (SmFileCardRow.tupled, SmFileCardRow.unapply)
@@ -345,20 +358,21 @@ trait Tables {
 
     /** Foreign key referencing SmDevice (database name fk_sm_file_card_sm_device) */
     lazy val smDeviceFk = foreignKey("fk_sm_file_card_sm_device", deviceUid, SmDevice)(r => r.uid, onUpdate = ForeignKeyAction.NoAction, onDelete = ForeignKeyAction.Restrict)
+    /** Foreign key referencing SmImageResize (database name fk_sm_file_card_sm_image_resize) */
+    lazy val smImageResizeFk = foreignKey("fk_sm_file_card_sm_image_resize", (sha256, fName), SmImageResize)(r => (Rep.Some(r.sha256), r.fName), onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
 
     /** Index over (fParent) (database name idx_f_parent) */
     val index1 = index("idx_f_parent", fParent)
     /** Index over (fNameLc) (database name idx_fc_f_name_lc) */
     val index2 = index("idx_fc_f_name_lc", fNameLc)
-    /** Index over (sha256,fName) (database name idx_fc_sha_name) */
-    val index3 = index("idx_fc_sha_name", (sha256, fName))
     /** Index over (fLastModifiedDate) (database name idx_last_modified) */
-    val index4 = index("idx_last_modified", fLastModifiedDate)
+    val index3 = index("idx_last_modified", fLastModifiedDate)
     /** Index over (sha256) (database name idx_sha256) */
-    val index5 = index("idx_sha256", sha256)
+    val index4 = index("idx_sha256", sha256)
     /** Index over (deviceUid,fParent) (database name idx_sm_file_card_device_uid) */
-    val index6 = index("idx_sm_file_card_device_uid", (deviceUid, fParent))
+    val index5 = index("idx_sm_file_card_device_uid", (deviceUid, fParent))
   }
+
   /** Collection-like TableQuery object for table SmFileCard */
   lazy val SmFileCard = new TableQuery(tag => new SmFileCard(tag))
 
@@ -375,6 +389,7 @@ trait Tables {
       import prs._
       SmImageResizeRow.tupled((<<[String], <<[String], <<[String]))
   }
+
   /** Table description of table sm_image_resize. Objects of this class serve as prototypes for rows in queries. */
   class SmImageResize(_tableTag: Tag) extends profile.api.Table[SmImageResizeRow](_tableTag, "sm_image_resize") {
     def * = (sha256, fName, fileId) <> (SmImageResizeRow.tupled, SmImageResizeRow.unapply)
@@ -392,6 +407,7 @@ trait Tables {
     /** Uniqueness Index over (sha256,fName) (database name sm_image_resize_uniq) */
     val index1 = index("sm_image_resize_uniq", (sha256, fName), unique = true)
   }
+
   /** Collection-like TableQuery object for table SmImageResize */
   lazy val SmImageResize = new TableQuery(tag => new SmImageResize(tag))
 
@@ -410,6 +426,7 @@ trait Tables {
       import prs._
       SmJobPathMoveRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[java.time.LocalDateTime]))
   }
+
   /** Table description of table sm_job_path_move. Objects of this class serve as prototypes for rows in queries. */
   class SmJobPathMove(_tableTag: Tag) extends profile.api.Table[SmJobPathMoveRow](_tableTag, "sm_job_path_move") {
     def * = (id, deviceUid, pathFrom, pathTo, done) <> (SmJobPathMoveRow.tupled, SmJobPathMoveRow.unapply)
@@ -435,8 +452,9 @@ trait Tables {
     lazy val smDeviceFk = foreignKey("fk_sm_job_path_move_sm_device", deviceUid, SmDevice)(r => r.uid, onUpdate = ForeignKeyAction.NoAction, onDelete = ForeignKeyAction.NoAction)
 
     /** Uniqueness Index over (id) (database name unq_sm_job_path_move) */
-    val index1 = index("unq_sm_job_path_move", id, unique=true)
+    val index1 = index("unq_sm_job_path_move", id, unique = true)
   }
+
   /** Collection-like TableQuery object for table SmJobPathMove */
   lazy val SmJobPathMove = new TableQuery(tag => new SmJobPathMove(tag))
 
@@ -456,6 +474,7 @@ trait Tables {
       import prs._
       SmLogRow.tupled((<<?[java.time.LocalDateTime], <<[String], <<[String], <<[String], <<[String], <<?[String]))
   }
+
   /** Table description of table sm_log. Objects of this class serve as prototypes for rows in queries. */
   class SmLog(_tableTag: Tag) extends profile.api.Table[SmLogRow](_tableTag, "sm_log") {
     def * = (createDate, deviceUid, level, step, error, stackTrace) <> (SmLogRow.tupled, SmLogRow.unapply)
@@ -477,8 +496,9 @@ trait Tables {
     val stackTrace: Rep[Option[String]] = column[Option[String]]("stack_trace", O.Default(None))
 
     /** Foreign key referencing SmDevice (database name fk_sm_log_sm_device) */
-    lazy val smDeviceFk = foreignKey("fk_sm_log_sm_device", deviceUid, SmDevice)(r => r.uid, onUpdate = ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    lazy val smDeviceFk = foreignKey("fk_sm_log_sm_device", deviceUid, SmDevice)(r => r.uid, onUpdate = ForeignKeyAction.NoAction, onDelete = ForeignKeyAction.NoAction)
   }
+
   /** Collection-like TableQuery object for table SmLog */
   lazy val SmLog = new TableQuery(tag => new SmLog(tag))
 }

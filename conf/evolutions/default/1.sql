@@ -42,46 +42,13 @@ CREATE TABLE sm_device_scan
   CONSTRAINT fk_sm_device_scan_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid)
 );
 
-CREATE TABLE sm_file_card
-(
-  id                     VARCHAR NOT NULL,
-  device_uid             VARCHAR NOT NULL,
-  f_parent               VARCHAR NOT NULL,
-  f_name                 VARCHAR NOT NULL,
-  f_extension            VARCHAR,
-  f_creation_date        TIMESTAMP NOT NULL,
-  f_last_modified_date   TIMESTAMP NOT NULL,
-  f_size                 BIGINT,
-  f_mime_type_java       VARCHAR,
-  sha256                 VARCHAR,
-  f_name_lc              VARCHAR NOT NULL,
-  CONSTRAINT sm_file_card_pkey PRIMARY KEY (id),
-  CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid) ON DELETE RESTRICT
-);
-
-CREATE INDEX idx_f_parent
-ON sm_file_card (f_parent);
-
-CREATE INDEX idx_fc_f_name_lc
-ON sm_file_card (f_name_lc);
-
-CREATE INDEX idx_last_modified
-ON sm_file_card (f_last_modified_date);
-
-CREATE INDEX idx_sm_file_card_device_uid
-ON sm_file_card (device_uid, f_parent);
-
-CREATE INDEX idx_sha256
-ON sm_file_card (sha256);
-
-CREATE INDEX idx_fc_sha_name
-ON sm_file_card (sha256, f_name);
-
 CREATE TABLE sm_image_resize
 (
-  sha256   VARCHAR NOT NULL,
-  f_name   VARCHAR NOT NULL,
-  CONSTRAINT sm_image_resize_uniq UNIQUE (sha256,f_name)
+  sha256    VARCHAR NOT NULL,
+  f_name    VARCHAR NOT NULL,
+  file_id   VARCHAR NOT NULL,
+  CONSTRAINT sm_image_resize_uniq UNIQUE (sha256,f_name),
+  CONSTRAINT pk_sm_image_resize_file_id PRIMARY KEY (file_id)
 );
 
 CREATE TABLE sm_job_path_move
@@ -112,15 +79,51 @@ ON sm_log (device_uid);
 
 CREATE TABLE sm_category_fc
 (
-  id              INTEGER NOT NULL,
-  sha256          VARCHAR NOT NULL,
-  f_name          VARCHAR NOT NULL,
+  id       INTEGER NOT NULL,
+  sha256   VARCHAR NOT NULL,
+  f_name   VARCHAR NOT NULL,
   CONSTRAINT sm_category_fc_pkey PRIMARY KEY (sha256,f_name),
   CONSTRAINT fk_sm_category_fc_sm_category_rule FOREIGN KEY (id) REFERENCES sm_category_rule (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE INDEX idx_sm_category_fc_id
 ON sm_category_fc (id);
+
+CREATE TABLE sm_file_card
+(
+  id                     VARCHAR NOT NULL,
+  device_uid             VARCHAR NOT NULL,
+  f_parent               VARCHAR NOT NULL,
+  f_name                 VARCHAR NOT NULL,
+  f_extension            VARCHAR,
+  f_creation_date        TIMESTAMP NOT NULL,
+  f_last_modified_date   TIMESTAMP NOT NULL,
+  f_size                 BIGINT,
+  f_mime_type_java       VARCHAR,
+  sha256                 VARCHAR,
+  f_name_lc              VARCHAR NOT NULL,
+  CONSTRAINT sm_file_card_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_sm_file_card_sm_device FOREIGN KEY (device_uid) REFERENCES sm_device (uid) ON DELETE RESTRICT,
+  CONSTRAINT fk_sm_file_card_sm_image_resize FOREIGN KEY (sha256,f_name) REFERENCES sm_image_resize (sha256,f_name) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX idx_f_parent
+ON sm_file_card (f_parent);
+
+CREATE INDEX idx_fc_f_name_lc
+ON sm_file_card (f_name_lc);
+
+CREATE INDEX idx_last_modified
+ON sm_file_card (f_last_modified_date);
+
+CREATE INDEX idx_sm_file_card_device_uid
+ON sm_file_card (device_uid, f_parent);
+
+CREATE INDEX idx_sha256
+ON sm_file_card (sha256);
+
+CREATE INDEX idx_fc_sha_name
+ON sm_file_card (sha256, f_name);
 
 CREATE TABLE sm_exif
 (
