@@ -40,6 +40,8 @@ GET         /sync-compare-directory/children/:device                  controller
 POST        /calcExif/:device                                         controllers.SmSyncExif.calcExif(device:String)
 GET         /exif/:fileName                                           controllers.SmSyncExif.getExif(fileName:String)
 GET         /gps-all                                                  controllers.SmSyncExif.viewAllGps
+GET         /get-dirs-diff-modify-date                                controllers.SmSyncExif.getDirsDiffModifyDate
+GET         /get-files-diff-modify-date-by-parent                     controllers.SmSyncExif.getFilesDiffModifyDateByParent(fParent: String)
 
 + nocsrf
 POST        /resize-image/:device                                     controllers.SmImage.resizeImage(device:String)

@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
+import org.joda.time.DateTime
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent, InjectedController}
 import ru.ns.model.{OsConf, SmExif, SmExifGoo}
@@ -114,5 +115,50 @@ class SmSyncExif @Inject()(val database: DBService)
         }
         Ok(views.html.gps(lstSmExifGoo)())
       }
+  }
+
+  def getDirsDiffModifyDate: Action[AnyContent] = Action.async {
+
+    val qry = sql"""
+       SELECT F_PARENT,
+              TO_CHAR(sm_file_card.F_LAST_MODIFIED_DATE,'YYYY-MM-DD HH24:MI:SS') F_LAST_MODIFIED_DATE,
+              TO_CHAR(sm_exif.DATE_TIME,'YYYY-MM-DD HH24:MI:SS') EXIF_DATE_TIME,
+              sm_exif.MAKE,
+              sm_exif.MODEL
+       FROM sm_file_card
+          INNER JOIN sm_exif ON sm_exif.ID = sm_file_card.ID
+       WHERE sm_exif.ID IS NOT NULL
+       AND   sm_exif.DATE_TIME IS NOT NULL
+       AND   DATE_PART('day',sm_exif.DATE_TIME) != DATE_PART('day',sm_file_card.F_LAST_MODIFIED_DATE)
+       ORDER BY DATE_TIME DESC
+      """
+      .as[(String, DateTime, DateTime, String, String)]
+    database.runAsync(qry).map { rowSeq =>
+      Ok(views.html.exif.diff_modify_dates_dirs(rowSeq)())
+    }
+
+  }
+
+  def getFilesDiffModifyDateByParent(fParent: String): Action[AnyContent] = Action.async {
+
+    val qry = sql"""
+       SELECT F_PARENT,
+              sm_file_card.F_NAME,
+              TO_CHAR(sm_file_card.F_LAST_MODIFIED_DATE,'YYYY-MM-DD HH24:MI:SS') F_LAST_MODIFIED_DATE,
+              TO_CHAR(sm_exif.DATE_TIME,'YYYY-MM-DD HH24:MI:SS') EXIF_DATE_TIME,
+              sm_exif.MAKE,
+              sm_exif.MODEL
+       FROM sm_file_card
+          INNER JOIN sm_exif ON sm_exif.ID = sm_file_card.ID
+       WHERE sm_exif.ID IS NOT NULL
+       AND   sm_exif.DATE_TIME IS NOT NULL
+       AND   DATE_PART('day',sm_exif.DATE_TIME) != DATE_PART('day',sm_file_card.F_LAST_MODIFIED_DATE)
+       AND   sm_file_card.f_parent = '#$fParent'
+       ORDER BY DATE_TIME DESC
+      """
+      .as[(String, String, DateTime, DateTime, String, String)]
+    database.runAsync(qry).map { rowSeq =>
+      Ok(views.html.exif.diff_modify_dates_files(rowSeq)())
+    }
   }
 }
