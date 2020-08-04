@@ -37,7 +37,7 @@ object FileUtils {
   }
 
   def getDevicesInfo(deviceUid: String = ""): Future[ArrayBuffer[Device]] = Future[ArrayBuffer[Device]] {
-    if (OsConf.isUnix) {
+    if (OsConf.isLinux) {
       import scala.sys.process._
       implicit val cmdProc: String = Seq("lsblk", "-Jf").!!
 

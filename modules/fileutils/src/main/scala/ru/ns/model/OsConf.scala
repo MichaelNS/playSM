@@ -1,26 +1,29 @@
 package ru.ns.model
 
+import scala.util.Properties
+
 /**
   * Current operation system config
   * [[OsConf.fsSeparator]] FileSystems.getDefault.getSeparator
   * <p>
-  * [[OsConf.isUnix]] - Nix OS environment
+  * [[OsConf.isLinux]] - Linux OS environment
   * <p>
   * [[OsConf.isWindows]] - Windows OS environment
+  * <p>
+  * [[OsConf.isMac]] - Apple Mac OSX environment
+  *
   */
 object OsConf {
 
   val fsSeparator: String = "/"
 
-  val OS: String = System.getProperty("os.name").toLowerCase
+  def isLinux: Boolean = Properties.isLinux
 
-  def isUnix: Boolean = OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0
+  def isWindows: Boolean = Properties.isWin
 
-  def isWindows: Boolean = OS.indexOf("win") >= 0
+  def isMac: Boolean = Properties.isMac
 
-  def isMac: Boolean = OS.indexOf("mac") >= 0
+  def getOsSeparator: String = if (Properties.isWin) "\\" else "/"
 
-  def getOsSeparator: String = if (isWindows) "\\" else "/"
-
-  def getMacWinDeviceRegexp: String = if (isWindows) "\\(([^)]+)\\)" else "(.*)\\s+(\\([^\\)]+\\))"
+  def getMacWinDeviceRegexp: String = if (Properties.isWin) "\\(([^)]+)\\)" else "(.*)\\s+(\\([^\\)]+\\))"
 }

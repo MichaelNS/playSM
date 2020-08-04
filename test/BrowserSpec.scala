@@ -135,7 +135,7 @@ class BrowserSpec extends PlaySpec
         fParent = Some(pathStr.drop(3)) // drop "c:\"
         mountPoint = Some(pathStr.take(2)) // take "c:"
       }
-      else if (OsConf.isUnix) {
+      else if (OsConf.isLinux) {
         fParent = Some(dir_clearJob.path.toString.drop(1))
         mountPoint = Some(OsConf.fsSeparator)
       }
