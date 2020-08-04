@@ -20,9 +20,6 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 
-conf/application.conf
-conf/scanImport.conf
-
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
