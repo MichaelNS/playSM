@@ -22,5 +22,5 @@ object OsConf {
 
   def getOsSeparator: String = if (isWindows) "\\" else "/"
 
-  def getMacWinDeviceRegexp: String = if (isWindows) "(.*)\\s+(\\([^\\)]+\\))" else "\\(([^)]+)\\)"
+  def getMacWinDeviceRegexp: String = if (isWindows) "\\(([^)]+)\\)" else "(.*)\\s+(\\([^\\)]+\\))"
 }
