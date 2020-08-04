@@ -137,4 +137,32 @@ order by DATE_TIME desc
 
 -------------------------------------------------------------------------------------------------------------------------------------
 
+CREATE EXTENSION pg_trgm with schema public;
+
+CREATE INDEX sm_file_card_f_name_lc_gin_trgm_idx ON sm_file_card USING gin(LOWER(f_name_lc) gin_trgm_ops);
+
+
+explain analyse
+SELECT x2.x3,
+       x2.x4,
+       x2.x5,
+       x2.x6,
+       x2.x7,
+       x2.x8
+FROM (SELECT x9."f_name_lc" AS x3,
+             x9."f_name" AS x4,
+             x9."f_parent" AS x5,
+             x9."sha256" AS x6,
+             (CASE WHEN (x10."id" IS NOT NULL) THEN x10."label_v" ELSE NULL END) AS x7,
+             COUNT(1) AS x8
+      FROM "sm_file_card" x9
+        LEFT OUTER JOIN "sm_device" x10 ON x9."device_uid" = x10."uid"
+      WHERE x9."f_name_lc" LIKE '%%'
+      GROUP BY x9."f_name_lc",
+               x9."f_name",
+               x9."f_parent",
+               x9."sha256",
+               (CASE WHEN (x10."id" IS NOT NULL) THEN x10."label_v" ELSE NULL END) LIMIT 10 OFFSET 0) x2
+ORDER BY x2.x4
+
 -------------------------------------------------------------------------------------------------------------------------------------
