@@ -1,6 +1,6 @@
 @import org.joda.time.DateTime
 
-@(exifFc: scala.Vector[(String, DateTime, DateTime, String, String)])()
+@(exifFc: scala.Vector[String])()
 @_template {
     <div class="row column">
         <h2>list folders different between file modify date and exif date</h2>
@@ -11,21 +11,12 @@
             <thead>
                 <tr>
                     <th>Parent</th>
-                    <th>Name</th>
-                    <th>file date</th>
-                    <th>Exif date</th>
-                    <th>Make</th>
-                    <th>Model</th>
                 </tr>
             </thead>
             <tbody>
             @for(fc <- exifFc) {
                 <tr>
-                    <td><a href="@routes.SmSyncExif.getFilesDiffModifyDateByParent(fc._1)">@fc._1</a></td>
-                    <td>@fc._2.toLocalDateTime.toString("yyy.MM.dd HH:mm:ss")</td>
-                    <td>@fc._3.toLocalDateTime.toString("yyy.MM.dd HH:mm:ss")</td>
-                    <td>@fc._4</td>
-                    <td>@fc._5</td>
+                    <td><a href="@routes.SmSyncExif.getFilesDiffModifyDateByParent(fc)">@fc</a></td>
                 </tr>
             }
             </tbody>

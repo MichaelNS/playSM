@@ -1,6 +1,6 @@
 @import org.joda.time.DateTime
 
-@(exifFc: scala.Vector[(String, String, DateTime, DateTime, String, String)])()
+@(exifFc: scala.Vector[(String, String, String, DateTime, DateTime, String, String)])()
 @_template {
     <div class="row column">
         <h2>list files different between file modify date and exif date</h2>
@@ -22,11 +22,11 @@
             @for(fc <- exifFc) {
                 <tr>
                     <td>@fc._1</td>
-                    <td>@fc._2</td>
-                    <td>@fc._3.toLocalDateTime.toString("yyy.MM.dd HH:mm:ss")</td>
+                    <td><a href="@routes.SmView.viewFile(Some(fc._3))">@fc._2</a></td>
                     <td>@fc._4.toLocalDateTime.toString("yyy.MM.dd HH:mm:ss")</td>
-                    <td>@fc._5</td>
+                    <td>@fc._5.toLocalDateTime.toString("yyy.MM.dd HH:mm:ss")</td>
                     <td>@fc._6</td>
+                    <td>@fc._7</td>
                 </tr>
             }
             </tbody>

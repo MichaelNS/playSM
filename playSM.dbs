@@ -146,15 +146,11 @@
 			<fk name="fk_sm_file_card_sm_device" to_schema="public" to_table="sm_device" delete_action="restrict" >
 				<fk_column name="device_uid" pk="uid" />
 			</fk>
-			<fk name="fk_sm_file_card_sm_image_resize" to_schema="public" to_table="sm_image_resize" delete_action="cascade" update_action="cascade" >
-				<fk_column name="sha256" pk="sha256" />
-				<fk_column name="f_name" pk="f_name" />
-			</fk>
 		</table>
 		<table name="sm_image_resize" generator_rows="100" >
+			<column name="file_id" type="varchar" jt="12" mandatory="y" />
 			<column name="sha256" type="varchar" jt="12" mandatory="y" />
 			<column name="f_name" type="varchar" jt="12" mandatory="y" />
-			<column name="file_id" type="varchar" jt="12" mandatory="y" />
 			<index name="sm_image_resize_uniq" unique="UNIQUE" >
 				<column name="sha256" />
 				<column name="f_name" />
@@ -500,8 +496,8 @@ AS '$libdir/pg_trgm', $function$word_similarity_op$function$
 		<entity schema="public" name="sm_category_rule" color="c1d8ee" x="45" y="60" />
 		<entity schema="public" name="sm_category_fc" color="bed3f4" x="45" y="240" />
 		<entity schema="public" name="sm_device" color="bed3f4" x="240" y="60" />
-		<entity schema="public" name="sm_file_card" color="bed3f4" x="240" y="375" />
 		<entity schema="public" name="sm_image_resize" color="c1d8ee" x="240" y="630" />
+		<entity schema="public" name="sm_file_card" color="bed3f4" x="240" y="375" />
 	</layout>
 	<layout name="Sample Layout with Tools" id="Layout_13ab4a1" show_column_type="y" show_relation="columns" >
 		<callout x="45" y="45" pointer="NO" >

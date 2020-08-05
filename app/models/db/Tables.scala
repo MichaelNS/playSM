@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2020-07-31T22:06:38.606783+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2020-08-05T10:46:08.770347500+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -358,19 +358,19 @@ trait Tables {
 
     /** Foreign key referencing SmDevice (database name fk_sm_file_card_sm_device) */
     lazy val smDeviceFk = foreignKey("fk_sm_file_card_sm_device", deviceUid, SmDevice)(r => r.uid, onUpdate = ForeignKeyAction.NoAction, onDelete = ForeignKeyAction.Restrict)
-    /** Foreign key referencing SmImageResize (database name fk_sm_file_card_sm_image_resize) */
-    lazy val smImageResizeFk = foreignKey("fk_sm_file_card_sm_image_resize", (sha256, fName), SmImageResize)(r => (Rep.Some(r.sha256), r.fName), onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
 
     /** Index over (fParent) (database name idx_f_parent) */
     val index1 = index("idx_f_parent", fParent)
     /** Index over (fNameLc) (database name idx_fc_f_name_lc) */
     val index2 = index("idx_fc_f_name_lc", fNameLc)
+    /** Index over (sha256,fName) (database name idx_fc_sha_name) */
+    val index3 = index("idx_fc_sha_name", (sha256, fName))
     /** Index over (fLastModifiedDate) (database name idx_last_modified) */
-    val index3 = index("idx_last_modified", fLastModifiedDate)
+    val index4 = index("idx_last_modified", fLastModifiedDate)
     /** Index over (sha256) (database name idx_sha256) */
-    val index4 = index("idx_sha256", sha256)
+    val index5 = index("idx_sha256", sha256)
     /** Index over (deviceUid,fParent) (database name idx_sm_file_card_device_uid) */
-    val index5 = index("idx_sm_file_card_device_uid", (deviceUid, fParent))
+    val index6 = index("idx_sm_file_card_device_uid", (deviceUid, fParent))
   }
 
   /** Collection-like TableQuery object for table SmFileCard */
@@ -378,10 +378,10 @@ trait Tables {
 
   /** Entity class storing rows of table SmImageResize
     *
+    * @param fileId Database column file_id SqlType(varchar), PrimaryKey
     * @param sha256 Database column sha256 SqlType(varchar)
-    * @param fName  Database column f_name SqlType(varchar)
-    * @param fileId Database column file_id SqlType(varchar), PrimaryKey */
-  case class SmImageResizeRow(sha256: String, fName: String, fileId: String)
+    * @param fName  Database column f_name SqlType(varchar) */
+  case class SmImageResizeRow(fileId: String, sha256: String, fName: String)
 
   /** GetResult implicit for fetching SmImageResizeRow objects using plain SQL queries */
   implicit def GetResultSmImageResizeRow(implicit e0: GR[String]): GR[SmImageResizeRow] = GR {
@@ -392,17 +392,17 @@ trait Tables {
 
   /** Table description of table sm_image_resize. Objects of this class serve as prototypes for rows in queries. */
   class SmImageResize(_tableTag: Tag) extends profile.api.Table[SmImageResizeRow](_tableTag, "sm_image_resize") {
-    def * = (sha256, fName, fileId) <> (SmImageResizeRow.tupled, SmImageResizeRow.unapply)
+    def * = (fileId, sha256, fName) <> (SmImageResizeRow.tupled, SmImageResizeRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(sha256), Rep.Some(fName), Rep.Some(fileId)).shaped.<>({ r => import r._; _1.map(_ => SmImageResizeRow.tupled((_1.get, _2.get, _3.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(fileId), Rep.Some(sha256), Rep.Some(fName)).shaped.<>({ r => import r._; _1.map(_ => SmImageResizeRow.tupled((_1.get, _2.get, _3.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
+    /** Database column file_id SqlType(varchar), PrimaryKey */
+    val fileId: Rep[String] = column[String]("file_id", O.PrimaryKey)
     /** Database column sha256 SqlType(varchar) */
     val sha256: Rep[String] = column[String]("sha256")
     /** Database column f_name SqlType(varchar) */
     val fName: Rep[String] = column[String]("f_name")
-    /** Database column file_id SqlType(varchar), PrimaryKey */
-    val fileId: Rep[String] = column[String]("file_id", O.PrimaryKey)
 
     /** Uniqueness Index over (sha256,fName) (database name sm_image_resize_uniq) */
     val index1 = index("sm_image_resize_uniq", (sha256, fName), unique = true)
