@@ -143,7 +143,10 @@ class SmFcCrc @Inject()(cc: MessagesControllerComponents, config: Configuration,
           val q = for (uRow <- Tables.SmFileCard if uRow.id === row._1) yield uRow.sha256
           q.update(Some(sha))
         }
-        database.runAsync(update).map(_ => logger.debug(s"calcCRC Set sha256 for key ${row._1}   path ${row._3} ${row._2}"))
+        database.runAsync(update).onComplete {
+          case Success(_) => logger.debug(s"calcCRC Set sha256 for key ${row._1}   path ${row._3} ${row._2}")
+          case Failure(ex) => logger.error(s"calcCRC Set sha256 error: ${ex.toString}")
+        }
       }
     } catch {
       case _: java.io.FileNotFoundException | _: java.io.IOException => None
