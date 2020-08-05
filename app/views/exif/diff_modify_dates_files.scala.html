@@ -1,10 +1,16 @@
 @import org.joda.time.DateTime
-
-@(exifFc: scala.Vector[(String, String, String, DateTime, DateTime, String, String)])()
+@import helper._
+@(exifFc: scala.Vector[(String, String, String, DateTime, DateTime, String, String, String)], fParent: String)(implicit request: MessagesRequestHeader)
 @_template {
     <div class="row column">
         <h2>list files different between file modify date and exif date</h2>
     </div>
+
+    @form(routes.SmSyncExif.setDiffModifyDateFilesByParent(fParent)) {
+        @CSRF.formField
+
+        <button class="button success">set modify date from exif to files</button>
+    }
 
     <div class="row column">
         <table class="stack">

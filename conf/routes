@@ -41,7 +41,8 @@ POST        /calcExif/:device                                         controller
 GET         /exif/:fileName                                           controllers.SmSyncExif.getExif(fileName:String)
 GET         /gps-all                                                  controllers.SmSyncExif.viewAllGps
 GET         /get-dirs-diff-modify-date                                controllers.SmSyncExif.getDirsDiffModifyDate
-GET         /get-files-diff-modify-date-by-parent                     controllers.SmSyncExif.getFilesDiffModifyDateByParent(fParent: String)
+GET         /get-files-diff-modify-date-by-parent                     controllers.SmSyncExif.vFilesDiffModifyDateByParent(fParent: String)
+POST        /set-modify-date-files-by-parent                          controllers.SmSyncExif.setDiffModifyDateFilesByParent(fParent: String)
 
 + nocsrf
 POST        /resize-image/:device                                     controllers.SmImage.resizeImage(device:String)

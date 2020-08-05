@@ -173,6 +173,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
   }
 
   def syncSingleNamePath(path2scan: String, deviceUid: String): Action[AnyContent] = Action {
+    // TODO 05.08.2020 Проверить, что указанный каталог указан в конфигурации сканирования. Иначе можно в explorerDevice нажать синхронизацию на каталоге, который в конфиге не указан и таким образом в БД добавить лишние файлы
     FileUtils.getDeviceInfo(deviceUid).map { device =>
       if (device.isDefined) {
         syncPath(path2scan, deviceUid, device.get.mountpoint)
@@ -256,7 +257,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
 
     futureListOfTrys onComplete {
       case Success(suc) =>
-        suc.foreach(qq =>logger.debug(s"deleted [$qq] row "))
+        suc.foreach(qq => logger.debug(s"deleted [$qq] row "))
 
       case Failure(ex) => logger.error(s"delFromDb -> Delete from DB error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
     }
