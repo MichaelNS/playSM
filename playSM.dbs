@@ -46,7 +46,7 @@
 			<column name="reliable" type="bool" length="1" decimal="0" jt="-7" mandatory="y" >
 				<defo>true</defo>
 			</column>
-			<column name="path_scan_date" type="timestamp" length="29" decimal="6" jt="93" mandatory="y" />
+			<column name="path_scan_date" type="timestamp" jt="93" />
 			<column name="crc_date" type="timestamp" jt="93" />
 			<column name="exif_date" type="timestamp" jt="93" />
 			<column name="job_path_scan" type="bool" jt="-7" mandatory="y" >
@@ -495,9 +495,9 @@ AS '$libdir/pg_trgm', $function$word_similarity_op$function$
 		<entity schema="public" name="sm_job_path_move" color="bed3f4" x="495" y="225" />
 		<entity schema="public" name="sm_category_rule" color="c1d8ee" x="45" y="60" />
 		<entity schema="public" name="sm_category_fc" color="bed3f4" x="45" y="240" />
-		<entity schema="public" name="sm_device" color="bed3f4" x="240" y="60" />
 		<entity schema="public" name="sm_image_resize" color="c1d8ee" x="240" y="630" />
 		<entity schema="public" name="sm_file_card" color="bed3f4" x="240" y="375" />
+		<entity schema="public" name="sm_device" color="bed3f4" x="240" y="60" />
 	</layout>
 	<layout name="Sample Layout with Tools" id="Layout_13ab4a1" show_column_type="y" show_relation="columns" >
 		<callout x="45" y="45" pointer="NO" >
