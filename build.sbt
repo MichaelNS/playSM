@@ -79,6 +79,8 @@ lazy val commonSettings = Seq(
 // This is common, non-Play code
 lazy val fileutils = project in file("modules/fileutils")
 
+val tmingleiDep = "0.19.2"
+
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .settings(routesGenerator := InjectedRoutesGenerator)
@@ -88,8 +90,10 @@ lazy val root = (project in file("."))
 
       "com.typesafe.slick" %% "slick" % "3.3.2",
       "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
-      "com.github.tminglei" %% "slick-pg" % "0.19.2",
-      "com.github.tminglei" %% "slick-pg_joda-time" % "0.19.2",
+
+      "com.github.tminglei" %% "slick-pg" % tmingleiDep,
+      "com.github.tminglei" %% "slick-pg_joda-time" % tmingleiDep,
+
       "com.typesafe.play" %% "play-slick" % "5.0.0",
       "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
 
