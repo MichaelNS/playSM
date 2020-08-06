@@ -8,12 +8,14 @@ import java.{lang, util}
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import org.scalatestplus.play.PlaySpec
+import play.api.Logger
 import ru.ns.model.{Device, FileCardSt, OsConf, SmPath}
 import ru.ns.tools.FileUtils
 
 import scala.collection.mutable.ArrayBuffer
 
 class FileUtilsSpec extends PlaySpec {
+  private val logger: Logger = Logger(classOf[FileUtilsSpec])
 
   "getNixDevicesInfo is OK" in {
 
@@ -92,7 +94,32 @@ class FileUtilsSpec extends PlaySpec {
 
 
   }
+  /*
+    "test performance" in {
+      logger.info("performance")
+      val fName = "c:/Distrib/jdk-11.0.5_windows-x64_bin.exe"
+      var start: Long = 0
+      var end: Long = 0
+      var sha: String = ""
 
+      start = System.currentTimeMillis
+      val hash = Files.asByteSource(new File(fName)).hash(Hashing.sha256)
+      end = System.currentTimeMillis
+      logger.info(s"performance 0 asByteSource - $hash   ${end - start}")
+
+      start = System.currentTimeMillis
+      sha = FileUtils.getGuavaSha256(fName)
+      end = System.currentTimeMillis
+      logger.info(s"performance 2 getGuavaSha256 - $sha   ${end - start}")
+
+
+      start = System.currentTimeMillis
+      val file = better.files.File(fName)
+      sha = file.sha256
+      end = System.currentTimeMillis
+      logger.info(s"performance 1 better - $sha   ${end - start}")
+    }
+  */
   "check crc file is equals" in {
     val fName = "./test/tmp/test1.txt"
     val hash = Files.asByteSource(new File(fName)).hash(Hashing.sha256)
