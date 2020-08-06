@@ -1,3 +1,6 @@
+@import java.time.format.DateTimeFormatter
+@import java.time.temporal.ChronoUnit
+@import java.time.LocalDate
 @import helper._
 @(devices: scala.collection.mutable.Seq[DeviceView])(implicit request: MessagesRequestHeader)
 @_template {
@@ -39,10 +42,8 @@
                     @* new device has value LocalDateTime.MIN*@
                     @if(device.syncDate.getYear > -1) {
                         <td>
-                            @device.syncDate.toLocalDateTime.toString("dd.MM.yyyy HH:mm")
-
-                            (@{org.joda.time.Days.daysBetween(device.syncDate.toLocalDate, new org.joda.time.LocalDate()).getDays
-                        } days ago)
+                            @device.syncDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
+                            (@{ChronoUnit.DAYS.between (device.syncDate.toLocalDate, LocalDate.now())} days ago)
                         </td>
                     } else {
                         <td>None</td>

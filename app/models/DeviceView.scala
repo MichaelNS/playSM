@@ -1,12 +1,12 @@
 package models
 
-import org.joda.time.DateTime
+import java.time.LocalDateTime
 
 case class DeviceView(name: String,
                       label: String,
                       uid: String,
                       description: String,
-                      syncDate: DateTime,
+                      syncDate: LocalDateTime,
                       visible: Boolean,
                       reliable: Boolean,
                       withOutCrc: Int

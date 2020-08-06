@@ -166,3 +166,34 @@ FROM (SELECT x9."f_name_lc" AS x3,
 ORDER BY x2.x4
 
 -------------------------------------------------------------------------------------------------------------------------------------
+
+JdbcCapabilities.insertOrUpdate;
+[debug] s.j.J.statementAndParameter - Executing prepared update: HikariProxyPreparedStatement@1198385275 wrapping update "sm_exif" set "date_time"=?,"date_time_original"=?,"date_time_digitized"=?,"make"=?,"model"=?,"software"=?,"exif_image_width"=?,"exif_image_height"=?,"gps_version_id"=?,"gps_latitude_ref"=?,"gps_latitude"=?,"gps_longitude_ref"=?,"gps_longitude"=?,"gps_altitude_ref"=?,"gps_altitude"=?,"gps_time_stamp"=?,"gps_processing_method"=?,"gps_date_stamp"=?,"gps_latitude_dec"=?,"gps_longitude_dec"=? where "id"=?; insert into "sm_exif" ("id","date_time","date_time_original","date_time_digitized","make","model","software","exif_image_width","exif_image_height","gps_version_id","gps_latitude_ref","gps_latitude","gps_longitude_ref","gps_longitude","gps_altitude_ref","gps_altitude","gps_time_stamp","gps_processing_method","gps_date_stamp","gps_latitude_dec","gps_longitude_dec") select ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? where not exists (select 1 from "sm_exif" where "id"=?)
+[debug] s.j.J.statementAndParameter - Executing prepared update: HikariProxyPreparedStatement@408292370 wrapping insert into "sm_exif" ("id","date_time","date_time_original","date_time_digitized","make","model","software","exif_image_width","exif_image_height","gps_version_id","gps_latitude_ref","gps_latitude","gps_longitude_ref","gps_longitude","gps_altitude_ref","gps_altitude","gps_time_stamp","gps_processing_method","gps_date_stamp","gps_latitude_dec","gps_longitude_dec") values ('3FFE4FE6CBEFED63B282D7763F472C44A24A9DF400B1ACAD6EF22D674602CAAD',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL) on conflict ("id") do update set "date_time"=EXCLUDED."date_time","date_time_original"=EXCLUDED."date_time_original","date_time_digitized"=EXCLUDED."date_time_digitized","make"=EXCLUDED."make","model"=EXCLUDED."model","software"=EXCLUDED."software","exif_image_width"=EXCLUDED."exif_image_width","exif_image_height"=EXCLUDED."exif_image_height","gps_version_id"=EXCLUDED."gps_version_id","gps_latitude_ref"=EXCLUDED."gps_latitude_ref","gps_latitude"=EXCLUDED."gps_latitude","gps_longitude_ref"=EXCLUDED."gps_longitude_ref","gps_longitude"=EXCLUDED."gps_longitude","gps_altitude_ref"=EXCLUDED."gps_altitude_ref","gps_altitude"=EXCLUDED."gps_altitude","gps_time_stamp"=EXCLUDED."gps_time_stamp","gps_processing_method"=EXCLUDED."gps_processing_method","gps_date_stamp"=EXCLUDED."gps_date_stamp","gps_latitude_dec"=EXCLUDED."gps_latitude_dec","gps_longitude_dec"=EXCLUDED."gps_longitude_dec"
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+              /*
+                            logger.info(s"getNano = ${row._5.getNano}")
+                            logger.info(s"getNano = ${row._5.toString}")
+                            logger.info(s"toInstant = ${row._5.toInstant(ZoneOffset.UTC)}")
+                            logger.info(s"toEpochMilli = ${row._5.toInstant(ZoneOffset.UTC).toEpochMilli}")
+                            logger.info(s"FileTime getNano = ${FileTime.fromMillis(row._5.getNano)}")
+                            logger.info(s"FileTime from = ${FileTime.from(row._5.getNano, TimeUnit.NANOSECONDS)}")
+                            logger.info(s"FileTime fromMillis = ${FileTime.fromMillis(row._5.toInstant(ZoneOffset.UTC).toEpochMilli)}")
+              */
+
+              logger.info("!!!!!")
+              logger.info(s"getNano = ${row._5.toString}")
+              logger.info(s"MILLI_OF_SECOND = ${row._5.getLong(ChronoField.MILLI_OF_SECOND)}")
+              logger.info(s"MILLI_OF_DAYMILLI_OF_DAY = ${row._5.getLong(ChronoField.MILLI_OF_DAY)}")
+              //              logger.info(s"MILLI_OF_DAYMILLI_OF_DAY = ${row._5.toInstant(ZoneOffset.UTC).toEpochMilli)}")
+              import java.time.ZoneId
+              import java.time.ZonedDateTime
+              val zdtSys = ZonedDateTime.of(row._5, ZoneId.systemDefault())
+              val zdtUtc = ZonedDateTime.of(row._5, ZoneOffset.UTC)
+              logger.info(s"zdtSys = $zdtSys")
+              logger.info(s"zdtUtc = $zdtUtc")
+              //              logger.info(s"zdt = ${ZoneId.getAvailableZoneIds}")
+              //              logger.info(s"zdt = ${ZoneId.SHORT_IDS}")

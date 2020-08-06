@@ -1,10 +1,17 @@
-import org.joda.time.DateTime
+import java.time.LocalDateTime
+
 import play.api.Logger
 import slick.jdbc.GetResult
 
 package object controllers {
 
-  implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
+//  implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
+
+  implicit val getDateTimeResult: AnyRef with GetResult[LocalDateTime] =
+    GetResult { r =>
+      val nextTimestamp = r.nextTimestamp()
+      LocalDateTime.of(nextTimestamp.toLocalDateTime.toLocalDate, nextTimestamp.toLocalDateTime.toLocalTime)
+    }
 
   val logger: Logger = play.api.Logger(getClass)
 

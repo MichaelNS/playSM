@@ -11,6 +11,7 @@ import play.api.{Configuration, Logger}
 import ru.ns.model.{OsConf, SmExif, SmExifGoo}
 import ru.ns.tools.{FileUtils, SmExifUtil}
 import services.db.DBService
+import slick.jdbc.GetResult
 import slick.sql.SqlStreamingAction
 import utils.db.SmPostgresDriver.api._
 
@@ -29,6 +30,8 @@ class SmSyncExif @Inject()(cc: MessagesControllerComponents, config: Configurati
   val logger: Logger = play.api.Logger(getClass)
 
   val smSyncDeviceStream = new SmSyncDeviceStream(cc, config, database)
+
+  implicit val getDateTimeResult: AnyRef with GetResult[DateTime] = GetResult(r => new DateTime(r.nextTimestamp()))
 
   case class FolderSync(deviceUid: String, mountPoint: String, folderName: String)
 
@@ -195,7 +198,8 @@ class SmSyncExif @Inject()(cc: MessagesControllerComponents, config: Configurati
 
               val file = better.files.File(fileName)
               //              file.update("creationTime", FileTime.fromMillis(row._5.getMillis))
-              file.update("lastModifiedTime", FileTime.fromMillis(row._5.getMillis))
+
+//              file.update("lastModifiedTime", FileTime.fromMillis(row._5.getMillis))
               val attributes = file.attributes
               if (attributes.creationTime().toMillis > attributes.lastModifiedTime().toMillis) {
                 file.update("creationTime", FileTime.fromMillis(row._5.getMillis))

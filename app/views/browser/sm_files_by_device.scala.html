@@ -1,4 +1,5 @@
-@(files: scala.Vector[(String, String, String, String, org.joda.time.DateTime)])()
+@import java.time.format.DateTimeFormatter
+@(files: scala.Vector[(String, String, String, String, java.time.LocalDateTime)])()
 @_template {
     <div class="row column">
         <h2>Filecards</h2>
@@ -21,7 +22,7 @@
                     <td><a href="@routes.SmView.viewFile(Some(fc._1))">@fc._2</a></td>
                     <td>@fc._3</td>
                     <td>@fc._4</td>
-                    <td>@fc._5.toLocalDateTime.toString("yyy.MM.dd HH:mm:ss")</td>
+                    <td>@fc._5.format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"))</td>
                 </tr>
             }
             </tbody>

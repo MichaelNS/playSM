@@ -1,9 +1,10 @@
 package controllers
 
+import java.time.LocalDateTime
+
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
-import org.joda.time.DateTime
 import play.api.Configuration
 import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
 import ru.ns.model.OsConf
@@ -157,7 +158,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
        WHERE device_uid NOT IN (#$device_NotView)
        LIMIT #$maxRows
       """
-      .as[(String, String, String, DateTime)]
+      .as[(String, String, String, LocalDateTime)]
     database.runAsync(qry).map { rowSeq =>
       Ok(views.html.sm_chk_backup_last_year(rowSeq, device_Unreliable, device_NotView, cntFiles, rowSeq.length, maxRows)())
     }

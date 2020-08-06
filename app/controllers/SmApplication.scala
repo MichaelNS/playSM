@@ -4,13 +4,12 @@ import java.time.LocalDateTime
 
 import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Singleton}
-import models.DeviceView2
+import models.DeviceView
 import models.db.Tables
 import play.api.Logger
 import play.api.mvc._
 import ru.ns.model.OsConf
 import services.db.DBService
-import slick.jdbc.GetResult
 import utils.db.SmPostgresDriver.api._
 
 import scala.collection.mutable.ArrayBuffer
@@ -24,13 +23,6 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
   extends InjectedController {
 
   val logger: Logger = play.api.Logger(getClass)
-
-  //  implicit val getDateTimeResult: AnyRef with GetResult[LocalDateTime] = GetResult(r => LocalDateTime.of(r.nextDate().toLocalDate, LocalTime.now()))
-  implicit val getDateTimeResult: AnyRef with GetResult[LocalDateTime] =
-    GetResult { r =>
-      val nextTimestamp = r.nextTimestamp()
-      LocalDateTime.of(nextTimestamp.toLocalDateTime.toLocalDate, nextTimestamp.toLocalDateTime.toLocalTime)
-    }
 
   def smIndex: Action[AnyContent] = Action.async {
     val qry = sql"""
@@ -51,8 +43,8 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
       //      logger.debug(pprint.apply(rowSeq).toString())
 
 
-      val devices = ArrayBuffer[DeviceView2]()
-      rowSeq.foreach { p => devices += DeviceView2(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
+      val devices = ArrayBuffer[DeviceView]()
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
 
       Ok(views.html.smr_index(devices)())
     }

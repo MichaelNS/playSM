@@ -10,7 +10,6 @@ import akka.stream.scaladsl.{Sink, Source}
 import javax.inject.{Inject, Singleton}
 import models.db.Tables
 import models.{DeviceView, SmDevice}
-import org.joda.time.DateTime
 import play.api.mvc._
 import play.api.{Configuration, Logger}
 import ru.ns.model.OsConf
@@ -76,7 +75,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
       FROM sm_device x2
       ORDER BY x2.label_v
       """
-      .as[(String, String, String, String, DateTime, Boolean, Boolean)]
+      .as[(String, String, String, String, LocalDateTime, Boolean, Boolean)]
     database.runAsync(qry).map { rowSeq =>
       val devices = ArrayBuffer[DeviceView]()
       rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = p._6, reliable = p._7, withOutCrc = 0) }
