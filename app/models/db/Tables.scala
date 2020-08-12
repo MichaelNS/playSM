@@ -1,6 +1,6 @@
 package models.db
 
-// AUTO-GENERATED Slick data model [2020-08-05T10:46:08.770347500+03:00[Europe/Moscow]]
+// AUTO-GENERATED Slick data model [2020-08-11T11:49:04.682210+03:00[Europe/Moscow]]
 
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
@@ -119,20 +119,20 @@ trait Tables {
     * @param description  Database column description SqlType(varchar), Default(None)
     * @param visible      Database column visible SqlType(bool), Default(true)
     * @param reliable     Database column reliable SqlType(bool), Default(true)
-    * @param pathScanDate Database column path_scan_date SqlType(timestamp)
+    * @param pathScanDate Database column path_scan_date SqlType(timestamp), Default(None)
     * @param crcDate      Database column crc_date SqlType(timestamp), Default(None)
     * @param exifDate     Database column exif_date SqlType(timestamp), Default(None)
     * @param jobPathScan  Database column job_path_scan SqlType(bool), Default(false)
     * @param jobCalcCrc   Database column job_calc_crc SqlType(bool), Default(false)
     * @param jobCalcExif  Database column job_calc_exif SqlType(bool), Default(false)
     * @param jobResize    Database column job_resize SqlType(bool), Default(false) */
-  case class SmDeviceRow(id: Int, uid: String, name: String, labelV: String, nameV: Option[String] = None, description: Option[String] = None, visible: Boolean = true, reliable: Boolean = true, pathScanDate: java.time.LocalDateTime, crcDate: Option[java.time.LocalDateTime] = None, exifDate: Option[java.time.LocalDateTime] = None, jobPathScan: Boolean = false, jobCalcCrc: Boolean = false, jobCalcExif: Boolean = false, jobResize: Boolean = false)
+  case class SmDeviceRow(id: Int, uid: String, name: String, labelV: String, nameV: Option[String] = None, description: Option[String] = None, visible: Boolean = true, reliable: Boolean = true, pathScanDate: Option[java.time.LocalDateTime] = None, crcDate: Option[java.time.LocalDateTime] = None, exifDate: Option[java.time.LocalDateTime] = None, jobPathScan: Boolean = false, jobCalcCrc: Boolean = false, jobCalcExif: Boolean = false, jobResize: Boolean = false)
 
   /** GetResult implicit for fetching SmDeviceRow objects using plain SQL queries */
-  implicit def GetResultSmDeviceRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]], e3: GR[Boolean], e4: GR[java.time.LocalDateTime], e5: GR[Option[java.time.LocalDateTime]]): GR[SmDeviceRow] = GR {
+  implicit def GetResultSmDeviceRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]], e3: GR[Boolean], e4: GR[Option[java.time.LocalDateTime]]): GR[SmDeviceRow] = GR {
     prs =>
       import prs._
-      SmDeviceRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<[Boolean], <<[Boolean], <<[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<[Boolean], <<[Boolean], <<[Boolean], <<[Boolean]))
+      SmDeviceRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<[Boolean], <<[Boolean], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<?[java.time.LocalDateTime], <<[Boolean], <<[Boolean], <<[Boolean], <<[Boolean]))
   }
 
   /** Table description of table sm_device. Objects of this class serve as prototypes for rows in queries. */
@@ -140,7 +140,7 @@ trait Tables {
     def * = (id, uid, name, labelV, nameV, description, visible, reliable, pathScanDate, crcDate, exifDate, jobPathScan, jobCalcCrc, jobCalcExif, jobResize) <> (SmDeviceRow.tupled, SmDeviceRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(uid), Rep.Some(name), Rep.Some(labelV), nameV, description, Rep.Some(visible), Rep.Some(reliable), Rep.Some(pathScanDate), crcDate, exifDate, Rep.Some(jobPathScan), Rep.Some(jobCalcCrc), Rep.Some(jobCalcExif), Rep.Some(jobResize)).shaped.<>({ r => import r._; _1.map(_ => SmDeviceRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7.get, _8.get, _9.get, _10, _11, _12.get, _13.get, _14.get, _15.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(uid), Rep.Some(name), Rep.Some(labelV), nameV, description, Rep.Some(visible), Rep.Some(reliable), pathScanDate, crcDate, exifDate, Rep.Some(jobPathScan), Rep.Some(jobCalcCrc), Rep.Some(jobCalcExif), Rep.Some(jobResize)).shaped.<>({ r => import r._; _1.map(_ => SmDeviceRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7.get, _8.get, _9, _10, _11, _12.get, _13.get, _14.get, _15.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(serial), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
@@ -158,8 +158,8 @@ trait Tables {
     val visible: Rep[Boolean] = column[Boolean]("visible", O.Default(true))
     /** Database column reliable SqlType(bool), Default(true) */
     val reliable: Rep[Boolean] = column[Boolean]("reliable", O.Default(true))
-    /** Database column path_scan_date SqlType(timestamp) */
-    val pathScanDate: Rep[java.time.LocalDateTime] = column[java.time.LocalDateTime]("path_scan_date")
+    /** Database column path_scan_date SqlType(timestamp), Default(None) */
+    val pathScanDate: Rep[Option[java.time.LocalDateTime]] = column[Option[java.time.LocalDateTime]]("path_scan_date", O.Default(None))
     /** Database column crc_date SqlType(timestamp), Default(None) */
     val crcDate: Rep[Option[java.time.LocalDateTime]] = column[Option[java.time.LocalDateTime]]("crc_date", O.Default(None))
     /** Database column exif_date SqlType(timestamp), Default(None) */

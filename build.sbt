@@ -79,6 +79,8 @@ lazy val commonSettings = Seq(
 // This is common, non-Play code
 lazy val fileutils = project in file("modules/fileutils")
 
+val playSlick = "5.0.0"
+val slick = "3.3.2"
 val tmingleiDep = "0.19.2"
 
 lazy val root = (project in file("."))
@@ -88,14 +90,13 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       ehcache,
 
-      "com.typesafe.slick" %% "slick" % "3.3.2",
-      "com.typesafe.slick" %% "slick-codegen" % "3.3.2",
+      "com.typesafe.slick" %% "slick" % slick,
+      "com.typesafe.slick" %% "slick-codegen" % slick,
 
       "com.github.tminglei" %% "slick-pg" % tmingleiDep,
-      "com.github.tminglei" %% "slick-pg_joda-time" % tmingleiDep,
 
-      "com.typesafe.play" %% "play-slick" % "5.0.0",
-      "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
+      "com.typesafe.play" %% "play-slick" % playSlick,
+      "com.typesafe.play" %% "play-slick-evolutions" % playSlick,
 
       "org.webjars" %% "webjars-play" % "2.8.0",
       "org.webjars" % "foundation" % "6.4.3",
@@ -112,9 +113,7 @@ lazy val root = (project in file("."))
       //    scala-fixture:
       "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
       "com.h2database" % "h2" % "1.4.200" % Test,
-      "org.flywaydb" % "flyway-core" % "6.5.3" % "test",
-
-      "org.camunda.bpm.dmn" % "camunda-engine-dmn" % "7.11.0"
+      "org.flywaydb" % "flyway-core" % "6.5.3" % Test
     )
 
   )
@@ -127,7 +126,7 @@ lazy val root = (project in file("."))
 addCommandAlias("tables", "runMain utils.db.SourceCodeGenerator")
 
 // sbt-scoverage:
-coverageMinimum := 28.77
+coverageMinimum := 29.03
 coverageFailOnMinimum := true
 coverageHighlighting := true
 

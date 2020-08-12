@@ -7,7 +7,7 @@ import slick.jdbc.JdbcCapabilities
 trait SmPostgresDriver extends ExPostgresProfile
   with PgArraySupport
   with PgDate2Support
-  //  with PgEnumSupport
+  with PgEnumSupport
   //  with PgRangeSupport
   //  with PgHStoreSupport
   //  with PgNetSupport
@@ -24,7 +24,7 @@ trait SmPostgresDriver extends ExPostgresProfile
 
   object SmPgAPI extends API
     with DateTimeImplicits
-    //    with ArrayImplicits
+    with ArrayImplicits
     //    with NetImplicits
     //    with LTreeImplicits
     //    with RangeImplicits

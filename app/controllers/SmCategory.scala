@@ -1,7 +1,5 @@
 package controllers
 
-import java.io.{IOException, InputStream}
-
 import akka.actor.ActorSystem
 import akka.stream.ThrottleMode
 import akka.stream.scaladsl.{Sink, Source}
@@ -9,8 +7,6 @@ import akka.{Done, NotUsed}
 import javax.inject.{Inject, Singleton}
 import models.SmCategoryRule
 import models.db.Tables
-import org.camunda.bpm.dmn.engine.{DmnDecision, DmnDecisionTableResult, DmnEngineConfiguration}
-import org.camunda.bpm.engine.variable.{VariableMap, Variables}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
@@ -20,7 +16,6 @@ import services.db.DBService
 import slick.basic.DatabasePublisher
 import utils.db.SmPostgresDriver.api._
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -191,40 +186,6 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
                   description: String
                  )
 
-  @deprecated
-  def getRules: ArrayBuffer[Rule] = {
-    val ruleFilePath = "/category.dmn"
-    val lstRules: ArrayBuffer[Rule] = ArrayBuffer[Rule]()
-
-    // create a new default DMN engine
-    val dmnEngine = DmnEngineConfiguration.createDefaultDmnEngineConfiguration.buildEngine
-    val inputStream: InputStream = getClass.getResourceAsStream(ruleFilePath)
-    try {
-      val decision: DmnDecision = dmnEngine.parseDecision("decision", inputStream)
-      logger.info(s"decision.getKey = ${decision.getKey}   decision.getName = ${decision.getName}")
-      val lstPath = getXmlRule(ruleFilePath)
-      logger.info(s"lstPath = $lstPath")
-      lstPath.foreach { rulePath =>
-        // prepare variables for decision evaluation
-        val variables: VariableMap = Variables.putValue("path", rulePath)
-        // evaluate decision
-        val result: DmnDecisionTableResult = dmnEngine.evaluateDecisionTable(decision, variables)
-        val outMap = result.getSingleResult.getEntryMap
-        if (outMap.size() == 4) {
-          lstRules += Rule(rulePath, java.lang.Boolean.valueOf(outMap.get("isBegins").toString), outMap.get("category").toString, outMap.get("subcategory").toString, outMap.get("description").toString, "")
-        } else {
-          logger.warn(s"applyRules -> out DMN has < 4 values - $rulePath")
-        }
-      }
-      lstRules
-    }
-    finally try
-      inputStream.close()
-    catch {
-      case e: IOException => logger.error(s"Could not close stream: ${e.getMessage}")
-    }
-  }
-
   def getStreamRulesFromDb: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = {
 
     val queryRes = Tables.SmCategoryRule.result
@@ -258,28 +219,6 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         case Failure(ex) => logger.error(s"applyRulesSetCategory error : ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
       }
     Future.successful(Redirect(routes.SmCategoryView.listCategoryTypeAndCnt()))
-  }
-
-
-  /**
-    * read input param from DMN
-    * replaceAll quotas need because NPE occurs when DMN exec - .getSingleResult.getSingleEntry.toString
-    *
-    * @param ruleFilePath List input DMN params
-    * @return
-    */
-  @deprecated
-  def getXmlRule(ruleFilePath: String): Seq[String] = {
-    val isDmn: InputStream = getClass.getResourceAsStream(ruleFilePath)
-
-    try {
-      val xml = scala.xml.XML.load(isDmn)
-      (xml \\ "definitions" \\ "decision" \\ "decisionTable" \\ "rule" \\ "inputEntry" \\ "text").map(_.text.replaceAll("\"", ""))
-    } finally try
-      isDmn.close()
-    catch {
-      case e: IOException => logger.error(s"Could not close stream: ${e.getMessage}")
-    }
   }
 
   // SmFileCard.sha256, SmFileCard.fName
@@ -334,47 +273,4 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
 
     insRes
   }
-
-  @deprecated
-  def copyRulesToDb: Action[AnyContent] = Action.async {
-    Source.fromIterator(() => getRules.iterator)
-      .throttle(elements = 1, 100.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
-      .mapAsync(1) { rulePath =>
-        debug("-----------------------------------")
-        debug("-----------------------------------")
-        debug(rulePath)
-        //        val dbRes =
-        database.runAsync(Tables.SmCategoryRule.filter(q => q.categoryType === rulePath.categoryType && q.category === rulePath.category && q.subCategory === rulePath.subCategory).result)
-          .map { rowSeq =>
-            debug(rowSeq)
-            if (rowSeq.isEmpty) {
-              //              debug(rulePath.category, rulePath.subCategory, rulePath.description)
-              val cRow = Tables.SmCategoryRuleRow(-1, rulePath.categoryType, rulePath.category, rulePath.subCategory, List(rulePath.fParent), rulePath.isBegins, None)
-              //              debug(cRow)
-              database.runAsync((Tables.SmCategoryRule returning Tables.SmCategoryRule.map(_.id)) += SmCategoryRule.apply(cRow).data.toRow)
-            } else {
-              if (!rowSeq.head.fPath.toSet.contains(rulePath.fParent)) {
-                val pathes = rowSeq.head.fPath.toSet + rulePath.fParent
-                //                pathes.+(rulePath.fParent)
-                debug((pathes, rulePath.fParent))
-
-                database.runAsync((for {uRow <- Tables.SmCategoryRule if uRow.categoryType === rulePath.categoryType && uRow.category === rulePath.category && uRow.subCategory === rulePath.subCategory} yield uRow.fPath)
-                  .update(pathes.toList))
-                  .map(_ => logger.info(s"update SmCategoryRule"))
-              }
-            }
-          }
-      }
-      .recover { case t: Throwable =>
-        logger.error("copyRulesToDb. Error retrieving output from file", t)
-        None
-      }
-      .runWith(Sink.ignore)
-      .onComplete {
-        case Success(_) => logger.info("copyRulesToDb done ")
-        case Failure(ex) => logger.error(s"copyRulesToDb error : ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
-      }
-    Future.successful(Ok("Done"))
-  }
-
 }

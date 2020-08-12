@@ -262,14 +262,22 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
   /**
     * Check backup android
     * ls -at > /tmp/123.txt
-    *
+    * <p>
     * Android Debug Bridge
+    * <p>
     * adb shell ls /sdcard/DCIM/Camera/ > /tmp/111222
-    *
+    * <p>
+    * /cmpBackupAndroindDeviceByFile/111222
+    * <p>
+    * <p>
+    * chmod 777 /tmp/111222.sh
+    * <p>
+    * /tmp/111222.sh
+    * <p>
     * @param fileName file name
     * @return
     */
-  def cmpBackupAndroindDeviceByFile(fileName: String): Action[AnyContent] = Action.async {
+  def cmpBackupAndroidDeviceByFile(fileName: String): Action[AnyContent] = Action.async {
     val copyFrom = "/sdcard/DCIM/Camera/"
     val copyTo = "/tmp/cp_back/"
 

@@ -199,12 +199,15 @@ class SmSyncExif @Inject()(cc: MessagesControllerComponents, config: Configurati
               val file = better.files.File(fileName)
               //              file.update("creationTime", FileTime.fromMillis(row._5.getMillis))
 
-//              file.update("lastModifiedTime", FileTime.fromMillis(row._5.getMillis))
-              val attributes = file.attributes
-              if (attributes.creationTime().toMillis > attributes.lastModifiedTime().toMillis) {
-                file.update("creationTime", FileTime.fromMillis(row._5.getMillis))
+              try {
+                file.update("lastModifiedTime", FileTime.fromMillis(row._5.getMillis))
+                val attributes = file.attributes
+                if (attributes.creationTime().toMillis > attributes.lastModifiedTime().toMillis) {
+                  file.update("creationTime", FileTime.fromMillis(row._5.getMillis))
+                }
+              } catch {
+                case e: java.nio.file.NoSuchFileException => logger.error(s"setDiffModifyDateFilesByParent NoSuchFileException : ${e.getMessage}")
               }
-
               val folderSync = FolderSync(row._8, mountPoint, row._1)
               if (!folders2Sync.contains(folderSync)) {
                 folders2Sync += folderSync

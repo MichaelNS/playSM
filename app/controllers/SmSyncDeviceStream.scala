@@ -46,7 +46,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
             if (rowSeq.contains(device.uuid)) {
               logger.info(s"Device [${device.toString}] already exists")
             } else {
-              val cRow = Tables.SmDeviceRow(-1, device.uuid, device.name, device.label, None, pathScanDate = LocalDateTime.MIN)
+              val cRow = Tables.SmDeviceRow(-1, device.uuid, device.name, device.label, None)
 
               val insRes = database.runAsync((Tables.SmDevice returning Tables.SmDevice.map(_.id)) += SmDevice.apply(cRow).data.toRow)
               insRes onComplete {
@@ -108,14 +108,14 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
               logger.info("done syncDevice, pathConfig " + res.toString + " " + impPath)
 
               database.runAsync((for {uRow <- Tables.SmDevice if uRow.uid === deviceUid} yield uRow.pathScanDate)
-                .update(LocalDateTime.now()))
+                .update(Some (LocalDateTime.now())))
                 .map(_ => logger.info(s"Sync complete for device $deviceUid"))
 
             case Failure(ex) =>
               logger.error(s"syncDevice error: ${ex.toString}")
 
               database.runAsync((for {uRow <- Tables.SmDevice if uRow.uid === deviceUid} yield uRow.pathScanDate)
-                .update(LocalDateTime.now()))
+                .update(Some (LocalDateTime.now())))
                 .map(_ => logger.info(s"Sync complete for device $deviceUid"))
 
           }

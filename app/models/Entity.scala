@@ -8,7 +8,7 @@ case class EntitySmFc[T](id: String, data: T)
 
 case class EntitySha[T](data: T)
 
-case class SmDevice(name: String, labelV: String, uid: String, pathScanDate: java.time.LocalDateTime) {
+case class SmDevice(name: String, labelV: String, uid: String, pathScanDate: Option[java.time.LocalDateTime] = None) {
   def toRow: Tables.SmDeviceRow = {
     Tables.SmDeviceRow(
       id = -1,
@@ -28,7 +28,7 @@ object SmDevice {
         name = row.name,
         row.labelV,
         uid = row.uid,
-        row.pathScanDate
+        pathScanDate = row.pathScanDate
       )
     )
   }

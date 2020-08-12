@@ -61,7 +61,7 @@ GET         /checkBackFilesLastYear                                   controller
 GET         /checkDuplicates/:device                                  controllers.SmReport.checkDuplicates(device: String)
 GET         /getFcByDeviceSha256/:device/:sha256                      controllers.SmReport.getFcByDeviceSha256(device: String, sha256: String)
 GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
-GET         /cmpBackupAndroindDeviceByFile/:fileName                  controllers.SmReport.cmpBackupAndroindDeviceByFile(fileName:String)
+GET         /cmpBackupAndroindDeviceByFile/:fileName                  controllers.SmReport.cmpBackupAndroidDeviceByFile(fileName:String)
 
 
 GET         /listCategoryTypeAndCnt                                   controllers.SmCategoryView.listCategoryTypeAndCnt
@@ -94,7 +94,6 @@ POST        /convertDeviceIdBatch                                     controller
 + nocsrf
 POST        /apply-rules-set-cathegory                                controllers.SmCategory.applyRulesSetCategory()
 
-#GET         /copy-rules-to-db                                         controllers.SmCategory.copyRulesToDb
 
 
 #view-file

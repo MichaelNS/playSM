@@ -1,6 +1,3 @@
-@import java.time.format.DateTimeFormatter
-@import java.time.temporal.ChronoUnit
-@import java.time.LocalDate
 @(devices: scala.collection.mutable.Seq[DeviceView])()
 @_template {
     <div class="row column">
@@ -35,19 +32,11 @@
 
                     <td>@device.description</td>
 
-                    @* new device has value LocalDateTime.MIN*@
-                    @if(device.syncDate.getYear > -1) {
-                        <td>
-                            @device.syncDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
-                            (@{ChronoUnit.DAYS.between (device.syncDate.toLocalDate, LocalDate.now())} days ago)
-                        </td>
-                    } else {
-                        <td>None</td>
-                    }
+                    <td>@device.syncDateDiff</td>
 
                     <td><a href="@routes.SmReport.listFilesWithoutSha256ByDevice(device.uid)" >@device.withOutCrc</a></td>
 
-                    @if(device.syncDate.getYear > -1) {
+                    @if(device.isSynced) {
                         <td><a href="@routes.SmView.viewStorage(device.uid)" >view</a></td>
                     } else {
                         <td></td>

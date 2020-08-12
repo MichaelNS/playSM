@@ -13,6 +13,10 @@ import scala.util.Properties
   * [[OsConf.isMac]] - Apple Mac OSX environment
   *
   */
+
+
+
+
 object OsConf {
 
   val fsSeparator: String = "/"

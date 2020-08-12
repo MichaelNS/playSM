@@ -23,7 +23,7 @@ CREATE TABLE sm_device
   description      VARCHAR,
   visible          BOOL DEFAULT TRUE NOT NULL,
   reliable         BOOL DEFAULT TRUE NOT NULL,
-  path_scan_date   TIMESTAMP NOT NULL,
+  path_scan_date   TIMESTAMP,
   crc_date         TIMESTAMP,
   exif_date        TIMESTAMP,
   job_path_scan    BOOL DEFAULT FALSE NOT NULL,

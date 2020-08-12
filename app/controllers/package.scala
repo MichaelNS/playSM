@@ -10,7 +10,11 @@ package object controllers {
   implicit val getDateTimeResult: AnyRef with GetResult[LocalDateTime] =
     GetResult { r =>
       val nextTimestamp = r.nextTimestamp()
-      LocalDateTime.of(nextTimestamp.toLocalDateTime.toLocalDate, nextTimestamp.toLocalDateTime.toLocalTime)
+      if (nextTimestamp == null) {
+        LocalDateTime.MIN
+      } else {
+        LocalDateTime.of(nextTimestamp.toLocalDateTime.toLocalDate, nextTimestamp.toLocalDateTime.toLocalTime)
+      }
     }
 
   val logger: Logger = play.api.Logger(getClass)
