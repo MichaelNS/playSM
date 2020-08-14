@@ -13,13 +13,19 @@ import scala.util.Properties
   * [[OsConf.isMac]] - Apple Mac OSX environment
   *
   */
+trait OsConfMethods {
+  def isWindows: Boolean
 
+  def getOsSeparator: String
 
+  def getMacWinDeviceRegexp: String
+}
 
-
-object OsConf {
+object OsConf extends OsConfMethods {
 
   val fsSeparator: String = "/"
+  val winDeviceRegExp: String = "\\(([^)]+)\\)"
+  val macOsDeviceRegExp: String = "(.*)\\s+(\\([^\\)]+\\))"
 
   def isLinux: Boolean = Properties.isLinux
 
@@ -27,7 +33,7 @@ object OsConf {
 
   def isMac: Boolean = Properties.isMac
 
-  def getOsSeparator: String = if (Properties.isWin) "\\" else "/"
+  def getOsSeparator: String = if (isWindows) "\\" else "/"
 
-  def getMacWinDeviceRegexp: String = if (Properties.isWin) "\\(([^)]+)\\)" else "(.*)\\s+(\\([^\\)]+\\))"
+  def getMacWinDeviceRegexp: String = if (isWindows) winDeviceRegExp else macOsDeviceRegExp
 }

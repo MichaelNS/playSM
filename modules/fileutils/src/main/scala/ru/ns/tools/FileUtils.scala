@@ -7,7 +7,7 @@ import java.{lang, util}
 
 import com.typesafe.scalalogging._
 import org.slf4j.LoggerFactory
-import ru.ns.model.{Device, FileCardSt, OsConf, SmPath}
+import ru.ns.model._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -19,16 +19,6 @@ import scala.concurrent.Future
   */
 object FileUtils {
   private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))
-
-  def debugParam(implicit line: sourcecode.Line, enclosing: sourcecode.Enclosing, args: sourcecode.Args): Unit = {
-    logger.debug(s"debugParam ${enclosing.value} : ${line.value}  - "
-      + args.value.map(_.map(a => a.source + s"=[${a.value}]").mkString("(", "\n, ", ")")).mkString("")
-    )
-  }
-
-  def debug[V](value: sourcecode.Text[V])(implicit fullName: sourcecode.FullName): Unit = {
-    logger.debug(s"${fullName.value} = ${value.source} : [${value.value}]")
-  }
 
   def getDeviceInfo(deviceUid: String = ""): Future[Option[Device]] = {
     getDevicesInfo(deviceUid)
@@ -44,8 +34,9 @@ object FileUtils {
       if (deviceUid == "") getNixDevicesInfo else getNixDevicesInfo.filter(_.uuid == deviceUid)
     } else {
       implicit val fileStores: lang.Iterable[FileStore] = FileSystems.getDefault.getFileStores
+      implicit val osConf: OsConfMethods = OsConf
 
-      if (deviceUid == "") getWinDevicesInfo else getWinDevicesInfo.filter(_.uuid == deviceUid)
+      if (deviceUid == "") getMacWinDevicesInfo else getMacWinDevicesInfo.filter(_.uuid == deviceUid)
     }
   }
 
@@ -81,7 +72,7 @@ object FileUtils {
     devices
   }
 
-  def getWinDevicesInfo(implicit fileStores: lang.Iterable[FileStore]): ArrayBuffer[Device] = {
+  def getMacWinDevicesInfo(implicit fileStores: lang.Iterable[FileStore], osConf: OsConfMethods): ArrayBuffer[Device] = {
     val devices: ArrayBuffer[Device] = ArrayBuffer[Device]()
 
     debug(fileStores)
@@ -99,7 +90,7 @@ object FileUtils {
     debug(fsUniq)
 
     if (fsUniq.nonEmpty) {
-      val pp = Pattern.compile(OsConf.getMacWinDeviceRegexp)
+      val pp = Pattern.compile(osConf.getMacWinDeviceRegexp)
 
       for (cFileStore <- fileStores.asScala.filter(fs => fsUniq.contains(fs.name))) {
 

@@ -17,16 +17,6 @@ object SmImageUtil {
   private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))
   private val cacheNameDir = "images-cache"
 
-  def debugParam(implicit line: sourcecode.Line, enclosing: sourcecode.Enclosing, args: sourcecode.Args): Unit = {
-    logger.debug(s"debugParam ${enclosing.value} : ${line.value}  - "
-      + args.value.map(_.map(a => a.source + s"=[${a.value}]").mkString("(", "\n, ", ")")).mkString("")
-    )
-  }
-
-  def debug[V](value: sourcecode.Text[V])(implicit fullName: sourcecode.FullName): Unit = {
-    logger.debug(s"${fullName.value} = ${value.source} : [${value.value}]")
-  }
-
   def getGroupDirName(sha256: String): String = {
     sha256.take(2)
   }

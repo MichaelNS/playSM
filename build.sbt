@@ -88,8 +88,6 @@ lazy val root = (project in file("."))
   .settings(routesGenerator := InjectedRoutesGenerator)
   .settings(
     libraryDependencies ++= Seq(
-      ehcache,
-
       "com.typesafe.slick" %% "slick" % slick,
       "com.typesafe.slick" %% "slick-codegen" % slick,
 
@@ -108,12 +106,13 @@ lazy val root = (project in file("."))
       "com.lihaoyi" %% "sourcecode" % "0.2.1",
       "com.lihaoyi" %% "pprint" % "0.6.0",
 
-      "com.github.pathikrit" %% "better-files" % "3.9.1",
-
       //    scala-fixture:
       "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
       "com.h2database" % "h2" % "1.4.200" % Test,
-      "org.flywaydb" % "flyway-core" % "6.5.3" % Test
+      "org.flywaydb" % "flyway-core" % "6.5.3" % Test,
+
+      "org.scalamock" %% "scalamock" % "5.0.0" % Test,
+      "org.scalatest" %% "scalatest" % "3.2.1" % Test
     )
 
   )

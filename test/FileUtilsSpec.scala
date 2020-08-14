@@ -7,14 +7,15 @@ import java.{lang, util}
 
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
+import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.PlaySpec
 import play.api.Logger
-import ru.ns.model.{Device, FileCardSt, OsConf, SmPath}
+import ru.ns.model._
 import ru.ns.tools.FileUtils
 
 import scala.collection.mutable.ArrayBuffer
 
-class FileUtilsSpec extends PlaySpec {
+class FileUtilsSpec extends PlaySpec with MockFactory {
   private val logger: Logger = Logger(classOf[FileUtilsSpec])
 
   "getNixDevicesInfo is OK" in {
@@ -80,14 +81,19 @@ class FileUtilsSpec extends PlaySpec {
 
       override def getFileStoreAttributeView[V <: FileStoreAttributeView](`type`: Class[V]): V = ???
 
-      override def toString(): String = s"${name()} ${winLetter()}"
+      override def toString: String = s"${name()} ${winLetter()}"
     }
 
     val dev_1: Device = Device(name = "", label = "PLEX", uuid = "PLEX", mountpoint = "C:", fstype = "")
     val lstDevices = ArrayBuffer[Device](dev_1)
 
+    val mockedUtils = mock[OsConfMethods]
+    //    (mockedUtils.isWindows _).expects().returning(true)
+    (mockedUtils.getMacWinDeviceRegexp _).expects().returning(OsConf.winDeviceRegExp)
+
     implicit val fileStores: lang.Iterable[FileStore] = util.Arrays.asList(fs1)
-    val res = FileUtils.getWinDevicesInfo
+    implicit val osConfL: OsConfMethods = mockedUtils
+    val res = FileUtils.getMacWinDevicesInfo
     res.size mustBe 1
 
     res mustBe lstDevices

@@ -24,16 +24,6 @@ object SmExifUtil {
   private val tagsJpeg = List[String]("Make", "Model", "Software", "Date/Time", "Date/Time Original", "Date/Time Digitized", "Exif Image Width", "Exif Image Height")
   private val tagsMp4 = List[String]("Creation Time", "Modification Time")
 
-  def debugParam(implicit line: sourcecode.Line, enclosing: sourcecode.Enclosing, args: sourcecode.Args): Unit = {
-    logger.debug(s"debugParam ${enclosing.value} : ${line.value}  - "
-      + args.value.map(_.map(a => a.source + s"=[${a.value}]").mkString("(", "\n, ", ")")).mkString("")
-    )
-  }
-
-  def debug[V](value: sourcecode.Text[V])(implicit fullName: sourcecode.FullName): Unit = {
-    logger.debug(s"${fullName.value} = ${value.source} : [${value.value}]")
-  }
-
   /**
     * https://github.com/drewnoakes/metadata-extractor/blob/master/Source/com/drew/metadata/exif/ExifDirectoryBase.java
     *

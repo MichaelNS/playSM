@@ -117,23 +117,6 @@ Caused by: org.postgresql.util.PSQLException: ERROR: column x2.label does not ex
 	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.execute(HikariProxyPreparedStatement.java)
 	at slick.jdbc.StatementInvoker.results(StatementInvoker.scala:39)
 
--------------------------------------------------------------------------------------------------------------------------------------
-
-select F_PARENT,
-       sm_file_card.F_NAME,
-       to_char(sm_file_card.F_LAST_MODIFIED_DATE, 'YYYY-MM-DD HH24:MI:SS') F_LAST_MODIFIED_DATE,
-       to_char(sm_exif.DATE_TIME, 'YYYY-MM-DD HH24:MI:SS')                 DATE_TIME,
-       sm_exif.MAKE,
-       sm_exif.MODEL
-from sm_file_card
-         inner join sm_exif on sm_exif.ID = sm_file_card.ID
-where sm_exif.ID is not null
-  and sm_exif.DATE_TIME is not null
-  and date_part('day', sm_exif.DATE_TIME) != date_part('day', sm_file_card.F_LAST_MODIFIED_DATE)
-order by DATE_TIME desc
-;
-
-
 
 -------------------------------------------------------------------------------------------------------------------------------------
 
