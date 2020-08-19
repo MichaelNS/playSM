@@ -19,8 +19,10 @@ import scala.concurrent.{Await, Future}
 
 
 @Singleton
-class SmView @Inject()(val database: DBService)
-  extends InjectedController {
+class SmView @Inject()(cc: MessagesControllerComponents, val database: DBService)
+  extends MessagesAbstractController(cc)
+    with play.api.i18n.I18nSupport {
+
 
   val logger: Logger = play.api.Logger(getClass)
 
@@ -57,7 +59,7 @@ class SmView @Inject()(val database: DBService)
     * @param depth    path depth
     * @return
     */
-  def explorerDevice(device: String, treePath: String, cPath: String, depth: Int): Action[AnyContent] = Action.async {
+  def explorerDevice(device: String, treePath: String, cPath: String, depth: Int): Action[AnyContent] = Action.async { implicit request =>
     debugParam
 
     val qry = sql"""
@@ -78,7 +80,7 @@ class SmView @Inject()(val database: DBService)
       """
       .as[(String, Int, Int, String)]
     database.runAsync(qry).map { rowSeq =>
-      Ok(views.html.fc_explorer(device, treePath, rowSeq, depth)())
+      Ok(views.html.fc_explorer(device, treePath, rowSeq, depth, ExtensionForm.form))
     }
   }
 

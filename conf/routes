@@ -59,6 +59,7 @@ GET         /checkBackUp/:device                                      controller
 GET         /checkBackAllFiles                                        controllers.SmReport.checkBackAllFiles
 GET         /checkBackFilesLastYear                                   controllers.SmReport.checkBackFilesLastYear
 GET         /checkDuplicates/:device                                  controllers.SmReport.checkDuplicates(device: String)
+POST        /checkDuplicatesByParent                                  controllers.SmReport.checkDuplicatesByParent(device: String, fParent: String)
 GET         /getFcByDeviceSha256/:device/:sha256                      controllers.SmReport.getFcByDeviceSha256(device: String, sha256: String)
 GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
 GET         /cmpBackupAndroindDeviceByFile/:fileName                  controllers.SmReport.cmpBackupAndroidDeviceByFile(fileName:String)

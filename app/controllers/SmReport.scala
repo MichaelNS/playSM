@@ -13,6 +13,7 @@ import utils.db.SmPostgresDriver.api._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.jdk.CollectionConverters._
 
 /**
@@ -20,7 +21,8 @@ import scala.jdk.CollectionConverters._
   */
 @Singleton
 class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration, val database: DBService)
-  extends MessagesAbstractController(cc) {
+  extends MessagesAbstractController(cc)
+    with play.api.i18n.I18nSupport {
 
   def listFilesWithoutSha256ByDevice(device: String): Action[AnyContent] = Action.async {
     val maxRows = 200
@@ -172,27 +174,41 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     * @return [[views.html.f_duplicates]]
     */
   def checkDuplicates(device: String): Action[AnyContent] = Action.async {
+    val res = checkDuplicatesEx(device, fParent = None, fExtension = None)
+    res._1.map { rowSeq =>
+      Ok(views.html.f_duplicates(device, res._2, rowSeq)())
+    }
+  }
+
+  def checkDuplicatesByParent(device: String, fParent: String): Action[AnyContent] = Action.async { implicit request =>
+    val formData: ExtensionForm = ExtensionForm.form.bindFromRequest().get
+    val extension = if (formData.extension.nonEmpty) Some(formData.extension.toLowerCase) else None
+
+    val res = checkDuplicatesEx(device, fParent = Some(fParent), extension)
+    res._1.map { rowSeq =>
+      Ok(views.html.f_duplicates(device, res._2, rowSeq)())
+    }
+  }
+
+  def checkDuplicatesEx(device: String, fParent: Option[String], fExtension: Option[String]): (Future[Seq[(Option[String], String, Option[Long], Int)]], Long) = {
     val config = ConfigFactory.load("scanImport.conf")
     val maxFileSize: Long = config.getBytes("checkDuplicates.maxFileSize")
 
     val qry = (for {
       uRow <- Tables.SmFileCard if uRow.deviceUid === device && uRow.fSize > 0L && uRow.fSize > maxFileSize && uRow.sha256.nonEmpty
     } yield uRow)
+      .filterOpt(fParent)(_.fParent startsWith _)
+      .filterOpt(fExtension)(_.fExtension === _)
       .groupBy(uRow =>
         (uRow.sha256, uRow.fName, uRow.fSize))
       .map({
-        case ((uRow, v_fName, b_fName), cnt) =>
-          (uRow, v_fName, b_fName, cnt.map(_.sha256).length)
+        case ((uRow, fName, fSize), cnt) =>
+          (uRow, fName, fSize, cnt.map(_.sha256).length)
       })
       .filter(cnt => cnt._4 > 1)
       .sortBy(r => (r._4.desc, r._3.desc))
 
-    database.runAsync(
-      qry.result
-    ).map { rowSeq =>
-
-      Ok(views.html.f_duplicates(device, maxFileSize, rowSeq)())
-    }
+    (database.runAsync(qry.result), maxFileSize)
   }
 
   /**
