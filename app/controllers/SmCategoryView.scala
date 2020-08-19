@@ -181,17 +181,14 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
 
     val formData: ExtensionForm = ExtensionForm.form.bindFromRequest().get
 
-    val qry = if (formData.extension.isEmpty) {
+    val qry = (
       for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
         fc.sha256 === cat.sha256 && fc.fName === cat.fName
       }) if catRow.isEmpty && fcRow.fSize > 0L
-           } yield (fcRow.sha256, fcRow.fParent)
-    } else {
-      for {(fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-        fc.sha256 === cat.sha256 && fc.fName === cat.fName
-      }) if catRow.isEmpty && fcRow.fSize > 0L && fcRow.fExtension.getOrElse("").toLowerCase === formData.extension.toLowerCase
-           } yield (fcRow.sha256, fcRow.fParent)
-    }
+      } yield (fcRow.sha256, fcRow.fParent, fcRow.fExtension)
+      )
+      .filterIf(formData.extension.nonEmpty)(_._3.getOrElse("").toLowerCase === formData.extension.toLowerCase)
+
     database.runAsync(
       qry
         .groupBy(p => p._2)
