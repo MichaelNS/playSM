@@ -177,15 +177,12 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
 
     val qry = (for {
       uRow <- Tables.SmFileCard if uRow.deviceUid === device && uRow.fSize > 0L && uRow.fSize > maxFileSize && uRow.sha256.nonEmpty
-      v_fName <- Tables.SmFileCard if v_fName.id === uRow.id
-    } yield (uRow, v_fName))
-      .groupBy({
-        case (uRow, v_fName) =>
-          (uRow.sha256, v_fName.fName, v_fName.fSize)
-      })
+    } yield uRow)
+      .groupBy(uRow =>
+        (uRow.sha256, uRow.fName, uRow.fSize))
       .map({
         case ((uRow, v_fName, b_fName), cnt) =>
-          (uRow, v_fName, b_fName, cnt.map(_._1.sha256).length)
+          (uRow, v_fName, b_fName, cnt.map(_.sha256).length)
       })
       .filter(cnt => cnt._4 > 1)
       .sortBy(r => (r._4.desc, r._3.desc))
@@ -208,7 +205,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
   def getFcByDeviceSha256(device: String, sha256: String): Action[AnyContent] = Action.async {
 
     val qry = for {
-      ((fcRow, catRow), rulesRow) <- Tables.SmFileCard .joinLeft (Tables.SmCategoryFc). on ((fc, cat) => {
+      ((fcRow, catRow), rulesRow) <- Tables.SmFileCard.joinLeft(Tables.SmCategoryFc).on((fc, cat) => {
         fc.sha256 === cat.sha256 && fc.fName === cat.fName
       }).joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
 
@@ -274,6 +271,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     * <p>
     * /tmp/111222.sh
     * <p>
+    *
     * @param fileName file name
     * @return
     */
