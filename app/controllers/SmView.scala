@@ -206,17 +206,12 @@ class SmView @Inject()(cc: MessagesControllerComponents, val database: DBService
   }
 
   def viewPathBySha256(sha256: String): Action[AnyContent] = Action.async {
-
-    val qry = sql"""
-       SELECT
-         f_name,
-         f_parent,
-         device_uid
-       FROM sm_file_card card
-       WHERE sha256 = '#$sha256'
-      """
-      .as[(String, String, String)]
-    database.runAsync(qry).map { rowSeq =>
+    database.runAsync(
+      Tables.SmFileCard
+        .filter(_.sha256 === sha256)
+        .map(fld => (fld.fName, fld.fParent, fld.deviceUid))
+        .result
+    ).map { rowSeq =>
       Ok(views.html.fc_by_sha256(sha256, rowSeq)())
     }
   }
