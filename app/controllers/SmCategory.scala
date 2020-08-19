@@ -77,6 +77,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     database.runAsync(
       qry
         .filter(if (isBegins) _._2.startsWith(fParent) else _._2 === fParent)
+        .filter(_._5 =!= "")
         .sortBy(_._3)
         .sortBy(_._2)
         .sortBy(_._1)

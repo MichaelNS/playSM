@@ -191,6 +191,7 @@ class SmCategoryView @Inject()(cc: MessagesControllerComponents, val database: D
 
     database.runAsync(
       qry
+        .filter(_._1 =!= "")
         .groupBy(p => p._2)
         .map { case (fParent, cnt) => (fParent, cnt.map(_._2).length) }
         .sortBy(_._2.desc)
