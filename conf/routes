@@ -97,6 +97,9 @@ POST        /apply-rules-set-cathegory                                controller
 
 
 
+GET         /delete-files                                             controllers.SmDeduplicate.deleteFilesIfExist(device: String, fParent:String)
+
+
 #view-file
 GET         /view-storage                                             controllers.SmView.viewStorage(device: String)
 GET         /explorerDevice                                           controllers.SmView.explorerDevice(device: String, treePath:String, path: String, depth: Int)

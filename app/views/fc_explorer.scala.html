@@ -4,6 +4,7 @@
 @_template {
     <div class="row column">
         <h3>Explorer - @treePath</h3>
+        <h3><a href="@routes.SmDeduplicate.deleteFilesIfExist(device, treePath)" >delete files if exists!!!</a></h3>
     </div>
 
     @form(routes.SmReport.checkDuplicatesByParent(device, treePath)) {
