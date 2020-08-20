@@ -36,7 +36,6 @@ object SourceCodeGenerator extends App {
   }
   val generatedFileClass = "Tables"
   val generatedFilePackage = "models.db"
-  val generatedFileName = "Tables.scala"
   val generatedFileOutputFolder = "app"
 
   val db = SmPostgresDriver.api.Database.forURL(
@@ -91,6 +90,7 @@ object SourceCodeGenerator extends App {
         }
       }
 
+      // TODO remove, see packageContainerCode
       override def packageCode(profile: String, pkg: String, container: String, parentType: Option[String]): String = {
         s"""
 package $pkg
@@ -110,8 +110,31 @@ trait $container${parentType.map(t => s" extends $t").getOrElse("")} {
 }
               """.trim()
       }
+
+      override def packageContainerCode(profile: String, pkg: String, container: String = "Tables"): String = {
+        val mixinCode = codePerTable.keys.map(tableName => s"${tableName}Table").mkString("extends ", " with ", "")
+        s"""
+package $pkg
+// AUTO-GENERATED Slick data model [${java.time.ZonedDateTime.now()}]
+/** Stand-alone Slick data model for immediate use */
+object $container extends {
+  val profile = $profile
+} with $container
+
+/** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.)
+  * Each generated XXXXTable trait is mixed in this trait hence allowing access to all the TableQuery lazy vals.
+  */
+trait $container${parentType.map(t => s" extends $t").getOrElse("")} $mixinCode {
+  val profile: $profile
+  import profile.api._
+  ${indent(codeForContainer)}
+
+}
+              """.trim()
+      }
     }
   }
 
-  Await.ready(codegen.map(_.writeToFile(slickDriver, generatedFileOutputFolder, generatedFilePackage, generatedFileClass, generatedFileName)), Duration.Inf)
+  //  Await.ready(codegen.map(_.writeToFile(slickDriver, generatedFileOutputFolder, generatedFilePackage, generatedFileClass, "Tables.scala")), Duration.Inf)
+  Await.ready(codegen.map(_.writeToMultipleFiles(slickDriver, generatedFileOutputFolder, generatedFilePackage, generatedFileClass)), Duration.Inf)
 }
