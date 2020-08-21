@@ -18,32 +18,9 @@ class SmSearch @Inject()(val database: DBService)(implicit assetsFinder: AssetsF
   extends InjectedController {
 
   val logger: Logger = play.api.Logger(getClass)
-  val gLimit: Int = 100
 
   def queryForm: Action[AnyContent] = Action {
     Ok(views.html.sm_search_autocomplete(assetsFinder))
-  }
-
-  def byFileName(fileName: String, limit: Int): Action[AnyContent] = Action.async {
-    val maxLimit: Int = Math.min(limit, gLimit)
-    val fileNameFnd = fileName.replace(" ", "%").toLowerCase()
-
-    logger.debug(s"fileName - $fileName")
-
-    val qry = sql"""
-       SELECT DISTINCT fc.f_name
-       FROM sm_file_card fc
-       WHERE lower(fc.f_name_lc) LIKE '%#$fileNameFnd%'
-       order by fc.f_name
-       limit '#$maxLimit'
-      """
-      .as[String]
-
-    database.runAsync(qry).map { rowSeq =>
-      logger.debug(rowSeq.size.toString)
-
-      Ok(Json.toJson(rowSeq))
-    }
   }
 
   case class Paging(draw: Int,

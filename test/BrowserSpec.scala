@@ -208,18 +208,6 @@ class BrowserSpec extends PlaySpec
       }
     }
 
-  // SmSearch ---------------------------------------------------------------------------------------------------------
-  "UserController byFileName" should {
-    "render the byFileName" in {
-      val controller = app.injector.instanceOf[SmSearch]
-      val request = FakeRequest().withCSRFToken
-      val result = controller.byFileName("", 1).apply(request)
-
-      status(result) mustBe OK
-      contentType(result) mustBe Some("application/json")
-    }
-  }
-
   // SmView ---------------------------------------------------------------------------------------------------------
   "UserController viewStorage" should {
     "render the viewStorage" in {

@@ -110,7 +110,6 @@ GET         /viewPathBySha256                                         controller
 
 #search
 GET         /search-form                                              controllers.SmSearch.queryForm
-GET         /search-by-file-name                                      controllers.SmSearch.byFileName(name: String, limit: Int ?= 50)
 GET         /get-files-by-file-name                                   controllers.SmSearch.getFilesbyName(draw: Int, start:Int, length:Int)
 
 GET         /exif-devices                                             controllers.browser.SmExifDevice.listExifDevices
