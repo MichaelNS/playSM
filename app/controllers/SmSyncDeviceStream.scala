@@ -63,22 +63,15 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
   }
 
   def deviceImport: Action[AnyContent] = Action.async { implicit request: MessagesRequest[AnyContent] =>
-    val qry = sql"""
-      SELECT
-        x2.name,
-        x2.label_v,
-        x2.uid,
-        x2.description,
-        x2.path_scan_date,
-        x2.visible,
-        x2.reliable
-      FROM sm_device x2
-      ORDER BY x2.label_v
-      """
-      .as[(String, String, String, String, LocalDateTime, Boolean, Boolean)]
-    database.runAsync(qry).map { rowSeq =>
+    database.runAsync(
+      Tables.SmDevice
+        .map(f => (f.name, f.labelV, f.uid, f.description, f.pathScanDate, f.visible, f.reliable))
+        .sortBy(_._2)
+        .result
+    ).map { rowSeq =>
       val devices = ArrayBuffer[DeviceView]()
-      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = p._6, reliable = p._7, withOutCrc = 0) }
+      // TODO убрать getOrElse после того, как будет переписан запрос на главной странице
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4.getOrElse(""), syncDate = p._5.getOrElse(LocalDateTime.MIN), visible = p._6, reliable = p._7, withOutCrc = 0) }
 
       Ok(views.html.device_import(devices))
     }
