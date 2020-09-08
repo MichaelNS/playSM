@@ -20,7 +20,7 @@ import scala.concurrent.Future
 object FileUtils {
   private val logger: Logger = Logger(LoggerFactory.getLogger(this.getClass))
 
-  def getDeviceInfo(deviceUid: String = ""): Future[Option[Device]] = {
+  def getDeviceInfo(deviceUid: String): Future[Option[Device]] = {
     getDevicesInfo(deviceUid)
       .map { p => Some(p.head) }
       .recover { case _: NoSuchElementException => None }

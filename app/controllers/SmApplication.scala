@@ -25,26 +25,32 @@ class SmApplication @Inject()(implicit assetsFinder: AssetsFinder, val database:
   val logger: Logger = play.api.Logger(getClass)
 
   def smIndex: Action[AnyContent] = Action.async {
-    val qry = sql"""
-      SELECT
-        x2.name,
-        x2.label_v,
-        x2.uid,
-        x2.description,
-        x2.path_scan_date,
-        x2.reliable,
-      (SELECT count(1) FROM sm_file_card x3 WHERE x3.device_uid = x2.uid AND (x3.sha256 IS NULL)  AND (x3.f_size > 0))
-      FROM sm_device x2
-      where x2.visible is true
-      ORDER BY x2.label_v
-      """
-      .as[(String, String, String, String, LocalDateTime, Boolean, Int)]
-    database.runAsync(qry).map { rowSeq =>
+
+    val qry =
+      (Tables.SmDevice
+        .joinLeft(Tables.SmFileCard) on ((device, fc) => {
+        device.uid === fc.deviceUid && fc.sha256.isEmpty && fc.fSize > 0L
+      }))
+        .filter { case (device, _) => device.visible }
+        .groupBy { case (device, _) => (device.name, device.labelV, device.uid, device.description, device.pathScanDate, device.visible, device.reliable) }
+        .map { case (device, cnt) => (
+          device._1,
+          device._2,
+          device._3,
+          device._4,
+          device._5,
+          device._6,
+          device._7,
+          cnt.map(_._2.map(_.id)).countDefined
+        )
+        }
+        .sortBy(_._2)
+    database.runAsync(qry.result).map { rowSeq =>
       //      logger.debug(pprint.apply(rowSeq).toString())
 
 
       val devices = ArrayBuffer[DeviceView]()
-      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = true, reliable = p._6, withOutCrc = p._7) }
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = p._6, reliable = p._7, withOutCrc = p._8) }
 
       Ok(views.html.smr_index(devices)())
     }

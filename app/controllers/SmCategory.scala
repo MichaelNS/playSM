@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.LocalDateTime
+
 import akka.actor.ActorSystem
 import akka.stream.ThrottleMode
 import akka.stream.scaladsl.{Sink, Source}
@@ -68,21 +70,8 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
                                ): Action[AnyContent] = Action.async {
     debugParam
 
-    val qry = for {
-      ((fcRow, catRow), rulesRow) <- Tables.SmFileCard.joinLeft(Tables.SmCategoryFc).on((fc, cat) => {
-        fc.sha256 === cat.sha256 && fc.fName === cat.fName
-      }).joinLeft(Tables.SmCategoryRule).on(_._2.map(_.id) === _.id)
-    } yield (fcRow.deviceUid, fcRow.fParent, fcRow.fName, fcRow.fLastModifiedDate, fcRow.sha256, rulesRow.map(_.categoryType), rulesRow.map(_.category), rulesRow.map(_.subCategory), rulesRow.map(_.description))
-
-    database.runAsync(
-      qry
-        .filter(if (isBegins) _._2.startsWith(fParent) else _._2 === fParent)
-        .filter(_._5 =!= "")
-        .sortBy(_._3)
-        .sortBy(_._2)
-        .sortBy(_._1)
-        .result
-    ).map { rowSeq =>
+    val qry = getDirWithoutCatByParent(fParent, isBegins)
+    database.runAsync(qry.result).map { rowSeq =>
       val catForm: Form[FormCategoryUpdate] = Form(
         mapping(
           "categoryType" -> nonEmptyText,
@@ -92,10 +81,41 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
         )(FormCategoryUpdate.apply)(FormCategoryUpdate.unapply)
       )
 
-      Ok(views.html.category.cat_fc_path("path", fParent, rowSeq, catForm, isBegins)())
+      val lstDevice = rowSeq.map(r => r._1).distinct
+      val lstCat = rowSeq.map(r => FormCategoryUpdate(r._6.getOrElse(""), r._7.getOrElse(""), r._8.getOrElse(""), r._9.getOrElse("").toString)).distinct
+
+      Ok(views.html.category.cat_fc_path("path", fParent, rowSeq, catForm, isBegins, lstDevice, lstCat)())
     }
   }
 
+  def getDirWithoutCatByParent(fParent: String, isBegins: Boolean = false): Query[(
+    Rep[String], Rep[String], Rep[String], Rep[LocalDateTime], Rep[Option[String]], Rep[Option[String]], Rep[Option[String]], Rep[Option[String]],
+      Rep[Option[Option[String]]]), (String, String, String, LocalDateTime, Option[String], Option[String], Option[String], Option[String], Option[Option[String]]), Seq] = {
+
+    (Tables.SmDevice
+      .join(Tables.SmFileCard) on (_.uid === _.deviceUid))
+      //      .filter { case (_, fc) => (fc.sha256 =!= "" && (if (isBegins) fc.fParent.startsWith(fParent) else fc.fParent === fParent)) }
+      //      .sortBy { case (device, fc) => (device.labelV, fc.fParent, fc.fName) }
+      .joinLeft(Tables.SmCategoryFc).on { case ((_, fc), catFc) => fc.sha256 === catFc.sha256 && fc.fName === catFc.fName }
+      .joinLeft(Tables.SmCategoryRule).on { case (((_, _), catFc), rule) => catFc.map(_.id) === rule.id }
+      .map { case (((device, fc), _), rule) => (
+        device.labelV,
+        fc.fParent,
+        fc.fName,
+        fc.fLastModifiedDate,
+        fc.sha256,
+        rule.map(_.categoryType),
+        rule.map(_.category),
+        rule.map(_.subCategory),
+        rule.map(_.description)
+      )
+      }
+      .filter(if (isBegins) _._2.startsWith(fParent) else _._2 === fParent)
+      .filter(_._5 =!= "")
+      .sortBy(_._3)
+      .sortBy(_._2)
+      .sortBy(_._1)
+  }
 
   /**
     * Form for assign Category And Description
@@ -147,6 +167,10 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
   def addCategoryRuleToDb(fParent: String, isBegins: Boolean = false, catForm: FormCategoryUpdate): Future[Int] = {
     val cRow = Tables.SmCategoryRuleRow(-1, catForm.categoryType, catForm.category, catForm.subCategory, List(fParent), isBegins, if (catForm.description.nonEmpty) Some(catForm.description) else None)
     database.runAsync((Tables.SmCategoryRule returning Tables.SmCategoryRule.map(_.id)) += SmCategoryRule.apply(cRow).data.toRow)
+      .recover { case ex: Throwable =>
+        logger.error(s"addCategoryRuleToDb error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+        throw ex
+      }
   }
 
   def updateCategoryRuleInDb(fParent: String, catForm: FormCategoryUpdate, pathes: Set[String]): Future[Int] = {
@@ -169,7 +193,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     logger.info(s"start rulePath = $fParent")
     val start = System.currentTimeMillis
 
-    val dbFcStream: Source[(Option[String], String), NotUsed] = getStreamFcByParent(fParent, isBegins)
+    val dbFcStream: Source[DbRes, NotUsed] = getStreamFcByParent(fParent, isBegins)
     val applyRule = dbFcStream
       .throttle(elements = 500, 10.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
       .mapAsync(1)(writeToCategoryTbl(_, id))
@@ -223,7 +247,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
   }
 
   // SmFileCard.sha256, SmFileCard.fName
-  type DbRes = (Option[String], String)
+  type DbRes = (Option[String], String, String)
 
   /**
     * Get stream SmFileCard from DB by dir name
@@ -238,21 +262,15 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
                          ): Source[DbRes, NotUsed] = {
     debugParam
 
-    // query by startsWith
-    val preQuery = if (isBegins) {
+    val preQuery = (
       for {
         (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
           fc.sha256 === cat.sha256 && fc.fName === cat.fName
-        }) if fcRow.fParent.startsWith(fParent) && fcRow.sha256.nonEmpty && catRow.isEmpty
-      } yield (fcRow.sha256, fcRow.fName)
-    }
-    else {
-      for {
-        (fcRow, catRow) <- Tables.SmFileCard joinLeft Tables.SmCategoryFc on ((fc, cat) => {
-          fc.sha256 === cat.sha256 && fc.fName === cat.fName
-        }) if fcRow.fParent.startsWith(fParent) && fcRow.sha256.nonEmpty && catRow.isEmpty
-      } yield (fcRow.sha256, fcRow.fName)
-    }
+        }) if fcRow.sha256.nonEmpty && catRow.isEmpty
+      } yield (fcRow.sha256, fcRow.fName, fcRow.fParent)
+      )
+      .filterIf(isBegins)(_._3.startsWith(fParent))
+      .filterIf(!isBegins)(_._3 === fParent)
 
     val queryRes = preQuery.result
     val databasePublisher: DatabasePublisher[DbRes] = database runStream queryRes
@@ -268,7 +286,7 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
     * @param id      ID [[models.SmCategoryFc.id]]
     * @return count upsert records SmCategoryFc
     */
-  def writeToCategoryTbl(message: (Option[String], String), id: Int): Future[Int] = {
+  def writeToCategoryTbl(message: DbRes, id: Int): Future[Int] = {
     val cRow = Tables.SmCategoryFcRow(id, message._1.get, message._2)
     val insRes = database.runAsync(Tables.SmCategoryFc.insertOrUpdate(models.SmCategoryFc.apply(cRow).data.toRow))
 

@@ -62,6 +62,7 @@ GET         /checkDuplicates/:device                                  controller
 POST        /checkDuplicatesByParent                                  controllers.SmReport.checkDuplicatesByParent(device: String, fParent: String)
 GET         /getFcByDeviceSha256/:device/:sha256                      controllers.SmReport.getFcByDeviceSha256(device: String, sha256: String)
 GET         /lstDirByDevice/:device/:maxFiles                         controllers.SmReport.lstDirByDevice(device: String, maxFiles: Int)
+#GET         /cmpBackupAndroidDevice                                   controllers.SmReport.cmpBackupAndroidDevice
 GET         /cmpBackupAndroindDeviceByFile/:fileName                  controllers.SmReport.cmpBackupAndroidDeviceByFile(fileName:String)
 
 
@@ -81,6 +82,8 @@ POST        /delJobToMove                                             controller
 + nocsrf
 POST        /moveAllDevices                                           controllers.SmMove.moveAllDevices
 
+GET         /runMoveFilesBySource                                     controllers.SmMove.runMoveFilesBySource()
+
 
 GET         /listDirWithoutCatByLastDate                              controllers.SmCategoryView.listDirWithoutCatByLastDate()
 GET         /listFcWithoutCatByLastDate                               controllers.SmCategoryView.listFcWithoutCatByLastDate()
@@ -95,9 +98,6 @@ POST        /convertDeviceIdBatch                                     controller
 + nocsrf
 POST        /apply-rules-set-cathegory                                controllers.SmCategory.applyRulesSetCategory()
 
-
-
-GET         /delete-files                                             controllers.SmDeduplicate.deleteFilesIfExist(device: String, fParent:String)
 
 
 #view-file

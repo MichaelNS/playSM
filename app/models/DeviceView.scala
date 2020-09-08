@@ -19,20 +19,24 @@ case class DeviceView(name: String,
 }
 
 object DeviceView {
-  def isDeviceSynced(syncDate: LocalDateTime): Boolean = {
-    syncDate.getYear > -1
-  }
-
-  def apply(name: String, label: String, uid: String, description: String, syncDate: LocalDateTime, visible: Boolean, reliable: Boolean, withOutCrc: Int): DeviceView = {
-    val syncDateDiff: String = if (isDeviceSynced(syncDate)) {
-      syncDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) + " (" +
-        ChronoUnit.DAYS.between(syncDate.toLocalDate, LocalDate.now()).toString + " days ago)"
+  def apply(name: String, label: String, uid: String, description: Option[String], syncDate: Option[LocalDateTime], visible: Boolean, reliable: Boolean, withOutCrc: Int): DeviceView = {
+    val syncDateDiff: String = if (syncDate.isDefined) {
+      syncDate.get.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) + " (" +
+        ChronoUnit.DAYS.between(syncDate.get.toLocalDate, LocalDate.now()).toString + " days ago)"
     }
     else {
       "None"
     }
-    val isSynced: Boolean = if (isDeviceSynced(syncDate)) true else false
 
-    new DeviceView(name, label, uid, description, syncDate, visible, reliable, withOutCrc, syncDateDiff, isSynced)
+    new DeviceView(name,
+      label,
+      uid,
+      description.getOrElse(""),
+      syncDate.getOrElse(LocalDateTime.MIN),
+      visible,
+      reliable,
+      withOutCrc,
+      syncDateDiff,
+      syncDate.isDefined)
   }
 }

@@ -1,5 +1,5 @@
 @import java.time.format.DateTimeFormatter
-@(devices: Seq[(String, String, String, java.time.LocalDateTime)],
+@(devices: Seq[(String, String, String, String)],
         device_Unreliable: String,
         device_NotView: String,
         cntFiles: Int,
@@ -11,7 +11,7 @@
         <h2>Check files backup last year</h2>
     </div>
 
-    <div class="device_Unreliable">device unreliable - @device_Unreliable</div>
+@*    <div class="device_Unreliable">device unreliable - @device_Unreliable</div>*@
     <div class="device_NotView">device not view - @device_NotView</div>
     <div class="cntFiles">cnt files backup - @cntFiles</div>
     <div class="rows">rows - @rows</div>
@@ -28,9 +28,13 @@
             <tbody>
             @for(device <- devices) {
                 <tr>
-                    <td><a href="@routes.SmView.viewPathBySha256(device._1)">@device._2</a></td>
+                    @if(device._1 != null) {
+                        <td><a href="@routes.SmView.viewPathBySha256(device._1)">@device._2</a></td>
+                    } else {
+                        <td>@device._2</td>
+                    }
                     <td>@device._3</td>
-                    <td>@device._4.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))</td>
+                    <td>@device._4</td>
                 </tr>
             }
             </tbody>

@@ -1,14 +1,15 @@
 @import ru.ns.model.OsConf
 @import helper._
-@(device: String, treePath: String, lstPath: Vector[(String, Int, Int, String)], depth: Int, fExtForm: Form[ExtensionForm])(implicit request: MessagesRequestHeader)
+@(device: String, treePath: String, lstPath: Vector[(String, Int, Int, String, String)], depth: Int, fExtForm: Form[ExtensionForm])(implicit request: MessagesRequestHeader)
 @_template {
     <div class="row column">
         <h3>Explorer - @treePath</h3>
-        <h3><a href="@routes.SmDeduplicate.deleteFilesIfExist(device, treePath)" >delete files if exists!!!</a></h3>
+        <h4><a href="@routes.SmCategory.listDirWithoutCatByParent(treePath + OsConf.fsSeparator , isBegins = true)" >list dir without category by path</a></h4>
     </div>
 
     @form(routes.SmReport.checkDuplicatesByParent(device, treePath)) {
         @CSRF.formField
+        <h5>check duplicates by parent:</h5>
         @inputText(fExtForm("extension"))
         <input type="submit" value="Submit">
     }
@@ -22,6 +23,7 @@
                     <th>Count <br>
                         Category is null</th>
                     <th>Category</th>
+                    <th>id category</th>
                     <th>Sync path</th>
                 </tr>
             </thead>
@@ -32,6 +34,7 @@
                     <td>@path._2</td>
                     <td>@path._3</td>
                     <td>@path._4</td>
+                    <td>@path._5</td>
                     <td>
                         <div class="input-group-button">
                             <form action="@routes.SmSyncDeviceStream.syncSingleNamePath(treePath + OsConf.fsSeparator + path._1, device)" method="post">

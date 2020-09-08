@@ -127,6 +127,7 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     val config = ConfigFactory.load("scanImport.conf")
     val cntFiles: Int = config.getInt("BackUp.allFiles.cntFiles")
     val maxRows: Int = config.getInt("BackUp.allFiles.maxRows")
+    // TODO delete
     val device_Unreliable: String = config.getStringList("BackUp.allFiles.device_Unreliable").asScala.toSet.mkString("'", "', '", "'")
     val device_NotView: String = config.getStringList("BackUp.allFiles.device_NotView").asScala.toSet.mkString("'", "', '", "'")
 
@@ -134,33 +135,43 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     debug(device_NotView)
 
     val qry = sql"""
-       SELECT
-         sha256,
-         f_name,
-         device_uid,
-         f_last_modified_date
-       FROM (
-              SELECT
-                card.sha256,
-                card.f_name,
-                (SELECT device_uid
-                 FROM sm_file_card sq
-                 WHERE sq.sha256 = card.sha256
-                 AND   sq.device_uid NOT IN (#$device_Unreliable)
-                 LIMIT 1) AS device_uid,
-                 card.f_last_modified_date
-              FROM sm_file_card card
-              WHERE card.f_last_modified_date >= date_trunc('month', card.f_last_modified_date) - INTERVAL '1 year'
-              GROUP BY card.sha256,
-                       card.f_name,
-                       card.f_last_modified_date
-              HAVING COUNT(1) < #$cntFiles
-              order by card.f_last_modified_date desc
-            ) AS res
-       WHERE device_uid NOT IN (#$device_NotView)
-       LIMIT #$maxRows
-      """
-      .as[(String, String, String, LocalDateTime)]
+        SELECT card.sha256,
+               card.f_name,
+               array_agg(sd.label_v),
+               array_agg(to_char(card.f_last_modified_date, 'YYYY-MM-DD HH:MM:SS')) as last_modified_date
+        FROM sm_file_card card
+                 inner join sm_device sd on card.device_uid = sd.uid
+        WHERE card.f_last_modified_date >= date_trunc('month', card.f_last_modified_date) - INTERVAL '1 year'
+          and sd.label_v NOT IN (#$device_NotView)
+          and sd.reliable
+        GROUP BY card.sha256,
+                 card.f_name
+--                  , last_modified_date
+        HAVING COUNT(1) < #$cntFiles
+
+        union all
+        SELECT card.sha256,
+               card.f_name,
+               array_agg(sd.label_v),
+               array_agg(to_char(card.f_last_modified_date, 'YYYY-MM-DD HH:MM:SS')) as last_modified_date
+        FROM sm_file_card card
+                 inner join sm_device sd on card.device_uid = sd.uid
+        WHERE card.f_last_modified_date >= date_trunc('month', card.f_last_modified_date) - INTERVAL '1 year'
+          and sd.label_v NOT IN (#$device_NotView)
+          and not sd.reliable
+          and not exists(select 1
+                         from sm_file_card
+                                  inner join sm_device s on s.uid = sm_file_card.device_uid
+                         where sm_file_card.sha256 = card.sha256
+                           and s.reliable)
+        GROUP BY card.sha256,
+                 card.f_name
+--                  , last_modified_date
+        HAVING COUNT(1) < #$cntFiles
+        order by last_modified_date desc
+        LIMIT #$maxRows
+          """
+      .as[(String, String, String, String)]
     database.runAsync(qry).map { rowSeq =>
       Ok(views.html.sm_chk_backup_last_year(rowSeq, device_Unreliable, device_NotView, cntFiles, rowSeq.length, maxRows)())
     }
@@ -272,8 +283,24 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
       }
   }
 
+  /*
+    def cmpBackupAndroidDevice: Action[AnyContent] = Action {
+      val fileName = "111222"
+      val outDir = "/home/ns/Documents/123/"
+      var cmdProc: String = Seq(s"adb shell ls /sdcard/DCIM/Camera/ > $outDir$fileName").!!
+      println(cmdProc)
+      cmpBackupAndroidDeviceByFile(fileName = fileName)
+
+      cmdProc = Seq(s"chmod 777 $outDir$fileName.sh").!!
+      println(cmdProc)
+
+      Ok("OK")
+    }
+  */
+
   /**
     * Check backup android
+    * <p>
     * ls -at > /tmp/123.txt
     * <p>
     * Android Debug Bridge
@@ -292,10 +319,11 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
     * @return
     */
   def cmpBackupAndroidDeviceByFile(fileName: String): Action[AnyContent] = Action.async {
+    val outDir: String = config.get[String]("BackUp.androidOutDir")
     val copyFrom = "/sdcard/DCIM/Camera/"
-    val copyTo = "/tmp/cp_back/"
+    val copyTo = s"$outDir/cp_back/"
 
-    val file = better.files.File(s"/tmp/$fileName")
+    val file = better.files.File(s"$outDir/$fileName")
     val content: String = file.contentAsString
     val lines = content.split("\n")
 
@@ -316,8 +344,10 @@ class SmReport @Inject()(cc: MessagesControllerComponents, config: Configuration
           fileNamesExp.append(sss)
         }
       }
-      val fileWr = better.files.File(s"/tmp/$fileName.sh")
+      val fileWr = better.files.File(s"$outDir/$fileName.sh")
       fileWr.overwrite(fileNamesExp.mkString("\n"))
+
+      //      val cmdProc = Seq(s"chmod 777 $outDir/$fileName.sh").!!
 
       Ok(fileNamesExp.length.toString)
     }

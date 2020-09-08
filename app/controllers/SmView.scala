@@ -67,7 +67,8 @@ class SmView @Inject()(cc: MessagesControllerComponents, val database: DBService
         split_part(x2.f_parent, '/', #$depth),
         count(1),
         count(1) filter (where sm_category_fc is null),
-        array_agg(DISTINCT category_rule.category_type) filter (where sm_category_fc is not null)
+        array_agg(DISTINCT category_rule.category_type) filter (where sm_category_fc is not null),
+        array_agg(DISTINCT category_rule.id) filter (where sm_category_fc is not null)
     FROM sm_file_card x2
            left outer join sm_category_fc on x2.sha256 = sm_category_fc.sha256
            left outer join  sm_category_rule category_rule ON category_rule.id = sm_category_fc.id
@@ -78,7 +79,7 @@ class SmView @Inject()(cc: MessagesControllerComponents, val database: DBService
       GROUP BY split_part(x2.f_parent, '/', #$depth)
       ORDER BY split_part(x2.f_parent, '/', #$depth)
       """
-      .as[(String, Int, Int, String)]
+      .as[(String, Int, Int, String, String)]
     database.runAsync(qry).map { rowSeq =>
       Ok(views.html.fc_explorer(device, treePath, rowSeq, depth, ExtensionForm.form))
     }
@@ -206,11 +207,12 @@ class SmView @Inject()(cc: MessagesControllerComponents, val database: DBService
   }
 
   def viewPathBySha256(sha256: String): Action[AnyContent] = Action.async {
-    database.runAsync(
-      Tables.SmFileCard
-        .filter(_.sha256 === sha256)
-        .map(fld => (fld.fName, fld.fParent, fld.deviceUid))
-        .result
+    database.runAsync((
+      for {
+        fc <- Tables.SmFileCard if fc.sha256 === sha256
+        device <- fc.smDeviceFk
+      } yield (fc.fName, fc.fParent, device.labelV)
+      ).result
     ).map { rowSeq =>
       Ok(views.html.fc_by_sha256(sha256, rowSeq)())
     }

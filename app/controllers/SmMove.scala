@@ -18,6 +18,7 @@ import play.api.mvc.{Action, AnyContent, InjectedController}
 import ru.ns.model.{Device, OsConf}
 import ru.ns.tools.FileUtils
 import services.db.DBService
+import slick.sql.SqlStreamingAction
 import utils.db.SmPostgresDriver.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -56,9 +57,11 @@ class SmMove @Inject()(val database: DBService)
     val qry = sql"""
        SELECT
          x2.f_parent,
-         (SELECT string_agg(DISTINCT x3.device_uid, ', ')
+         (SELECT string_agg(DISTINCT sm_device.label_v, ', ')
           FROM sm_file_card x3
-          WHERE x3.f_parent = x2.f_parent),
+              JOIN sm_device ON sm_device.uid = x3.device_uid
+          WHERE x3.f_parent = x2.f_parent
+          ),
          (SELECT count(1)
           FROM sm_file_card x3
           WHERE x3.f_parent = x2.f_parent),
@@ -320,4 +323,87 @@ class SmMove @Inject()(val database: DBService)
     logger.info("clearJob is DONE")
     "clearJob is DONE"
   }
+
+  // find . -type d -empty -delete
+  def runMoveFilesBySource(): Action[AnyContent] = Action.async {
+    val deviceUidSource: String = ""
+    val deviceUidTarget: String = ""
+
+    moveFilesBySource(deviceUidSource, deviceUidTarget)
+    Future.successful(Ok("run moveFilesBySource"))
+  }
+
+  def moveFilesBySource(deviceUidSource: String, deviceUidTarget: String): Future[Vector[Any]] = {
+    val resDb = (for {
+      fileCards <- database.runAsync(getFilesForMoveFilesBySource(deviceUidSource, deviceUidTarget))
+      mount <- FileUtils.getDeviceInfo(deviceUidTarget)
+    } yield (fileCards, mount))
+
+    resDb.filter { case (_, device) => device.isDefined }.map { case (fileCards, deviceOpt) =>
+      val device = deviceOpt.get
+      fileCards.filter(_._1 == 1).map { fc =>
+
+      moveAction2(device.mountpoint, fParent = fc._6, fc._3, pathTo = fc._5)
+      }
+    }
+  }
+
+  def moveAction2(mountPoint: String, fParent: String, fName: String, pathTo: String): Any = {
+    val fileFrom = File(mountPoint + OsConf.fsSeparator + fParent + fName)
+    val fileTo = File(mountPoint + OsConf.fsSeparator + pathTo + fName)
+    val dirTo = File(mountPoint + OsConf.fsSeparator + pathTo)
+
+    if (!fileTo.exists) {
+      if (dirTo.exists() || dirTo.createDirectories().exists) {
+        // move + delete
+        try {
+          fileFrom.moveTo(fileTo)
+        } catch {
+          case ex: IOException => logger.error(s"err move = ${ex.toString}")
+        }
+      } else {
+        logger.warn(s"Can`t create path = ${mountPoint + dirTo}")
+      }
+    } else {
+      fileFrom.delete()
+    }
+  }
+
+  def getFilesForMoveFilesBySource(deviceUidSource: String, deviceUidTarget: String): SqlStreamingAction[Vector[(Int, String, String, String, String, String)], (Int, String, String, String, String, String), Effect] = {
+    debugParam
+
+    val qry = sql"""
+        SELECT (SELECT COUNT(1)
+                FROM sm_file_card x2
+                WHERE x2.f_name = x1.f_name
+                  AND x2.sha256 = x1.sha256
+                  AND x2.device_uid = x1.device_uid),
+               (SELECT ARRAY_AGG(x2.f_parent)
+                FROM sm_file_card x2
+                WHERE x2.f_name = x1.f_name
+                  AND x2.sha256 = x1.sha256
+                  AND x2.device_uid = x1.device_uid),
+               x1.f_name,
+               x1.sha256,
+               x1.f_parent,
+               x2.f_parent
+        FROM sm_file_card x1
+                 INNER JOIN sm_file_card x2
+                            ON x2.f_name = x1.f_name
+                                AND x2.sha256 = x1.sha256
+                                AND x1.id != x2.id
+                                AND x2.device_uid != x1.device_uid
+                                AND x1.f_parent != x2.f_parent
+        WHERE x1.device_uid = '#$deviceUidSource'
+          and x2.device_uid = '#$deviceUidTarget'
+        ORDER BY x1.f_parent,
+                 x2.f_parent,
+                 x1.f_name
+
+      """
+      .as[(Int, String, String, String, String, String)]
+
+    qry
+  }
+
 }

@@ -18,10 +18,10 @@ class ViewsTest extends PlaySpec
     "render" in {
       import java.time.LocalDateTime
 
-      val device_1: DeviceView = DeviceView("sdb2", "Acer", "1234567", "Acer 1", LocalDateTime.parse("2010-06-30T01:20"), visible = true, reliable = true, 10)
-      val device_2: DeviceView = DeviceView("sdb3", "Bcer", "111-222", "Acer 2", LocalDateTime.MIN, visible = true, reliable = true, 1)
+      val device_1: DeviceView = DeviceView("sdb2", "Acer", "1234567", Some("Acer 1"), Some(LocalDateTime.parse("2010-06-30T01:20")), visible = true, reliable = true, 10)
+      val device_2: DeviceView = DeviceView("sdb3", "Bcer", "111-222", Some("Acer 2"), Some(LocalDateTime.MIN), visible = true, reliable = true, 1)
 
-      val rowSeq = Vector[DeviceView](device_1, device_2, DeviceView("sdb1", "WD", "qwerty", "WD 4", LocalDateTime.parse("2010-06-30T01:20"), visible = true, reliable = true, 1))
+      val rowSeq = Vector[DeviceView](device_1, device_2, DeviceView("sdb1", "WD", "qwerty", Some("WD 4"), Some(LocalDateTime.parse("2010-06-30T01:20")), visible = true, reliable = true, 1))
       val viewRes = views.html.smr_index(rowSeq.toBuffer)()
 
       contentType(viewRes) mustBe "text/html"

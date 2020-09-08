@@ -11,11 +11,16 @@
                         Option[String],
                         Option[Option[String]])],
         catForm: Form[FormCategoryUpdate],
-        isBegins: Boolean
+        isBegins: Boolean,
+        lstDevice: Seq[String],
+        lstCat: Seq[FormCategoryUpdate]
 )()
 @_template {
     <div class="row column">
         <h2>Fill categoryType, category, subCategory & description by path</h2>
+        <h4>isBegins = @isBegins | parent = @fParent</h4>
+        <h4>lstDevice - @lstDevice.toString</h4>
+        <h4>lstCat    - @lstCat.toString</h4>
     </div>
 
     @if(mode == "path" && rowSeq.nonEmpty) {
@@ -106,6 +111,7 @@
                 <td>@cRow._6</td>
                 <td>@cRow._7</td>
                 <td>@cRow._8</td>
+                <td>@cRow._9</td>
                 </tr>
             }
             </tbody>

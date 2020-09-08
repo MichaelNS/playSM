@@ -169,7 +169,7 @@ class SmCategorySpec extends PlaySpec
 
     "run writeToCategoryTbl" in {
       val controller = app.injector.instanceOf[SmCategory]
-      val message: (Option[String], String) = (Some("sha_id"), "fileName")
+      val message: (Option[String], String, String) = (Some("sha_id"), "fileName", "")
 
       controller.writeToCategoryTbl(message, -1)
       //      val result = controller.writeToCategoryTbl(message, "categoryType", "description")

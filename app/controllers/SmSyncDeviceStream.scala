@@ -70,8 +70,7 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
         .result
     ).map { rowSeq =>
       val devices = ArrayBuffer[DeviceView]()
-      // TODO убрать getOrElse после того, как будет переписан запрос на главной странице
-      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4.getOrElse(""), syncDate = p._5.getOrElse(LocalDateTime.MIN), visible = p._6, reliable = p._7, withOutCrc = 0) }
+      rowSeq.foreach { p => devices += DeviceView(name = p._1, label = p._2, uid = p._3, description = p._4, syncDate = p._5, visible = p._6, reliable = p._7, withOutCrc = 0) }
 
       Ok(views.html.device_import(devices))
     }
