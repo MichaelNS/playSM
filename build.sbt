@@ -80,8 +80,8 @@ lazy val commonSettings = Seq(
 lazy val fileutils = project in file("modules/fileutils")
 
 val playSlick = "5.0.0"
-val slick = "3.3.2"
-val tmingleiDep = "0.19.2"
+val slick = "3.3.3"
+val tmingleiDep = "0.19.3"
 
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
@@ -109,10 +109,10 @@ lazy val root = (project in file("."))
       //    scala-fixture:
       "com.github.tototoshi" % "scala-fixture_2.12" % "0.4.0" % Test,
       "com.h2database" % "h2" % "1.4.200" % Test,
-      "org.flywaydb" % "flyway-core" % "6.5.3" % Test,
+      "org.flywaydb" % "flyway-core" % "6.5.5" % Test,
 
       "org.scalamock" %% "scalamock" % "5.0.0" % Test,
-      "org.scalatest" %% "scalatest" % "3.2.1" % Test
+      "org.scalatest" %% "scalatest" % "3.2.2" % Test
     )
 
   )
