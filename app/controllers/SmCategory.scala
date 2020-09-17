@@ -16,6 +16,7 @@ import play.api.data.validation.Constraints
 import play.api.mvc._
 import services.db.DBService
 import slick.basic.DatabasePublisher
+import slick.jdbc.{ResultSetConcurrency, ResultSetType}
 import utils.db.SmPostgresDriver.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -212,8 +213,14 @@ class SmCategory @Inject()(cc: MessagesControllerComponents, val database: DBSer
                  )
 
   def getStreamRulesFromDb: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = {
-
+    val fetchSize = 50
     val queryRes = Tables.SmCategoryRule.result
+      .withStatementParameters(
+        rsType = ResultSetType.ForwardOnly,
+        rsConcurrency = ResultSetConcurrency.ReadOnly,
+        fetchSize = fetchSize)
+      .transactionally
+
     val databasePublisher: DatabasePublisher[Tables.SmCategoryRule#TableElementType] = database runStream queryRes
     val akkaSourceFromSlick: Source[Tables.SmCategoryRule#TableElementType, NotUsed] = Source fromPublisher databasePublisher
 

@@ -15,6 +15,7 @@ import ru.ns.model.OsConf
 import ru.ns.tools.{FileUtils, SmImageUtil}
 import services.db.DBService
 import slick.basic.DatabasePublisher
+import slick.jdbc.{ResultSetConcurrency, ResultSetType}
 import utils.db.SmPostgresDriver.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,6 +38,8 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
 
   type DbImageRes = (String, String, Option[String], Option[String])
 
+  val fetchSize = 400
+
   def resizeImage(deviceUid: String): Action[AnyContent] = Action.async {
     debugParam
 
@@ -45,7 +48,7 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
         val mountPoint: String = device.head.mountpoint
         val dbFcStream: Source[DbImageRes, NotUsed] = getStreamImageByDevice(deviceUid)
         dbFcStream
-          .throttle(elements = 400, 10.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
+          .throttle(elements = fetchSize, 10.millisecond, maximumBurst = 1, mode = ThrottleMode.Shaping)
           .mapAsync(2)(writeImageResizeToDb(_, mountPoint))
           .runWith(Sink.ignore)
       }
@@ -67,6 +70,12 @@ class SmImage @Inject()(config: Configuration, val database: DBService)
     }
       yield (fcRow.fParent, fcRow.fName, fcRow.fExtension, fcRow.sha256)
       ).result
+      .withStatementParameters(
+        rsType = ResultSetType.ForwardOnly,
+        rsConcurrency = ResultSetConcurrency.ReadOnly,
+        fetchSize = fetchSize)
+      .transactionally
+
     val databasePublisher: DatabasePublisher[DbImageRes] = database runStream queryRes
     val akkaSourceFromSlick: Source[DbImageRes, NotUsed] = Source fromPublisher databasePublisher
 

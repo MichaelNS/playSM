@@ -35,30 +35,32 @@ class SmSyncDeviceStream @Inject()(cc: MessagesControllerComponents, config: Con
   implicit val system: ActorSystem = ActorSystem()
 
   def importDevice: Action[AnyContent] = Action.async {
-    database.runAsync(Tables.SmDevice.sortBy(_.uid).map(_.uid).result).map { rowSeq =>
-      logger.debug(pprint.apply(rowSeq).toString())
+    val devices = (for {
+      dbDevices <- database.runAsync(Tables.SmDevice.sortBy(_.uid).map(_.uid).result)
+      mountDevices <- FileUtils.getDevicesInfo()
+    } yield (dbDevices, mountDevices))
 
-      FileUtils.getDevicesInfo() onComplete {
-        case Success(lstDevices) =>
-          lstDevices.foreach { device =>
-            debug(device)
+    devices.filter { case (_, mountDevices) => mountDevices.nonEmpty }.map { case (dbDevices, deviceOpt) =>
+      logger.debug(pprint.apply(dbDevices).toString())
+      deviceOpt.foreach { device =>
+        if (dbDevices.contains(device.uuid)) {
+          logger.debug(s"Device [${device.toString}] already exists")
+        } else {
+          val cRow = Tables.SmDeviceRow(-1, device.uuid, device.name, device.label, None)
 
-            if (rowSeq.contains(device.uuid)) {
-              logger.info(s"Device [${device.toString}] already exists")
-            } else {
-              val cRow = Tables.SmDeviceRow(-1, device.uuid, device.name, device.label, None)
-
-              val insRes = database.runAsync((Tables.SmDevice returning Tables.SmDevice.map(_.id)) += SmDevice.apply(cRow).data.toRow)
-              insRes onComplete {
-                case Success(suc) => logger.debug(s"add device = $suc")
-                case Failure(ex) => logger.error(s"importDevice 1 error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
-              }
+          database.runAsync((Tables.SmDevice returning Tables.SmDevice.map(_.id)) += SmDevice.apply(cRow).data.toRow)
+            .map(ins => logger.debug(s"add device = $ins"))
+            .recover { case ex: Throwable =>
+              logger.error(s"importDevice DB ins error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+              throw ex
             }
-          }
-        case Failure(ex) => logger.error(s"importDevice 2 error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+        }
       }
 
-      Redirect(routes.SmApplication.smIndex())
+      Redirect(routes.SmSyncDeviceStream.importDevice())
+    }.recover { case ex: Throwable =>
+      logger.error(s"importDevice error: ${ex.toString}\nStackTrace:\n ${ex.getStackTrace.mkString("\n")}")
+      throw ex
     }
   }
 

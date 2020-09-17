@@ -28,4 +28,8 @@ package object controllers {
   def debug[V](value: sourcecode.Text[V])(implicit fullName: sourcecode.FullName): Unit = {
     logger.debug(s"${fullName.value} = ${value.source} : [${value.value}]")
   }
+
+  def infoLog[V](value: sourcecode.Text[V])(implicit fullName: sourcecode.FullName): Unit = {
+    logger.info(s"${fullName.value} = ${value.source} : [${value.value}]")
+  }
 }

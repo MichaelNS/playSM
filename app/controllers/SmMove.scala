@@ -342,14 +342,14 @@ class SmMove @Inject()(val database: DBService)
     resDb.filter { case (_, device) => device.isDefined }.map { case (fileCards, deviceOpt) =>
       val device = deviceOpt.get
       fileCards.filter(_._1 == 1).map { fc =>
-
-      moveAction2(device.mountpoint, fParent = fc._6, fc._3, pathTo = fc._5)
+        moveAction2(device.mountpoint, pathFrom = fc._5, fName = fc._2, pathTo = fc._4)
       }
     }
   }
 
-  def moveAction2(mountPoint: String, fParent: String, fName: String, pathTo: String): Any = {
-    val fileFrom = File(mountPoint + OsConf.fsSeparator + fParent + fName)
+  def moveAction2(mountPoint: String, pathFrom: String, fName: String, pathTo: String): Any = {
+    debugParam
+    val fileFrom = File(mountPoint + OsConf.fsSeparator + pathFrom + fName)
     val fileTo = File(mountPoint + OsConf.fsSeparator + pathTo + fName)
     val dirTo = File(mountPoint + OsConf.fsSeparator + pathTo)
 
@@ -369,39 +369,46 @@ class SmMove @Inject()(val database: DBService)
     }
   }
 
-  def getFilesForMoveFilesBySource(deviceUidSource: String, deviceUidTarget: String): SqlStreamingAction[Vector[(Int, String, String, String, String, String)], (Int, String, String, String, String, String), Effect] = {
+  def getFilesForMoveFilesBySource(deviceUidSource: String, deviceUidTarget: String): SqlStreamingAction[Vector[(Int, String, String, String, String)], (Int, String, String, String, String), Effect] = {
     debugParam
 
     val qry = sql"""
-        SELECT (SELECT COUNT(1)
-                FROM sm_file_card x2
-                WHERE x2.f_name = x1.f_name
-                  AND x2.sha256 = x1.sha256
-                  AND x2.device_uid = x1.device_uid),
-               (SELECT ARRAY_AGG(x2.f_parent)
-                FROM sm_file_card x2
-                WHERE x2.f_name = x1.f_name
-                  AND x2.sha256 = x1.sha256
-                  AND x2.device_uid = x1.device_uid),
-               x1.f_name,
-               x1.sha256,
-               x1.f_parent,
-               x2.f_parent
-        FROM sm_file_card x1
-                 INNER JOIN sm_file_card x2
-                            ON x2.f_name = x1.f_name
-                                AND x2.sha256 = x1.sha256
-                                AND x1.id != x2.id
-                                AND x2.device_uid != x1.device_uid
-                                AND x1.f_parent != x2.f_parent
-        WHERE x1.device_uid = '#$deviceUidSource'
-          and x2.device_uid = '#$deviceUidTarget'
-        ORDER BY x1.f_parent,
-                 x2.f_parent,
-                 x1.f_name
+        SELECT count(fc_cnt),
+        --       string_agg(fc_src.f_parent, ',' ORDER BY fc_src.f_parent),
+               fc_src.f_name,
+               fc_src.sha256,
+               fc_src.f_parent,
+               fc_trg.f_parent
+        FROM sm_file_card fc_src
+                 INNER JOIN sm_file_card fc_trg
+                            ON fc_trg.f_name = fc_src.f_name
+                                AND fc_trg.sha256 = fc_src.sha256
+                                AND fc_src.id != fc_trg.id
+                                AND fc_trg.device_uid != fc_src.device_uid
+                                AND fc_src.f_parent != fc_trg.f_parent
 
+                 INNER JOIN sm_file_card fc_cnt
+                            ON fc_cnt.f_name = fc_src.f_name
+                                AND fc_cnt.sha256 = fc_src.sha256
+                                AND fc_cnt.device_uid = fc_src.device_uid
+
+        WHERE fc_src.device_uid = '#$deviceUidSource'
+          and fc_trg.device_uid = '#$deviceUidTarget'
+
+        group by fc_src.f_name,
+                 fc_trg.f_name,
+                 fc_src.sha256,
+                 fc_trg.sha256,
+                 fc_src.f_parent,
+                 fc_trg.f_parent,
+                 fc_src.device_uid,
+                 fc_trg.device_uid
+        having count(1) = 1
+        ORDER BY fc_src.f_parent,
+                 fc_trg.f_parent,
+                 fc_src.f_name
       """
-      .as[(Int, String, String, String, String, String)]
+      .as[(Int, String, String, String, String)]
 
     qry
   }
